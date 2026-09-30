@@ -2,13 +2,18 @@
 
 Standalone desktop radio client for Repeater Nation.
 
-## Direction
+## Current integration
 
-- Existing Repeater Nation account
-- Existing LiveKit voice infrastructure
-- Windows desktop application
-- Radio-first interface
-- No duplicate member/account system
+- Uses the existing Repeater Nation Base44 account/session.
+- Requests server-issued radio sessions from `issue-radio-session`.
+- Uses the existing `voice.repeaternation.com` LiveKit service.
+- Loads the existing RadioChannel and RadioZone records.
+- Uses the existing server-authoritative `radio-ptt` floor control.
+- Shows LiveKit channel presence with callsign/display metadata.
+- Supports push-to-talk microphone publishing.
+- Supports shared Repeater Nation direct calls through `radio-direct-call`.
+- Uses the same verified-callsign transmit authorization as the website.
+- Does not create a second member/account system.
 
 ## Development
 
@@ -23,9 +28,27 @@ For Tauri development:
 npm run tauri:dev
 ```
 
-Environment:
+## Configuration
+
+Copy `.env.example` when local overrides are needed.
 
 - `VITE_REPEATER_NATION_APP_URL` — Repeater Nation web app
+- `VITE_BASE44_APP_ID` — Repeater Nation Base44 application ID
+- `VITE_BASE44_APP_BASE_URL` — optional Base44 app base URL
+- `VITE_BASE44_FUNCTIONS_VERSION` — optional functions version
 - `VITE_LIVEKIT_URL` — LiveKit WebSocket endpoint
+- `VITE_RADIO_CHANNEL_ID` — default RadioChannel record
+- `VITE_RADIO_CHANNEL_NAME` — default display name
 
-The current UI is the application shell. Authentication/session exchange, LiveKit room connection, device routing, presence, calls, and persistent radio settings are intentionally isolated as the next implementation layer.
+## Authentication note
+
+The desktop client uses the Base44 access-token flow rather than storing a separate radio password. The login flow returns the access token to the client, which then uses the existing Repeater Nation account for radio-session authorization.
+
+## Next desktop-specific work
+
+- Windows installer/signing and auto-update
+- Microphone/speaker device selectors
+- Persistent radio DSP presets
+- Keyboard/global PTT
+- Direct-call UI polish and notifications
+- Tray/PiP behavior
