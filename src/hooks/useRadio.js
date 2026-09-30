@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone } from "../lib/livekit";
+import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
 import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 
 export function useRadio(channelId) {
   const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map());
-  const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false);
-  const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);
+  const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
+  const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);\n  const refreshDevices=useCallback(async()=>{try{setDevices(await listAudioDevices())}catch{}},[]);
   const attachAudio=useCallback((track,participant)=>{
     if(track.kind!=="audio")return;
     const existing=audioElsRef.current.get(participant.identity);
@@ -14,7 +14,7 @@ export function useRadio(channelId) {
     el.play().catch(()=>{});
   },[muted]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
-  const connect=useCallback(async()=>{
+  useEffect(()=>{refreshDevices()},[refreshDevices]);\n  const connect=useCallback(async()=>{
     setError("");setState("connecting");
     try {
       const sessionData=await issueRadioSession(channelId);
@@ -45,5 +45,5 @@ export function useRadio(channelId) {
     if(roomRef.current)setState("listening");
   },[channelId]);
   const disconnect=useCallback(async()=>{await releasePTT();cleanupAudio();await disconnectRadio(roomRef.current);roomRef.current=null;setSession(null);setParticipants([]);setState("ready")},[releasePTT,cleanupAudio]);
-  return {state,error,session,participants,muted,setMuted,connect,requestPTT,releasePTT,disconnect,room:roomRef.current};
+  return {state,error,session,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect,room:roomRef.current};
 }
