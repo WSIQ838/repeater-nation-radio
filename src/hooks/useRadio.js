@@ -5,7 +5,8 @@ import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 export function useRadio(channelId) {
   const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map());
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
-  const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);\n  const refreshDevices=useCallback(async()=>{try{setDevices(await listAudioDevices())}catch{}},[]);
+  const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);
+  const refreshDevices=useCallback(async()=>{try{setDevices(await listAudioDevices())}catch{}},[]);
   const attachAudio=useCallback((track,participant)=>{
     if(track.kind!=="audio")return;
     const existing=audioElsRef.current.get(participant.identity);
@@ -14,7 +15,8 @@ export function useRadio(channelId) {
     el.play().catch(()=>{});
   },[muted]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
-  useEffect(()=>{refreshDevices()},[refreshDevices]);\n  const connect=useCallback(async()=>{
+  useEffect(()=>{refreshDevices()},[refreshDevices]);
+  const connect=useCallback(async()=>{
     setError("");setState("connecting");
     try {
       const sessionData=await issueRadioSession(channelId);
