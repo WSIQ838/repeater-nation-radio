@@ -46,9 +46,9 @@ The desktop client uses the Base44 access-token flow rather than storing a separ
 
 ## Next desktop-specific work
 
-- Windows installer/signing and auto-update
-- Microphone/speaker device selectors
+- Windows installer bundles (NSIS/MSI) enabled
+- Microphone/speaker device discovery
 - Persistent radio DSP presets
-- Keyboard/global PTT
+- Keyboard PTT (Space / Numpad 0)
 - Direct-call UI polish and notifications
 - Tray/PiP behavior
