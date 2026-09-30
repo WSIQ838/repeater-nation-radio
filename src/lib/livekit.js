@@ -12,7 +12,12 @@ export async function connectRadio(token, livekitUrl=config.livekitUrl, callback
   return room;
 }
 
-export async function listAudioDevices(){\n  if(!navigator.mediaDevices?.enumerateDevices)return [];\n  return (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput"||d.kind==="audiooutput");\n}\n\nexport async function publishMicrophone(room,deviceId) {
+export async function listAudioDevices(){
+  if(!navigator.mediaDevices?.enumerateDevices)return [];
+  return (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput"||d.kind==="audiooutput");
+}
+
+export async function publishMicrophone(room,deviceId) {
   if(!room || room.state!==ConnectionState.Connected) throw new Error("Radio connection is not active.");
   const track=await createLocalAudioTrack(deviceId?{deviceId:{exact:deviceId}}:undefined);
   await room.localParticipant.publishTrack(track,{name:"radio-microphone",source:Track.Source.Microphone,dtx:true,red:true});
