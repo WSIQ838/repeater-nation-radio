@@ -5,5 +5,5 @@
   "identifier":"com.repeaternation.radio",
   "build":{"beforeDevCommand":"npm run dev","devUrl":"http://localhost:1420","beforeBuildCommand":"npm run build","frontendDist":"../dist"},
   "app":{"windows":[{"title":"Repeater Nation Radio","width":1180,"height":760,"minWidth":900,"minHeight":620,"resizable":true}],"security":{"csp":null}},
-  "bundle":{"active":true,"targets":["nsis","msi"],"windows":{"nsis":{"installMode":"currentUser","displayLanguageSelector":false}}}
+  "bundle":{"active":true,"targets":["nsis","msi"],"icon":["icons/icon.ico"],"windows":{"nsis":{"installMode":"currentUser","displayLanguageSelector":false}}}
 }
