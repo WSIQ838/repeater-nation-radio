@@ -3,19 +3,28 @@ import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone }
 import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 
 export function useRadio(channelId) {
-  const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null);
-  const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]);
+  const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map());
+  const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false);
   const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);
+  const attachAudio=useCallback((track,participant)=>{
+    if(track.kind!=="audio")return;
+    const existing=audioElsRef.current.get(participant.identity);
+    if(existing){try{existing.remove()}catch{}}
+    const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=muted?0:1;document.body.appendChild(el);audioElsRef.current.set(participant.identity,el);
+    el.play().catch(()=>{});
+  },[muted]);
+  const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
   const connect=useCallback(async()=>{
     setError("");setState("connecting");
     try {
       const sessionData=await issueRadioSession(channelId);
       if(!sessionData?.ok) throw new Error(sessionData?.error||"Could not start radio session.");
-      const room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onDisconnected:()=>{roomRef.current=null;setState("ready")}});
+      const room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{cleanupAudio();roomRef.current=null;setState("ready")}});
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
     } catch(err){setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
-  },[channelId,refresh]);
-  useEffect(()=>{const room=roomRef.current;if(!room)return;const sync=()=>refresh();room.on("participantConnected",sync);room.on("participantDisconnected",sync);room.on("participantMetadataChanged",sync);return()=>{room.off("participantConnected",sync);room.off("participantDisconnected",sync);room.off("participantMetadataChanged",sync)}},[refresh,state]);
+  },[channelId,refresh,attachAudio,cleanupAudio]);
+  useEffect(()=>{for(const el of audioElsRef.current.values())el.volume=muted?0:1},[muted]);
+  useEffect(()=>{const room=roomRef.current;if(!room)return;const sync=()=>refresh();const onSub=(track,_pub,p)=>attachAudio(track,p);const onUnsub=(track,_pub,p)=>{const el=audioElsRef.current.get(p.identity);if(el){try{track.detach(el)}catch{}try{el.remove()}catch{}audioElsRef.current.delete(p.identity)}};room.on("participantConnected",sync);room.on("participantDisconnected",sync);room.on("participantMetadataChanged",sync);room.on("trackSubscribed",onSub);room.on("trackUnsubscribed",onUnsub);return()=>{room.off("participantConnected",sync);room.off("participantDisconnected",sync);room.off("participantMetadataChanged",sync);room.off("trackSubscribed",onSub);room.off("trackUnsubscribed",onUnsub)}},[refresh,attachAudio,state]);
   const requestPTT=useCallback(async()=>{
     if(floorRef.current)return;
     if(!roomRef.current||!session){setError("Connect to the radio first.");return}
@@ -35,6 +44,6 @@ export function useRadio(channelId) {
     try{await issueRadioPTT(channelId,"release")}catch{}
     if(roomRef.current)setState("listening");
   },[channelId]);
-  const disconnect=useCallback(async()=>{await releasePTT();await disconnectRadio(roomRef.current);roomRef.current=null;setSession(null);setParticipants([]);setState("ready")},[releasePTT]);
-  return {state,error,session,participants,connect,requestPTT,releasePTT,disconnect,room:roomRef.current};
+  const disconnect=useCallback(async()=>{await releasePTT();cleanupAudio();await disconnectRadio(roomRef.current);roomRef.current=null;setSession(null);setParticipants([]);setState("ready")},[releasePTT,cleanupAudio]);
+  return {state,error,session,participants,muted,setMuted,connect,requestPTT,releasePTT,disconnect,room:roomRef.current};
 }
