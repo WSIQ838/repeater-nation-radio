@@ -1,8 +1,9 @@
 import {useEffect,useMemo,useState} from "react";
-import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown} from "lucide-react";
+import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff} from "lucide-react";
 import {config} from "./lib/config";
 import {beginLogin,restoreSession,clearSession,listRadioChannels} from "./lib/auth";
 import {useRadio} from "./hooks/useRadio";
+import {useDirectCalls} from "./hooks/useDirectCalls";
 
 function Login(){
   const [checking,setChecking]=useState(true);
@@ -18,13 +19,14 @@ function MemberName({participant}){
 function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName);
   const {state,error,session:radioSession,participants,muted,setMuted,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId);
+  const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id);
   useEffect(()=>{listRadioChannels().then(list=>{setChannels(list);const current=list.find(x=>x.id===channelId)||list.find(x=>x.id===config.defaultChannelId);if(current){setChannelId(current.id);setChannelName(current.name)}}).catch(()=>{})},[]);
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
   const connected=state==="listening"||state==="transmitting";
   const chooseChannel=async e=>{const next=e.target.value;if(next===channelId)return;setPtt(false);await disconnect();const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio")};
   const down=async()=>{if(!connected||ptt)return;setPtt(true);await requestPTT()};
   const up=async()=>{if(!ptt)return;setPtt(false);await releasePTT()};
-  const logout=async()=>{await disconnect();clearSession();onSignOut()};
+  const logout=async()=>{await disconnect();await endCall();clearSession();onSignOut()};
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
   return <div className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small"><Radio size={20}/></div><div><strong>Repeater Nation</strong><span>RADIO</span></div></div><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":"Ready"}<ChevronDown size={14}/></div></header>
@@ -34,9 +36,9 @@ function RadioApp({session,onSignOut}){
   <div className="display"><span className="rx-dot"/><strong>{ptt?"TRANSMITTING":connected?"STANDBY":"OFFLINE"}</strong><small>{ptt?"TX ACTIVE":connected?"Ready for traffic":"Connect to monitor traffic"}</small></div>
   <div className="controls"><button className="icon-btn" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}</button><button className={ptt?"ptt pressed":"ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={30}/><span>HOLD TO TALK</span></button><button className="icon-btn" onClick={up}>{ptt?<MicOff/>:<Mic/>}</button></div>
   <div className="device-row"><span>Microphone</span><span>Default input</span><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span></div>{error&&<div className="error">{error}</div>}</section>
-  <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div><div className="empty">Direct calls use the same Repeater Nation member authorization as the website.</div></section></div></>}
+  <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div>{incoming?<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>:call?<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>:<div className="empty">Open Calls to see available members.</div>}</section></div></>}
   {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
-  {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div><div className="empty">Direct-call signaling is shared with Repeater Nation. Call controls will be added here next.</div></section>}
+  {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
   {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><button className="danger" onClick={logout}>Sign out</button></section>}</main></div></div>
 }
 
