@@ -23,10 +23,10 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{listRadioChannels().then(list=>{setChannels(list);const current=list.find(x=>x.id===channelId)||list.find(x=>x.id===config.defaultChannelId);if(current){setChannelId(current.id);setChannelName(current.name)}}).catch(()=>{})},[]);
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
   const connected=state==="listening"||state==="transmitting";
-  useEffect(()=>{const down=e=>{if((e.code==="Space"||e.code==="Numpad0")&&connected&&!e.repeat){e.preventDefault();downPTT()}};const up=e=>{if(e.code==="Space"||e.code==="Numpad0"){e.preventDefault();upPTT()}};window.addEventListener("keydown",down);window.addEventListener("keyup",up);return()=>{window.removeEventListener("keydown",down);window.removeEventListener("keyup",up)}},[connected,ptt]);
   const chooseChannel=async e=>{const next=e.target.value;if(next===channelId)return;setPtt(false);await disconnect();const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio")};
-  const down=async()=>{if(!connected||ptt)return;setPtt(true);await requestPTT()};
+  const down=async()=>{if(!connected||ptt)return;setPtt(true);await requestPTT(micDeviceId)};
   const up=async()=>{if(!ptt)return;setPtt(false);await releasePTT()};
+  useEffect(()=>{const keyDown=e=>{if((e.code==="Space"||e.code==="Numpad0")&&connected&&!e.repeat){e.preventDefault();down()}};const keyUp=e=>{if(e.code==="Space"||e.code==="Numpad0"){e.preventDefault();up()}};window.addEventListener("keydown",keyDown);window.addEventListener("keyup",keyUp);return()=>{window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp)}},[connected,ptt,micDeviceId]);
   const logout=async()=>{await disconnect();await endCall();clearSession();onSignOut()};
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
