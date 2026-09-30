@@ -16,8 +16,8 @@ function MemberName({participant}){
 }
 
 function RadioApp({session,onSignOut}){
-  const [tab,setTab]=useState("radio"),[muted,setMuted]=useState(false),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName);
-  const {state,error,session:radioSession,participants,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId);
+  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName);
+  const {state,error,session:radioSession,participants,muted,setMuted,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId);
   useEffect(()=>{listRadioChannels().then(list=>{setChannels(list);const current=list.find(x=>x.id===channelId)||list.find(x=>x.id===config.defaultChannelId);if(current){setChannelId(current.id);setChannelName(current.name)}}).catch(()=>{})},[]);
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
   const connected=state==="listening"||state==="transmitting";
