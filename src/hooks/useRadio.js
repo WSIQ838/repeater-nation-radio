@@ -25,7 +25,7 @@ export function useRadio(channelId) {
   },[channelId,refresh,attachAudio,cleanupAudio]);
   useEffect(()=>{for(const el of audioElsRef.current.values())el.volume=muted?0:1},[muted]);
   useEffect(()=>{const room=roomRef.current;if(!room)return;const sync=()=>refresh();const onSub=(track,_pub,p)=>attachAudio(track,p);const onUnsub=(track,_pub,p)=>{const el=audioElsRef.current.get(p.identity);if(el){try{track.detach(el)}catch{}try{el.remove()}catch{}audioElsRef.current.delete(p.identity)}};room.on("participantConnected",sync);room.on("participantDisconnected",sync);room.on("participantMetadataChanged",sync);room.on("trackSubscribed",onSub);room.on("trackUnsubscribed",onUnsub);return()=>{room.off("participantConnected",sync);room.off("participantDisconnected",sync);room.off("participantMetadataChanged",sync);room.off("trackSubscribed",onSub);room.off("trackUnsubscribed",onUnsub)}},[refresh,attachAudio,state]);
-  const requestPTT=useCallback(async()=>{
+  const requestPTT=useCallback(async(deviceId="")=>{
     if(floorRef.current)return;
     if(!roomRef.current||!session){setError("Connect to the radio first.");return}
     if(!session.canTransmit){setError("You are not authorized to transmit on this channel.");return}
@@ -33,7 +33,7 @@ export function useRadio(channelId) {
       const result=await issueRadioPTT(channelId,"request");
       if(!result?.ok) throw new Error(result?.error||"Could not reach the radio server.");
       if(!result.granted){setError(result.reason==="busy"?"Channel is busy — someone else is transmitting.":result.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return}
-      micRef.current=await publishMicrophone(roomRef.current);
+      micRef.current=await publishMicrophone(roomRef.current,deviceId);
       floorRef.current=true;setError("");setState("transmitting");
       renewRef.current=setInterval(async()=>{if(!floorRef.current)return;try{const r=await issueRadioPTT(channelId,"renew");if(!r?.ok)throw new Error()}catch{releasePTT()}},10000);
     } catch(err){setError(err instanceof Error?err.message:"Microphone access failed.");floorRef.current=false;try{await issueRadioPTT(channelId,"release")}catch{}}
