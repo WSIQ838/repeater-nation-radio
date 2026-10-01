@@ -76,8 +76,15 @@ export async function loginWithPassword(email, password) {
 }
 
 async function invoke(name, payload) {
-  const result = await client().functions.invoke(name, payload);
-  return result?.data || result;
+  try {
+    const result = await client().functions.invoke(name, payload);
+    return result?.data || result;
+  } catch (err) {
+    const data = err?.response?.data || err?.data;
+    const detail = data?.detail || data?.error || data?.message;
+    if (detail) throw new Error(String(detail));
+    throw err;
+  }
 }
 
 export const issueRadioSession = (channelId, zoneId="", channelNumber=null) =>
