@@ -12,7 +12,15 @@ function client() {
     base44Client = createClient({
       appId: config.base44AppId,
       functionsVersion: config.base44FunctionsVersion || undefined,
+      serverUrl: "",
+      requiresAuth: false,
       appBaseUrl: config.base44AppBaseUrl || undefined,
+      options: {
+        onError: (err) => {
+          console.error("[Base44 SDK]", err?.status, err?.message, err);
+        },
+        actorsTransport: "proxy",
+      },
     });
   }
   return base44Client;
