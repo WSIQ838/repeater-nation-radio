@@ -1,5 +1,12 @@
 # Repeater Nation Radio — Changelog
 
+## Next — Website radio parity
+
+- Reworked the desktop radio face to follow the Repeater Nation website radio widget layout and status presentation.
+- Added zone/channel metadata to desktop radio-session requests so the same server-side channel validation and stale-selection fallback used by the website is available to the desktop app.
+- Kept the existing LiveKit transport and PTT flow while improving the desktop radio display.
+
+
 ## Next — Google sign-in
 
 - Added a Continue with Google option to the desktop sign-in screen.
