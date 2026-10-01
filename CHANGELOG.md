@@ -1,5 +1,11 @@
 # Repeater Nation Radio — Changelog
 
+## Next — Zone selection
+
+- Added a dedicated Zone selector to the desktop radio controls.
+- Channel choices now follow the selected zone, making it easier to move between radio channel groups without scrolling through every channel.
+- Changing zones or channels safely disconnects the current radio session before switching selections.
+
 ## Next — Website radio parity
 
 - Reworked the desktop radio face to follow the Repeater Nation website radio widget layout and status presentation.
