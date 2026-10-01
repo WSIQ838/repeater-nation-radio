@@ -1,5 +1,12 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.4
+
+- Fixed the desktop Base44 client using same-origin API routing that only works inside the hosted website.
+- Desktop authentication and radio-session requests now use the Repeater Nation HTTPS host explicitly.
+- Google OAuth continues to return through the installed `repeaternation://` desktop deep link.
+- Bumped the desktop app version to 0.1.4.
+
 ## Unreleased
 
 - Fixed the in-app update check never finding a release: the tag pattern had doubled backslashes, so no `radio-v*` tag ever matched.
@@ -13,7 +20,6 @@
 
 - Fixed Google sign-in for the Windows desktop app by routing the OAuth callback through the installed app using the Repeater Nation deep-link protocol.
 - Added desktop OAuth callback handling for both a newly launched app instance and an already-running app.
-
 - Fixed desktop update checks by using Tauri’s native HTTP client for GitHub instead of the WebView network layer.
 - Added the GitHub API URL to the desktop HTTP permission scope.
 - Added dedicated Zone selection to the radio controls; channel choices now follow the selected zone.
@@ -30,13 +36,11 @@
 - Added zone/channel metadata to desktop radio-session requests so the same server-side channel validation and stale-selection fallback used by the website is available to the desktop app.
 - Kept the existing LiveKit transport and PTT flow while improving the desktop radio display.
 
-
 ## Next — Google sign-in
 
 - Added a Continue with Google option to the desktop sign-in screen.
 - Added OAuth callback handling so Google sign-in can return to the desktop app with the authenticated Repeater Nation session.
 - Existing email/password sign-in remains available.
-
 
 ## 0.1.2 — Radio audio and PTT reliability fix
 
