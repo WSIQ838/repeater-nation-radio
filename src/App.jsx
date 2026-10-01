@@ -189,44 +189,19 @@ function RadioApp({session,onSignOut}){
 }
 
 export default function App(){
-  const [session,setSession]=useState(null);
-  const [authChecking,setAuthChecking]=useState(true);
-  useEffect(()=>{
-    const handler=e=>setSession(e.detail);
-    window.addEventListener("rn-radio-session",handler);
-    let unlisten=null;
-    const handleDeepLink=async(urls)=>{
-      for(const url of urls||[]){
-        if(!String(url).startsWith("repeaternation://oauth/")) continue;
-        const restored=await restoreSessionFromOAuth(url);
-        if(restored){
-          window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:restored}));
-          setSession(restored);
-          window.history.replaceState({},document.title,"/");
-        }
-      }
-      setAuthChecking(false);
-    };
-    (async()=>{
-      try{
-        const current=await getCurrent();
-        if(current?.length){
-          await handleDeepLink(current);
-        }else{
-          const restored=await restoreSessionFromOAuth();
-          if(restored) setSession(restored);
-          setAuthChecking(false);
-        }
-        unlisten=await onOpenUrl(handleDeepLink);
-      }catch{
-        setAuthChecking(false);
-      }
-    })();
-    return()=>{
-      window.removeEventListener("rn-radio-session",handler);
-      if(unlisten) unlisten();
-    };
-  },[]);
-  if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Checking your sign-in…</p></main>;
-  return session?<RadioApp session={session} onSignOut={()=>setSession(null)}/>:<Login/>;
+  const websiteRadioUrl = config.appUrl.replace(/\\/$/, "") + "/?radio=desktop";
+  useEffect(() => {
+    // The website is the single source of truth for the radio interface.
+    // This keeps the desktop client on the same radio face, controls, layout
+    // settings, LiveKit behavior, and future UI changes as the web app.
+    if (window.location.href !== websiteRadioUrl) {
+      window.location.replace(websiteRadioUrl);
+    }
+  }, [websiteRadioUrl]);
+
+  return <main className="remote-radio-loading">
+    <div className="brand-mark"><Radio size={30}/></div>
+    <h1>Repeater Nation Radio</h1>
+    <p className="muted">Loading the Repeater Nation web radio…</p>
+  </main>;
 }
