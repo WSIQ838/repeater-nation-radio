@@ -34,8 +34,8 @@ jobs:
           projectPath: .
           tagName: radio-v__VERSION__
           releaseName: Repeater Nation Radio v__VERSION__
-          releaseDraft: true
-          prerelease: true
+          releaseDraft: false
+          prerelease: false
           includeDebug: false
 
       - name: Upload Windows installers
