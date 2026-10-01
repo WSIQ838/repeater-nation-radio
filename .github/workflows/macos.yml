@@ -1,0 +1,48 @@
+name: Build Repeater Nation Radio for macOS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-13
+            arch: x64
+          - runner: macos-14
+            arch: arm64
+
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate platform icons
+        run: npx tauri icon src-tauri/icons/icon.ico
+
+      - name: Build macOS app and DMG
+        run: npm run tauri build -- --bundles app,dmg
+
+      - name: Upload macOS installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: repeater-nation-radio-macos-${{ matrix.arch }}
+          path: |
+            src-tauri/target/release/bundle/dmg/*.dmg
+            src-tauri/target/release/bundle/macos/*.app
+          if-no-files-found: error
