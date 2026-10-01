@@ -2,9 +2,9 @@ import { createClient } from "@base44/sdk";
 import { config } from "./config";
 
 // Keep one Base44 client for the lifetime of the desktop app.
-// Base44's external SDK manages the authenticated token on the client.
-// Recreating the client after login was dropping the in-memory session,
-// which made the radio look signed in but caused subsequent calls to fail.
+// The desktop client must use the public Repeater Nation host for Base44 API
+// requests; the website can use same-origin routing, but the Tauri WebView
+// cannot. Keeping one client also preserves the in-memory authenticated token.
 let base44Client = null;
 
 function client() {
@@ -12,9 +12,9 @@ function client() {
     base44Client = createClient({
       appId: config.base44AppId,
       functionsVersion: config.base44FunctionsVersion || undefined,
-      serverUrl: "",
+      serverUrl: config.appUrl,
       requiresAuth: false,
-      appBaseUrl: config.base44AppBaseUrl || undefined,
+      appBaseUrl: config.base44AppBaseUrl || config.appUrl,
       options: {
         onError: (err) => {
           console.error("[Base44 SDK]", err?.status, err?.message, err);
