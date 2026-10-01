@@ -1,14 +1,35 @@
 import {useEffect,useMemo,useState} from "react";
 import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff} from "lucide-react";
 import {config} from "./lib/config";
-import {beginLogin,restoreSession,clearSession,listRadioChannels} from "./lib/auth";
+import {loginWithPassword,restoreSession,clearSession,listRadioChannels} from "./lib/auth";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 
 function Login(){
   const [checking,setChecking]=useState(true);
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
   useEffect(()=>{restoreSession().then(s=>{if(s)window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:s}));setChecking(false)}).catch(()=>setChecking(false))},[]);
-  return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Use your existing Repeater Nation account to access radio.</p><button className="primary large" onClick={beginLogin} disabled={checking}><LogIn size={18}/>{checking?" Checking session…":" Sign in with Repeater Nation"}</button><p className="fine">The desktop radio uses the same Repeater Nation account and callsign authorization as the website.</p></main>
+  const submit=async e=>{
+    e?.preventDefault();
+    if(checking||busy)return;
+    setError("");setBusy(true);
+    try{
+      const session=await loginWithPassword(email,password);
+      window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:session}));
+    }catch(err){
+      const message=err?.response?.data?.message||err?.response?.data?.error||err?.message||"Unable to sign in. Check your email and password.";
+      setError(String(message));
+    }finally{setBusy(false)}
+  };
+  return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Sign in with your existing Repeater Nation account.</p><form onSubmit={submit} className="login-form">
+    <label>Email<input type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" disabled={checking||busy} /></label>
+    <label>Password<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" disabled={checking||busy} /></label>
+    {error&&<div className="error">{error}</div>}
+    <button className="primary large" type="submit" disabled={checking||busy||!email||!password}><LogIn size={18}/>{checking?" Checking session…":busy?" Signing in…":" Sign in"}</button>
+  </form><p className="fine">The desktop radio uses the same Repeater Nation account and callsign authorization as the website. Your radio account is not separate from your Repeater Nation account.</p></main>
 }
 
 function MemberName({participant}){
