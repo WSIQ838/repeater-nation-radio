@@ -3,6 +3,7 @@ import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,Chevro
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
+import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 
@@ -66,7 +67,7 @@ function UpdateStatus(){
   const check=async()=>{
     setStatus("checking");
     try{
-      const r=await fetch("https://api.github.com/repos/jamessterlinglive/repeater-nation-radio/releases?per_page=20",{
+      const r=await tauriFetch("https://api.github.com/repos/jamessterlinglive/repeater-nation-radio/releases?per_page=20",{
         headers:{Accept:"application/vnd.github+json"}
       });
       if(!r.ok)throw new Error("Update service returned "+r.status);
@@ -85,7 +86,7 @@ function UpdateStatus(){
         return;
       }
       const latest=String(data.tag_name).replace(/^radio-v/i,"");
-      const current=String(import.meta.env.VITE_APP_VERSION||"0.1.2");
+      const current=String(import.meta.env.VITE_APP_VERSION||"0.1.3");
       const n=s=>s.split(".").map(x=>parseInt(x,10)||0);
       const a=n(current),b=n(latest);
       const newer=b[0]>a[0]||(b[0]===a[0]&&(b[1]>a[1]||(b[1]===a[1]&&b[2]>a[2])));
