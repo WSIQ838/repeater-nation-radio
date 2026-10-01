@@ -111,7 +111,9 @@ function MemberName({participant}){
 }
 
 function RadioApp({session,onSignOut}){
-  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState("");
+  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState("");
+  const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio"}])).values()),[channels]);
+  const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
   const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId));
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id);
 
@@ -121,7 +123,7 @@ function RadioApp({session,onSignOut}){
       if(!active)return;
       setChannels(list);
       const current=list.find(x=>x.id===channelId)||list.find(x=>x.id===config.defaultChannelId)||list[0];
-      if(current){setChannelId(current.id);setChannelName(current.name)}
+      if(current){setChannelId(current.id);setChannelName(current.name);setZoneId(current.zoneId||"")}
     }).catch(err=>console.error("[radio] channel load failed",err));
     return()=>{active=false};
   },[]);
@@ -129,10 +131,17 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
 
   const connected=state==="listening"||state==="transmitting";
+  const chooseZone=async e=>{
+    const next=e.target.value;if(next===zoneId)return;
+    setPtt(false);await disconnect();
+    const first=channels.find(c=>c.zoneId===next);
+    setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");
+  };
   const chooseChannel=async e=>{
     const next=e.target.value;if(next===channelId)return;
     setPtt(false);await disconnect();
     const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio");
+    if(c?.zoneId)setZoneId(c.zoneId);
   };
   const down=async()=>{if(!connected||ptt)return;setPtt(true);try{await requestPTT(micDeviceId)}catch{setPtt(false)}};
   const up=async()=>{if(!ptt)return;setPtt(false);await releasePTT()};
@@ -164,7 +173,7 @@ function RadioApp({session,onSignOut}){
               <div className="radio-screen"><div className="radio-zone">ZONE-{channels.find(x=>x.id===channelId)?.zoneName||"RADIO"}</div><div className="radio-channel">{channelName}<strong>CH {channels.find(x=>x.id===channelId)?.number||"--"}</strong></div><div className={ptt?"radio-status tx":connected?"radio-status":"radio-status off"}>{error|| (ptt?"TRANSMITTING":connected?"LISTENING":"DISCONNECTED")}</div>{(ptt||state==="receiving")&&radioSession?.callsign&&<div className="radio-callsign">{radioSession.callsign}</div>}</div>
               <div className="radio-face-controls"><button className="face-button" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}<span>{muted?"MUTE":"VOL"}</span></button><button className={ptt?"face-ptt pressed":"face-ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={26}/><span>PTT</span></button><button className="face-button" onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power/><span>{connected?"OFF":"ON"}</span></button></div>
             </div>
-            <div className="radio-utility"><label>CHANNEL<select value={channelId} onChange={chooseChannel}>{channels.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>
+            <div className="radio-utility"><label>ZONE<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>CHANNEL<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>
             <div className="device-row"><span>Microphone</span><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span><small>Space / Numpad 0 = PTT</small></div>
             {error&&<div className="error">{error}</div>}
           </section>
