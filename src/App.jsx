@@ -1,20 +1,19 @@
 import {useEffect,useMemo,useState} from "react";
-import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff} from "lucide-react";
+import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
 import {config} from "./lib/config";
-import {loginWithPassword,restoreSession,clearSession,listRadioChannels} from "./lib/auth";
+import {loginWithPassword,clearSession,listRadioChannels} from "./lib/auth";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 
 function Login(){
-  const [checking,setChecking]=useState(true);
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
-  useEffect(()=>{restoreSession().then(s=>{if(s)window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:s}));setChecking(false)}).catch(()=>setChecking(false))},[]);
+
   const submit=async e=>{
     e?.preventDefault();
-    if(checking||busy)return;
+    if(busy)return;
     setError("");setBusy(true);
     try{
       const session=await loginWithPassword(email,password);
@@ -24,12 +23,21 @@ function Login(){
       setError(String(message));
     }finally{setBusy(false)}
   };
-  return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Sign in with your existing Repeater Nation account.</p><form onSubmit={submit} className="login-form">
-    <label>Email<input type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" disabled={checking||busy} /></label>
-    <label>Password<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" disabled={checking||busy} /></label>
-    {error&&<div className="error">{error}</div>}
-    <button className="primary large" type="submit" disabled={checking||busy||!email||!password}><LogIn size={18}/>{checking?" Checking session…":busy?" Signing in…":" Sign in"}</button>
-  </form><p className="fine">The desktop radio uses the same Repeater Nation account and callsign authorization as the website. Your radio account is not separate from your Repeater Nation account.</p></main>
+
+  return <main className="login-shell">
+    <div className="brand-mark"><Radio size={30}/></div>
+    <h1>Repeater Nation Radio</h1>
+    <p className="muted">Sign in with your existing Repeater Nation account.</p>
+    <form onSubmit={submit} className="login-form">
+      <label>Email<input type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" disabled={busy}/></label>
+      <label>Password<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" disabled={busy}/></label>
+      {error&&<div className="error">{error}</div>}
+      <button className="primary large" type="submit" disabled={busy||!email.trim()||!password}>
+        <LogIn size={18}/>{busy?" Signing in…":" Sign in"}
+      </button>
+    </form>
+    <p className="fine">Use the same Repeater Nation account you use on the website. The desktop app will not silently reuse an old session at startup, so you always have a visible sign-in screen.</p>
+  </main>
 }
 
 function MemberName({participant}){
@@ -41,27 +49,73 @@ function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState("");
   const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId);
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id);
-  useEffect(()=>{listRadioChannels().then(list=>{setChannels(list);const current=list.find(x=>x.id===channelId)||list.find(x=>x.id===config.defaultChannelId);if(current){setChannelId(current.id);setChannelName(current.name)}}).catch(()=>{})},[]);
+
+  useEffect(()=>{
+    let active=true;
+    listRadioChannels().then(list=>{
+      if(!active)return;
+      setChannels(list);
+      const current=list.find(x=>x.id===channelId)||list.find(x=>x.id===config.defaultChannelId)||list[0];
+      if(current){setChannelId(current.id);setChannelName(current.name)}
+    }).catch(err=>console.error("[radio] channel load failed",err));
+    return()=>{active=false};
+  },[]);
+
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
+
   const connected=state==="listening"||state==="transmitting";
-  const chooseChannel=async e=>{const next=e.target.value;if(next===channelId)return;setPtt(false);await disconnect();const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio")};
-  const down=async()=>{if(!connected||ptt)return;setPtt(true);await requestPTT(micDeviceId)};
+  const chooseChannel=async e=>{
+    const next=e.target.value;if(next===channelId)return;
+    setPtt(false);await disconnect();
+    const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio");
+  };
+  const down=async()=>{if(!connected||ptt)return;setPtt(true);try{await requestPTT(micDeviceId)}catch{setPtt(false)}};
   const up=async()=>{if(!ptt)return;setPtt(false);await releasePTT()};
-  useEffect(()=>{const keyDown=e=>{if((e.code==="Space"||e.code==="Numpad0")&&connected&&!e.repeat){e.preventDefault();down()}};const keyUp=e=>{if(e.code==="Space"||e.code==="Numpad0"){e.preventDefault();up()}};window.addEventListener("keydown",keyDown);window.addEventListener("keyup",keyUp);return()=>{window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp)}},[connected,ptt,micDeviceId]);
-  const logout=async()=>{await disconnect();await endCall();clearSession();onSignOut()};
+
+  useEffect(()=>{
+    const keyDown=e=>{if((e.code==="Space"||e.code==="Numpad0")&&connected&&!e.repeat){e.preventDefault();down()}};
+    const keyUp=e=>{if(e.code==="Space"||e.code==="Numpad0"){e.preventDefault();up()}};
+    window.addEventListener("keydown",keyDown);window.addEventListener("keyup",keyUp);
+    return()=>{window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp)}
+  },[connected,ptt,micDeviceId]);
+
+  const logout=async()=>{await disconnect();await endCall();await clearSession();onSignOut()};
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
-  return <div className="app-shell"><header className="topbar"><div className="brand"><div className="brand-mark small"><Radio size={20}/></div><div><strong>Repeater Nation</strong><span>RADIO</span></div></div><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":"Ready"}<ChevronDown size={14}/></div></header>
-  <div className="body"><aside className="sidebar">{[["radio","Radio",Radio],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
-  <main className="content">{tab==="radio"&&<><section className="hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
-  <section className="radio-card"><div className="channel-head"><div><span className="label">CURRENT CHANNEL</span><select value={channelId} onChange={chooseChannel}>{channels.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></div><span className="status-pill">RADIO</span></div>
-  <div className="display"><span className="rx-dot"/><strong>{ptt?"TRANSMITTING":connected?"STANDBY":"OFFLINE"}</strong><small>{ptt?"TX ACTIVE":connected?"Ready for traffic":"Connect to monitor traffic"}</small></div>
-  <div className="controls"><button className="icon-btn" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}</button><button className={ptt?"ptt pressed":"ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={30}/><span>HOLD TO TALK</span></button><button className="icon-btn" onClick={up}>{ptt?<MicOff/>:<Mic/>}</button></div>
-  <div className="device-row"><span>Microphone</span><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span><small>Space / Numpad 0 = PTT</small></div>{error&&<div className="error">{error}</div>}</section>
-  <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div>{incoming?<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>:call?<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>:<div className="empty">Open Calls to see available members.</div>}</section></div></>}
-  {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
-  {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-  {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0</strong></div><button className="danger" onClick={logout}>Sign out</button></section>}</main></div></div>
+
+  return <div className="app-shell">
+    <header className="topbar">
+      <div className="brand"><div className="brand-mark small"><Radio size={20}/></div><div><strong>Repeater Nation</strong><span>RADIO</span></div></div>
+      <div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":"Ready"}<ChevronDown size={14}/></div>
+    </header>
+    <div className="body">
+      <aside className="sidebar">{[["radio","Radio",Radio],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
+      <main className="content">
+        {tab==="radio"&&<>
+          <section className="hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
+          <section className="radio-card">
+            <div className="channel-head"><div><span className="label">CURRENT CHANNEL</span><select value={channelId} onChange={chooseChannel}>{channels.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></div><span className="status-pill">RADIO</span></div>
+            <div className="display"><span className="rx-dot"/><strong>{ptt?"TRANSMITTING":connected?"STANDBY":"OFFLINE"}</strong><small>{ptt?"TX ACTIVE":connected?"Ready for traffic":"Connect to monitor traffic"}</small></div>
+            <div className="controls"><button className="icon-btn" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}</button><button className={ptt?"ptt pressed":"ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={30}/><span>HOLD TO TALK</span></button><button className="icon-btn" onClick={up}>{ptt?<MicOff/>:<Mic/>}</button></div>
+            <div className="device-row"><span>Microphone</span><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span><small>Space / Numpad 0 = PTT</small></div>
+            {error&&<div className="error">{error}</div>}
+          </section>
+          <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div>{incoming?<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>:call?<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>:<div className="empty">Open Calls to see available members.</div>}</section></div>
+        </>}
+        {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
+        {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0</strong></div><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+      </main>
+    </div>
+  </div>
 }
 
-export default function App(){const [session,setSession]=useState(null);useEffect(()=>{const handler=e=>setSession(e.detail);window.addEventListener("rn-radio-session",handler);restoreSession().then(s=>{if(s)setSession(s)}).catch(()=>{});return()=>window.removeEventListener("rn-radio-session",handler)},[]);return session?<RadioApp session={session} onSignOut={()=>setSession(null)}/>:<Login/>}
+export default function App(){
+  const [session,setSession]=useState(null);
+  useEffect(()=>{
+    const handler=e=>setSession(e.detail);
+    window.addEventListener("rn-radio-session",handler);
+    return()=>window.removeEventListener("rn-radio-session",handler);
+  },[]);
+  return session?<RadioApp session={session} onSignOut={()=>setSession(null)}/>:<Login/>;
+}
