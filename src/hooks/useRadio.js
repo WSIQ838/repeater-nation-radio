@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
 import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 
-export function useRadio(channelId) {
+export function useRadio(channelId, channelInfo=null) {
   const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0);
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
   const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);
@@ -33,7 +33,7 @@ export function useRadio(channelId) {
   const connect=useCallback(async()=>{
     setError("");setState("connecting");
     try {
-      const sessionData=await issueRadioSession(channelId);
+      const sessionData=await issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number);
       if(!sessionData?.ok) throw new Error(sessionData?.error||"Could not start radio session.");
       const room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{cleanupAudio();roomRef.current=null;setState("ready")}});
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
