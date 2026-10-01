@@ -24,13 +24,25 @@ function client() {
 }
 
 export async function restoreSession() {
-  const token=readAccessToken();
-  if(!token)return null;
-  try { const member=await client().auth.me(); return member?{token,member}:null; }
-  catch { localStorage.removeItem(TOKEN_KEY);accessToken=null;return null; }
+  try {
+    const member=await client().auth.me();
+    return member?{token:readAccessToken()||"",member}:null;
+  } catch {
+    localStorage.removeItem(TOKEN_KEY);
+    accessToken=null;
+    return null;
+  }
 }
 
-export function beginLogin(){client().auth.redirectToLogin(window.location.href);}
+export async function loginWithPassword(email,password){
+  const normalizedEmail=email.trim();
+  if(!normalizedEmail||!password) throw new Error("Enter your Repeater Nation email and password.");
+  const authClient=client();
+  await authClient.auth.loginViaEmailPassword(normalizedEmail,password);
+  const member=await authClient.auth.me();
+  if(!member) throw new Error("Sign in succeeded, but the account session could not be loaded.");
+  return {token:readAccessToken()||"",member};
+}
 
 async function invoke(name,payload){const result=await client().functions.invoke(name,payload);return result?.data||result;}
 
