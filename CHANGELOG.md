@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## Unreleased
+
+- Fixed the in-app update check never finding a release: the tag pattern had doubled backslashes, so no `radio-v*` tag ever matched.
+- The update check now reads the app version from `package.json` at build time instead of a hard-coded `0.1.3`.
+- Google sign-in now completes in an already-running app on Windows and Linux (single-instance plugin forwards the `repeaternation://` link and focuses the window).
+- Radio sessions now always send the selected zone and channel number, even when channels load after startup.
+- macOS Intel builds use the `macos-15-intel` runner; `macos-13` is retired.
+- Added a `.gitignore` for `node_modules`, `dist`, Tauri build output and CI-generated icons.
+
 ## 0.1.3
 
 - Fixed Google sign-in for the Windows desktop app by routing the OAuth callback through the installed app using the Repeater Nation deep-link protocol.

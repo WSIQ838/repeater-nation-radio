@@ -73,7 +73,7 @@ function UpdateStatus(){
       if(!r.ok)throw new Error("Update service returned "+r.status);
       const releases=await r.json();
       const candidates=(Array.isArray(releases)?releases:[])
-        .filter(x=>!x.draft&&/^radio-v\\d+\\.\\d+\\.\\d+$/i.test(String(x.tag_name||"")))
+        .filter(x=>!x.draft&&/^radio-v\d+\.\d+\.\d+$/i.test(String(x.tag_name||"")))
         .sort((a,b)=>{
           const parse=s=>String(s||"").replace(/^radio-v/i,"").split(".").map(x=>parseInt(x,10)||0);
           const av=parse(a.tag_name),bv=parse(b.tag_name);
@@ -86,7 +86,7 @@ function UpdateStatus(){
         return;
       }
       const latest=String(data.tag_name).replace(/^radio-v/i,"");
-      const current=String(import.meta.env.VITE_APP_VERSION||"0.1.3");
+      const current=String(__APP_VERSION__);
       const n=s=>s.split(".").map(x=>parseInt(x,10)||0);
       const a=n(current),b=n(latest);
       const newer=b[0]>a[0]||(b[0]===a[0]&&(b[1]>a[1]||(b[1]===a[1]&&b[2]>a[2])));
