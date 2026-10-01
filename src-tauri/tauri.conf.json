@@ -6,8 +6,8 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist"
+    "beforeBuildCommand": "",
+    "frontendDist": "https://repeaternation.com/?radio=desktop"
   },
   "app": {
     "windows": [
@@ -17,7 +17,8 @@
         "height": 760,
         "minWidth": 900,
         "minHeight": 620,
-        "resizable": true
+        "resizable": true,
+        "url": "https://repeaternation.com/?radio=desktop"
       }
     ],
     "security": {
@@ -27,14 +28,22 @@
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["repeaternation"]
+        "schemes": [
+          "repeaternation"
+        ]
       }
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
-    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "targets": [
+      "nsis",
+      "msi"
+    ],
+    "icon": [
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
     "windows": {
       "nsis": {
         "installMode": "currentUser",
