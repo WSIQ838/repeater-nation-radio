@@ -1,5 +1,11 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.3
+
+- Fixed desktop update checks by using Tauri’s native HTTP client for GitHub instead of the WebView network layer.
+- Added the GitHub API URL to the desktop HTTP permission scope.
+- Added dedicated Zone selection to the radio controls; channel choices now follow the selected zone.
+
 ## Next — Zone selection
 
 - Added a dedicated Zone selector to the desktop radio controls.
