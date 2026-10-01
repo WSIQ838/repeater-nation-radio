@@ -18,7 +18,7 @@ export default defineConfig({
     watch: {
       // Tauri's Rust build directory contains locked .exe files on Windows.
       // Vite should not watch that generated directory.
-      ignored: ["**/src-tauri/**"],
+      ignored: ["**/src-tauri/**", "**/src-tauri/target/**"],
     },
   },
 });
