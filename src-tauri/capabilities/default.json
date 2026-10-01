@@ -3,6 +3,7 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "deep-link:default",
     {
       "identifier": "http:default",
       "allow": [
@@ -14,7 +15,5 @@
   ],
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": [
-    "main"
-  ]
+  "windows": ["main"]
 }
