@@ -189,19 +189,48 @@ function RadioApp({session,onSignOut}){
 }
 
 export default function App(){
-  const websiteRadioUrl = config.appUrl.replace(/\\/$/, "") + "/?radio=desktop";
-  useEffect(() => {
-    // The website is the single source of truth for the radio interface.
-    // This keeps the desktop client on the same radio face, controls, layout
-    // settings, LiveKit behavior, and future UI changes as the web app.
-    if (window.location.href !== websiteRadioUrl) {
-      window.location.replace(websiteRadioUrl);
-    }
-  }, [websiteRadioUrl]);
+  const [session,setSession]=useState(null);
+  const [loading,setLoading]=useState(true);
 
-  return <main className="remote-radio-loading">
-    <div className="brand-mark"><Radio size={30}/></div>
-    <h1>Repeater Nation Radio</h1>
-    <p className="muted">Loading the Repeater Nation web radio…</p>
-  </main>;
+  useEffect(()=>{
+    let active=true;
+    const boot=async()=>{
+      try{
+        const restored=await restoreSessionFromOAuth();
+        if(active && restored){setSession(restored);setLoading(false);return;}
+      }catch{}
+      try{
+        const restored=await (await import("./lib/auth")).restoreSession();
+        if(active)setSession(restored);
+      }catch{}
+      if(active)setLoading(false);
+    };
+    boot();
+
+    const onSession=e=>{
+      if(e.detail)setSession(e.detail);
+    };
+    window.addEventListener("rn-radio-session",onSession);
+
+    let unlisten;
+    getCurrent().then(urls=>{
+      const url=Array.isArray(urls)?urls[0]:urls;
+      if(url) restoreSessionFromOAuth(String(url)).then(s=>{if(active&&s)setSession(s)});
+    }).catch(()=>{});
+
+    onOpenUrl(urls=>{
+      const url=Array.isArray(urls)?urls[0]:urls;
+      if(url) restoreSessionFromOAuth(String(url)).then(s=>{if(active&&s)setSession(s)});
+    }).then(fn=>{unlisten=fn}).catch(()=>{});
+
+    return()=>{
+      active=false;
+      window.removeEventListener("rn-radio-session",onSession);
+      if(typeof unlisten==="function")unlisten();
+    };
+  },[]);
+
+  if(loading)return <main className="login-shell boot-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Starting radio…</p></main>;
+  if(!session)return <Login/>;
+  return <RadioApp session={session} onSignOut={()=>setSession(null)}/>;
 }
