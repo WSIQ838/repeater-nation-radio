@@ -38,7 +38,7 @@ export function useRadio(channelId, channelInfo=null) {
       const room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{cleanupAudio();roomRef.current=null;setState("ready")}});
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
     } catch(err){setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
-  },[channelId,refresh,attachAudio,cleanupAudio]);
+  },[channelId,channelInfo?.zoneId,channelInfo?.number,refresh,attachAudio,cleanupAudio]);
 
   useEffect(()=>{for(const el of audioElsRef.current.values())el.volume=muted?0:1},[muted]);
 
