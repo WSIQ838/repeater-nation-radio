@@ -27,6 +27,24 @@ export async function restoreSession() {
   }
 }
 
+export async function loginWithGoogle() {
+  const authClient = client();
+  const callbackUrl = window.location.origin + window.location.pathname;
+  return authClient.auth.loginWithProvider("google", callbackUrl);
+}
+
+export async function restoreSessionFromOAuth() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("access_token");
+    if (token) client().auth.setToken(token);
+    const member = await client().auth.me();
+    return member ? { member } : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function loginWithPassword(email, password) {
   const normalizedEmail = email.trim();
   if (!normalizedEmail || !password) {
