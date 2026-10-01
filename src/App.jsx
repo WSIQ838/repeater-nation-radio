@@ -4,6 +4,7 @@ import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
 import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
+import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 
@@ -32,14 +33,13 @@ function Login(){
     setError("");setGoogleBusy(true);
     try{
       await loginWithGoogle();
-      const session=await restoreSessionFromOAuth();
-      if(!session)throw new Error("Google sign-in completed, but the Repeater Nation account session could not be loaded.");
-      window.history.replaceState({},document.title,window.location.pathname);
-      window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:session}));
+      // The OAuth result returns through the repeaternation:// deep link.
+      // The app-level deep-link listener below completes the sign-in.
     }catch(err){
-      const message=err?.response?.data?.message||err?.response?.data?.error||err?.message||"Unable to sign in with Google.";
+      const message=err?.response?.data?.message||err?.response?.data?.error||err?.message||"Unable to start Google sign-in.";
       setError(String(message));
-    }finally{setGoogleBusy(false)}
+      setGoogleBusy(false);
+    }
   };
 
   return <main className="login-shell">
@@ -194,13 +194,38 @@ export default function App(){
   useEffect(()=>{
     const handler=e=>setSession(e.detail);
     window.addEventListener("rn-radio-session",handler);
+    let unlisten=null;
+    const handleDeepLink=async(urls)=>{
+      for(const url of urls||[]){
+        if(!String(url).startsWith("repeaternation://oauth/")) continue;
+        const restored=await restoreSessionFromOAuth(url);
+        if(restored){
+          window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:restored}));
+          setSession(restored);
+          window.history.replaceState({},document.title,"/");
+        }
+      }
+      setAuthChecking(false);
+    };
     (async()=>{
       try{
-        const restored=await restoreSessionFromOAuth();
-        if(restored) setSession(restored);
-      }finally{setAuthChecking(false)}
+        const current=await getCurrent();
+        if(current?.length){
+          await handleDeepLink(current);
+        }else{
+          const restored=await restoreSessionFromOAuth();
+          if(restored) setSession(restored);
+          setAuthChecking(false);
+        }
+        unlisten=await onOpenUrl(handleDeepLink);
+      }catch{
+        setAuthChecking(false);
+      }
     })();
-    return()=>window.removeEventListener("rn-radio-session",handler);
+    return()=>{
+      window.removeEventListener("rn-radio-session",handler);
+      if(unlisten) unlisten();
+    };
   },[]);
   if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Checking your sign-in…</p></main>;
   return session?<RadioApp session={session} onSignOut={()=>setSession(null)}/>:<Login/>;
