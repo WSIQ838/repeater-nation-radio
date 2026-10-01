@@ -24,16 +24,17 @@
       "csp": null
     }
   },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["repeaternation"]
+      }
+    }
+  },
   "bundle": {
     "active": true,
-    "targets": [
-      "nsis",
-      "msi"
-    ],
-    "icon": [
-      "icons/icon.ico",
-      "icons/icon.png"
-    ],
+    "targets": ["nsis", "msi"],
+    "icon": ["icons/icon.ico", "icons/icon.png"],
     "windows": {
       "nsis": {
         "installMode": "currentUser",
