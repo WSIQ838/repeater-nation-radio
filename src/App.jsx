@@ -110,7 +110,7 @@ function MemberName({participant}){
 
 function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState("");
-  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId);
+  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId));
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id);
 
   useEffect(()=>{
@@ -156,10 +156,13 @@ function RadioApp({session,onSignOut}){
       <main className="content">
         {tab==="radio"&&<>
           <section className="hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
-          <section className="radio-card">
-            <div className="channel-head"><div><span className="label">CURRENT CHANNEL</span><select value={channelId} onChange={chooseChannel}>{channels.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></div><span className="status-pill">RADIO</span></div>
-            <div className="display"><span className="rx-dot"/><strong>{ptt?"TRANSMITTING":connected?"STANDBY":"OFFLINE"}</strong><small>{ptt?"TX ACTIVE":connected?"Ready for traffic":"Connect to monitor traffic"}</small></div>
-            <div className="controls"><button className="icon-btn" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}</button><button className={ptt?"ptt pressed":"ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={30}/><span>HOLD TO TALK</span></button><button className="icon-btn" onClick={up}>{ptt?<MicOff/>:<Mic/>}</button></div>
+          <section className="radio-card radio-face-card">
+            <div className="channel-head radio-face-head"><div><span className="label">REPEATER NATION RADIO</span><h3>{channelName}</h3></div><span className={connected?"status-pill":"status-pill offline-pill"}>{ptt?"TRANSMIT":connected?"LISTENING":"OFFLINE"}</span></div>
+            <div className="radio-face">
+              <div className="radio-screen"><div className="radio-zone">ZONE-{channels.find(x=>x.id===channelId)?.zoneName||"RADIO"}</div><div className="radio-channel">{channelName}<strong>CH {channels.find(x=>x.id===channelId)?.number||"--"}</strong></div><div className={ptt?"radio-status tx":connected?"radio-status":"radio-status off"}>{error|| (ptt?"TRANSMITTING":connected?"LISTENING":"DISCONNECTED")}</div>{(ptt||state==="receiving")&&radioSession?.callsign&&<div className="radio-callsign">{radioSession.callsign}</div>}</div>
+              <div className="radio-face-controls"><button className="face-button" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}<span>{muted?"MUTE":"VOL"}</span></button><button className={ptt?"face-ptt pressed":"face-ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={26}/><span>PTT</span></button><button className="face-button" onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power/><span>{connected?"OFF":"ON"}</span></button></div>
+            </div>
+            <div className="radio-utility"><label>CHANNEL<select value={channelId} onChange={chooseChannel}>{channels.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>
             <div className="device-row"><span>Microphone</span><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span><small>Space / Numpad 0 = PTT</small></div>
             {error&&<div className="error">{error}</div>}
           </section>
