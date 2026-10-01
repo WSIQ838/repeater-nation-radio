@@ -29,7 +29,7 @@ jobs:
         run: npm install
 
       - name: Generate platform icons
-        run: npx tauri icon src-tauri/icons/icon.ico
+        run: npx tauri icon src-tauri/icons/icon.svg
 
       - name: Build Linux packages
         run: npm run tauri build -- --bundles appimage,deb,rpm
