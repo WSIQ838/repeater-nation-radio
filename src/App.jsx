@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useState} from "react";
 import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
 import {config} from "./lib/config";
-import {loginWithPassword,clearSession,listRadioChannels} from "./lib/auth";
+import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
@@ -11,6 +11,7 @@ function Login(){
   const [password,setPassword]=useState("");
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
+  const [googleBusy,setGoogleBusy]=useState(false);
 
   const submit=async e=>{
     e?.preventDefault();
@@ -25,10 +26,27 @@ function Login(){
     }finally{setBusy(false)}
   };
 
+  const googleLogin=async()=>{
+    if(googleBusy||busy)return;
+    setError("");setGoogleBusy(true);
+    try{
+      await loginWithGoogle();
+      const session=await restoreSessionFromOAuth();
+      if(!session)throw new Error("Google sign-in completed, but the Repeater Nation account session could not be loaded.");
+      window.history.replaceState({},document.title,window.location.pathname);
+      window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:session}));
+    }catch(err){
+      const message=err?.response?.data?.message||err?.response?.data?.error||err?.message||"Unable to sign in with Google.";
+      setError(String(message));
+    }finally{setGoogleBusy(false)}
+  };
+
   return <main className="login-shell">
     <div className="brand-mark"><Radio size={30}/></div>
     <h1>Repeater Nation Radio</h1>
     <p className="muted">Sign in with your existing Repeater Nation account.</p>
+    <button type="button" className="google-login" onClick={googleLogin} disabled={busy||googleBusy}><span className="google-g">G</span>{googleBusy?"Signing in with Google…":"Continue with Google"}</button>
+    <div className="login-divider"><span>or</span></div>
     <form onSubmit={submit} className="login-form">
       <label>Email<input type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" disabled={busy}/></label>
       <label>Password<input type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" disabled={busy}/></label>
@@ -157,10 +175,18 @@ function RadioApp({session,onSignOut}){
 
 export default function App(){
   const [session,setSession]=useState(null);
+  const [authChecking,setAuthChecking]=useState(true);
   useEffect(()=>{
     const handler=e=>setSession(e.detail);
     window.addEventListener("rn-radio-session",handler);
+    (async()=>{
+      try{
+        const restored=await restoreSessionFromOAuth();
+        if(restored) setSession(restored);
+      }finally{setAuthChecking(false)}
+    })();
     return()=>window.removeEventListener("rn-radio-session",handler);
   },[]);
+  if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Checking your sign-in…</p></main>;
   return session?<RadioApp session={session} onSignOut={()=>setSession(null)}/>:<Login/>;
 }
