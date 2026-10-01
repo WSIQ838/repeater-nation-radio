@@ -2,6 +2,9 @@
 
 ## 0.1.3
 
+- Fixed Google sign-in for the Windows desktop app by routing the OAuth callback through the installed app using the Repeater Nation deep-link protocol.
+- Added desktop OAuth callback handling for both a newly launched app instance and an already-running app.
+
 - Fixed desktop update checks by using Tauri’s native HTTP client for GitHub instead of the WebView network layer.
 - Added the GitHub API URL to the desktop HTTP permission scope.
 - Added dedicated Zone selection to the radio controls; channel choices now follow the selected zone.
