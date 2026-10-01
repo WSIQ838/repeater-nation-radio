@@ -1,0 +1,45 @@
+name: Build Repeater Nation Radio for Linux
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y             libwebkit2gtk-4.1-dev             build-essential             curl             wget             file             libxdo-dev             libssl-dev             libayatana-appindicator3-dev             librsvg2-dev
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate platform icons
+        run: npx tauri icon src-tauri/icons/icon.ico
+
+      - name: Build Linux packages
+        run: npm run tauri build -- --bundles appimage,deb,rpm
+
+      - name: Upload Linux installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: repeater-nation-radio-linux
+          path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/rpm/*.rpm
+          if-no-files-found: error
