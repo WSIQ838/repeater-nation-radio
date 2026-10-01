@@ -44,26 +44,47 @@ function Login(){
 function UpdateStatus(){
   const [status,setStatus]=useState("checking");
   const [release,setRelease]=useState(null);
+
   const check=async()=>{
     setStatus("checking");
     try{
-      const r=await fetch("https://api.github.com/repos/jamessterlinglive/repeater-nation-radio/releases/latest",{headers:{Accept:"application/vnd.github+json"}});
+      const r=await fetch("https://api.github.com/repos/jamessterlinglive/repeater-nation-radio/releases?per_page=20",{
+        headers:{Accept:"application/vnd.github+json"}
+      });
       if(!r.ok)throw new Error("Update service returned "+r.status);
-      const data=await r.json();
-      const latest=String(data.tag_name||"").replace(/^radio-v/i,"").replace(/^v/i,"");
+      const releases=await r.json();
+      const candidates=(Array.isArray(releases)?releases:[])
+        .filter(x=>!x.draft&&/^radio-v\\d+\\.\\d+\\.\\d+$/i.test(String(x.tag_name||"")))
+        .sort((a,b)=>{
+          const parse=s=>String(s||"").replace(/^radio-v/i,"").split(".").map(x=>parseInt(x,10)||0);
+          const av=parse(a.tag_name),bv=parse(b.tag_name);
+          return bv[0]-av[0]||bv[1]-av[1]||bv[2]-av[2];
+        });
+      const data=candidates[0];
+      if(!data){
+        setStatus("current");
+        setRelease(null);
+        return;
+      }
+      const latest=String(data.tag_name).replace(/^radio-v/i,"");
       const current=String(import.meta.env.VITE_APP_VERSION||"0.1.2");
       const n=s=>s.split(".").map(x=>parseInt(x,10)||0);
-      const a=n(current),b=n(latest); const newer=b[0]>a[0]||(b[0]===a[0]&&(b[1]>a[1]||(b[1]===a[1]&&b[2]>a[2])));
-      if(newer){setRelease({...data,version:latest});setStatus("available")}else setStatus("current");
-    }catch(e){console.error("[update]",e);setStatus("error")}
+      const a=n(current),b=n(latest);
+      const newer=b[0]>a[0]||(b[0]===a[0]&&(b[1]>a[1]||(b[1]===a[1]&&b[2]>a[2])));
+      if(newer){setRelease({...data,version:latest});setStatus("available")}
+      else{setRelease(null);setStatus("current")}
+    }catch(e){
+      console.error("[update]",e);
+      setStatus("error");
+    }
   };
+
   useEffect(()=>{check()},[]);
   if(status==="checking")return <div className="update-row"><span>Updates</span><strong>Checking…</strong></div>;
   if(status==="available")return <div className="update-row"><span>Update available · v{release.version}</span><button className="primary" onClick={()=>{const asset=(release.assets||[]).find(a=>/\\.exe$/i.test(a.name));openUrl(asset?.browser_download_url||release.html_url)}}>Install update</button></div>;
   if(status==="error")return <div className="update-row"><span>Update check failed</span><button onClick={check}>Check again</button></div>;
   return <div className="update-row"><span>Updates</span><strong>You're up to date</strong><button onClick={check}>Check now</button></div>;
 }
-
 function MemberName({participant}){
   const info=useMemo(()=>{try{return participant?.metadata?JSON.parse(participant.metadata):{}}catch{return {}}},[participant]);
   return <div className="member"><strong>{info.callsign||info.displayName||participant?.name||participant?.identity||"Member"}</strong><span>{info.callsign&&info.displayName?info.displayName:"Connected"}</span></div>
