@@ -33,7 +33,7 @@ jobs:
         run: npm install
 
       - name: Generate platform icons
-        run: npx tauri icon src-tauri/icons/icon.ico
+        run: npx tauri icon src-tauri/icons/icon.svg
 
       - name: Build macOS app and DMG
         run: npm run tauri build -- --bundles app,dmg
