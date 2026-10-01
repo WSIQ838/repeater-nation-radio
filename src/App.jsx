@@ -2,6 +2,7 @@ import {useEffect,useMemo,useState} from "react";
 import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,clearSession,listRadioChannels} from "./lib/auth";
+import {openUrl} from "@tauri-apps/plugin-opener";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 
@@ -38,6 +39,29 @@ function Login(){
     </form>
     <p className="fine">Use the same Repeater Nation account you use on the website. The desktop app will not silently reuse an old session at startup, so you always have a visible sign-in screen.</p>
   </main>
+}
+
+function UpdateStatus(){
+  const [status,setStatus]=useState("checking");
+  const [release,setRelease]=useState(null);
+  const check=async()=>{
+    setStatus("checking");
+    try{
+      const r=await fetch("https://api.github.com/repos/jamessterlinglive/repeater-nation-radio/releases/latest",{headers:{Accept:"application/vnd.github+json"}});
+      if(!r.ok)throw new Error("Update service returned "+r.status);
+      const data=await r.json();
+      const latest=String(data.tag_name||"").replace(/^radio-v/i,"").replace(/^v/i,"");
+      const current=String(import.meta.env.VITE_APP_VERSION||"0.1.2");
+      const n=s=>s.split(".").map(x=>parseInt(x,10)||0);
+      const a=n(current),b=n(latest); const newer=b[0]>a[0]||(b[0]===a[0]&&(b[1]>a[1]||(b[1]===a[1]&&b[2]>a[2])));
+      if(newer){setRelease({...data,version:latest});setStatus("available")}else setStatus("current");
+    }catch(e){console.error("[update]",e);setStatus("error")}
+  };
+  useEffect(()=>{check()},[]);
+  if(status==="checking")return <div className="update-row"><span>Updates</span><strong>Checking…</strong></div>;
+  if(status==="available")return <div className="update-row"><span>Update available · v{release.version}</span><button className="primary" onClick={()=>{const asset=(release.assets||[]).find(a=>/\\.exe$/i.test(a.name));openUrl(asset?.browser_download_url||release.html_url)}}>Install update</button></div>;
+  if(status==="error")return <div className="update-row"><span>Update check failed</span><button onClick={check}>Check again</button></div>;
+  return <div className="update-row"><span>Updates</span><strong>You're up to date</strong><button onClick={check}>Check now</button></div>;
 }
 
 function MemberName({participant}){
@@ -104,7 +128,7 @@ function RadioApp({session,onSignOut}){
         </>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0</strong></div><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0</strong></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>
