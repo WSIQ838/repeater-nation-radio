@@ -1,5 +1,12 @@
 # Repeater Nation Radio — Changelog
 
+## Next — Google sign-in
+
+- Added a Continue with Google option to the desktop sign-in screen.
+- Added OAuth callback handling so Google sign-in can return to the desktop app with the authenticated Repeater Nation session.
+- Existing email/password sign-in remains available.
+
+
 ## 0.1.2 — Radio audio and PTT reliability fix
 
 - Fixed a PTT release race where releasing the mouse, touch control, Space, or Numpad 0 before the server finished granting transmit could leave the microphone keyed.
