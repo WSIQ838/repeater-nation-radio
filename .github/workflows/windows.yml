@@ -23,6 +23,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Generate platform icons
+        run: npx tauri icon src-tauri/icons/icon.svg
+
       - name: Build Windows installer
         uses: tauri-apps/tauri-action@v0
         env:
