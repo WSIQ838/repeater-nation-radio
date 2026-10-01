@@ -37,15 +37,20 @@ export async function restoreSession() {
 
 export async function loginWithGoogle() {
   const authClient = client();
-  const callbackUrl = window.location.origin + window.location.pathname;
-  return authClient.auth.loginWithProvider("google", callbackUrl);
+  // OAuth must return to the installed desktop app, not the Tauri WebView.
+  // The deep-link plugin routes this URL back into Repeater Nation Radio.
+  return authClient.auth.loginWithProvider("google", "repeaternation://oauth/callback");
 }
 
-export async function restoreSessionFromOAuth() {
+export async function restoreSessionFromOAuth(url = "") {
   try {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("access_token");
-    if (token) client().auth.setToken(token);
+    const raw = url || window.location.href;
+    const parsed = new URL(raw);
+    const query = new URLSearchParams(parsed.search);
+    const hash = new URLSearchParams(String(parsed.hash || "").replace(/^#/, ""));
+    const token = query.get("access_token") || hash.get("access_token");
+    if (!token) return null;
+    client().auth.setToken(token);
     const member = await client().auth.me();
     return member ? { member } : null;
   } catch {
