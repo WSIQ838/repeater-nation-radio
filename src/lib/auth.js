@@ -67,9 +67,11 @@ async function invoke(name, payload) {
   return result?.data || result;
 }
 
-export const issueRadioSession = (channelId) =>
+export const issueRadioSession = (channelId, zoneId="", channelNumber=null) =>
   invoke("issue-radio-session", {
     channel_id: channelId,
+    zone_id: zoneId || "",
+    channel_number: channelNumber ?? null,
     session_type: "radio",
   });
 
