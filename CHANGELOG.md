@@ -7,6 +7,7 @@
 - Scrolling a control-head knob now turns it one channel or zone per notch without also scrolling the page.
 - Touch PTT on the palm mic no longer re-keys from the synthetic mouse click that follows a tap.
 - Choosing "All Zones" keeps the current channel instead of clearing it.
+- `npx tauri dev` no longer crashes on Windows with `EBUSY ... src-tauri\target\debug\deps\*.dll`: Vite's dev server now ignores `src-tauri/` instead of watching Cargo's build output.
 - The in-app update check now reads releases from `WSIQ838/repeater-nation-radio`, where the Windows build publishes them; it was pointed at `jamessterlinglive/repeater-nation-radio`.
 - "Install update" downloads the `.exe` only on Windows; macOS and Linux open the release page instead of a Windows installer.
 - Muting now also silences members whose audio starts after you mute (new tracks used a stale mute value).
