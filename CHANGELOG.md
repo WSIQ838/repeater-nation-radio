@@ -1,7 +1,20 @@
 # Repeater Nation Radio — Changelog
 
-## Unreleased
+## 0.1.13
 
+- Version set to 0.1.13 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`, past the existing `radio-v0.1.12` tag (main had been reset to a 0.1.3 backup).
+- Redesigned the radio tab as an APX O7-style control head with a palm-mic PTT.
+- Scrolling a control-head knob now turns it one channel or zone per notch without also scrolling the page.
+- Touch PTT on the palm mic no longer re-keys from the synthetic mouse click that follows a tap.
+- Choosing "All Zones" keeps the current channel instead of clearing it.
+- Restored the sign-in fixes from 0.1.4 to 0.1.12 that were lost when main was reset to the 0.1.3 backup. The Base44 client again calls `https://repeaternation.com` instead of the WebView's own origin, which made email and Google sign-in fail. Google sign-in opens Base44's Google login in the system browser and returns through the website's `/oauth/callback` page to the `repeaternation://` link (the v0.1.12 `?rn_desktop=1` bridge does not exist on the website). Channels in the "Admin Testing" zone are hidden again.
+- The sign-in screen now shows each step of the Google hand-off. It also shows why sign-in failed: a link with no token, an account lookup error, or an unexpected link.
+- The app now listens for the `repeaternation://` sign-in link before checking the launch link. Before, a failed launch-link check left it unable to receive the sign-in link.
+- `npx tauri dev` no longer crashes on Windows with `EBUSY ... src-tauri\target\debug\deps\*.dll`: Vite's dev server now ignores `src-tauri/` instead of watching Cargo's build output.
+- The in-app update check now reads releases from `WSIQ838/repeater-nation-radio`, where the Windows build publishes them; it was pointed at `jamessterlinglive/repeater-nation-radio`.
+- "Install update" downloads the `.exe` only on Windows; macOS and Linux open the release page instead of a Windows installer.
+- Muting now also silences members whose audio starts after you mute (new tracks used a stale mute value).
+- If the voice server drops the connection, the radio stops renewing the PTT floor and clears the member list instead of looking connected.
 - Fixed the in-app update check never finding a release: the tag pattern had doubled backslashes, so no `radio-v*` tag ever matched.
 - The update check now reads the app version from `package.json` at build time instead of a hard-coded `0.1.3`.
 - Google sign-in now completes in an already-running app on Windows and Linux (single-instance plugin forwards the `repeaternation://` link and focuses the window).

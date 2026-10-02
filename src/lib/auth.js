@@ -1,10 +1,11 @@
 import { createClient } from "@base44/sdk";
 import { config } from "./config";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 // Keep one Base44 client for the lifetime of the desktop app.
-// Base44's external SDK manages the authenticated token on the client.
-// Recreating the client after login was dropping the in-memory session,
-// which made the radio look signed in but caused subsequent calls to fail.
+// The desktop client must use the public Repeater Nation host for Base44 API
+// requests; the website can use same-origin routing, but the Tauri WebView
+// cannot. Keeping one client also preserves the in-memory authenticated token.
 let base44Client = null;
 
 function client() {
@@ -12,9 +13,9 @@ function client() {
     base44Client = createClient({
       appId: config.base44AppId,
       functionsVersion: config.base44FunctionsVersion || undefined,
-      serverUrl: "",
+      serverUrl: config.appUrl,
       requiresAuth: false,
-      appBaseUrl: config.base44AppBaseUrl || undefined,
+      appBaseUrl: config.base44AppBaseUrl || config.appUrl,
       options: {
         onError: (err) => {
           console.error("[Base44 SDK]", err?.status, err?.message, err);
@@ -36,24 +37,47 @@ export async function restoreSession() {
 }
 
 export async function loginWithGoogle() {
-  const authClient = client();
-  // OAuth must return to the installed desktop app, not the Tauri WebView.
-  // The deep-link plugin routes this URL back into Repeater Nation Radio.
-  return authClient.auth.loginWithProvider("google", "repeaternation://oauth/callback");
+  // Google refuses sign-in inside an embedded WebView, so start Base44's Google
+  // login in the system browser. Base44 returns the token to the website's
+  // /oauth/callback page, which hands it to this app via repeaternation://.
+  const base = config.base44AppBaseUrl || config.appUrl;
+  const fromUrl = `${config.appUrl}/oauth/callback`;
+  const loginUrl = `${base}/api/apps/auth/login?app_id=${encodeURIComponent(config.base44AppId)}&from_url=${encodeURIComponent(fromUrl)}`;
+  await openUrl(loginUrl);
+  reportAuthStatus("Google sign-in opened in your browser. Finish there, then allow it to open Repeater Nation Radio.");
+}
+
+// Sign-in progress for the login screen, so a failed browser hand-off says where it stopped.
+export function reportAuthStatus(message, error = false) {
+  console[error ? "error" : "info"]("[auth]", message);
+  window.dispatchEvent(new CustomEvent("rn-auth-status", { detail: { message, error } }));
 }
 
 export async function restoreSessionFromOAuth(url = "") {
+  const fromLink = Boolean(url);
   try {
     const raw = url || window.location.href;
     const parsed = new URL(raw);
     const query = new URLSearchParams(parsed.search);
     const hash = new URLSearchParams(String(parsed.hash || "").replace(/^#/, ""));
     const token = query.get("access_token") || hash.get("access_token");
-    if (!token) return null;
+    if (!token) {
+      if (fromLink) {
+        const keys = [...query.keys(), ...hash.keys()].join(", ") || "none";
+        reportAuthStatus(`The sign-in link reached the app without a token (link fields: ${keys}).`, true);
+      }
+      return null;
+    }
+    if (fromLink) reportAuthStatus("Sign-in link received. Loading your account…");
     client().auth.setToken(token);
     const member = await client().auth.me();
+    if (!member && fromLink) reportAuthStatus("The token was accepted but no account came back.", true);
     return member ? { member } : null;
-  } catch {
+  } catch (err) {
+    if (fromLink) {
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || err?.message || String(err);
+      reportAuthStatus(`Could not finish sign-in: ${detail}`, true);
+    }
     return null;
   }
 }
@@ -118,7 +142,13 @@ export async function listRadioChannels() {
 
   const zoneMap = new Map((zones || []).map((z) => [z.id, z.name]));
 
-  return (channels || []).map((c) => ({
+  const allowedChannels = (channels || []).filter((c) => {
+    const zoneName = zoneMap.get(c.zone_id) || "Radio";
+    return !/^admin\s*testing$/i.test(String(zoneName)) &&
+      !/^admin\s*testing$/i.test(String(c.name || ""));
+  });
+
+  return allowedChannels.map((c) => ({
     id: c.id,
     name: c.name,
     number: c.number,

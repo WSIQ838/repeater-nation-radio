@@ -121,7 +121,7 @@
 .apx-mic-led{position:absolute;top:12px;right:22px;width:8px;height:8px;border-radius:50%;background:#3b3e43}
 .apx-mic-led.on{background:#ff3b30;box-shadow:0 0 10px #ff3b30}
 .apx-grille{width:72%;height:64px;border-radius:14px;background:radial-gradient(circle,#0b0c0d 1.6px,transparent 2px) 0 0/8px 8px,#232529;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
-.apx-ptt{width:100%;height:86px;border:0;border-radius:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#111;background:linear-gradient(180deg,#f7a046,#e07b18);box-shadow:0 4px 0 #8a4a0b,0 6px 12px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);font-weight:900;letter-spacing:2px}
+.apx-ptt{touch-action:none;width:100%;height:86px;border:0;border-radius:18px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#111;background:linear-gradient(180deg,#f7a046,#e07b18);box-shadow:0 4px 0 #8a4a0b,0 6px 12px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4);font-weight:900;letter-spacing:2px}
 .apx-ptt span{font-size:15px}
 .apx-ptt.pressed{transform:translateY(3px);background:linear-gradient(180deg,#e23b2f,#b8241b);color:#fff;box-shadow:0 1px 0 #6d140f,inset 0 2px 6px rgba(0,0,0,.4)}
 .apx-ptt:disabled{opacity:.4;cursor:not-allowed}
