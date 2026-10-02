@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from "react";
-import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw,Signal,LockKeyhole,MapPin,BatteryMedium,ScanLine,ChevronUp,ChevronDown as DownIcon,Menu} from "lucide-react";
+import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
@@ -112,8 +112,8 @@ function MemberName({participant}){
 }
 
 function RadioApp({session,onSignOut}){
-  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(""),[menuOpen,setMenuOpen]=useState(false),[scanning,setScanning]=useState(false);
-  const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId&& !/^admin\s*testing$/i.test(String(c.zoneName||""))).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio"}])).values()),[channels]);
+  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState("");
+  const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio"}])).values()),[channels]);
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
   const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId));
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id);
@@ -138,24 +138,6 @@ function RadioApp({session,onSignOut}){
     const first=channels.find(c=>c.zoneId===next);
     setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");
   };
-  const stepChannel=async direction=>{
-    if(!channels.length)return;
-    const list=visibleChannels.length?visibleChannels:channels;
-    const index=Math.max(0,list.findIndex(c=>c.id===channelId));
-    const next=list[(index+direction+list.length)%list.length];
-    if(next) await chooseChannel({target:{value:next.id}});
-  };
-  const toggleScan=()=>{
-    if(scanning){setScanning(false);return}
-    if(!connected||visibleChannels.length<2)return;
-    setScanning(true);
-  };
-  useEffect(()=>{
-    if(!scanning)return;
-    const timer=setInterval(()=>stepChannel(1),1400);
-    return()=>clearInterval(timer);
-  },[scanning,channelId,visibleChannels.length,connected]);
-
   const chooseChannel=async e=>{
     const next=e.target.value;if(next===channelId)return;
     setPtt(false);await disconnect();
@@ -188,19 +170,11 @@ function RadioApp({session,onSignOut}){
           <section className="hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
           <section className="radio-card radio-face-card">
             <div className="channel-head radio-face-head"><div><span className="label">REPEATER NATION RADIO</span><h3>{channelName}</h3></div><span className={connected?"status-pill":"status-pill offline-pill"}>{ptt?"TRANSMIT":connected?"LISTENING":"OFFLINE"}</span></div>
-            <div className="radio-control-head">
-              <div className="radio-top-knobs">
-                <button className="top-knob" onClick={()=>setMuted(!muted)} aria-label="Volume"><span className="knob-cap"></span><small>VOL</small></button>
-                <button className="top-knob" onClick={toggleScan} aria-label="Channel scan"><span className="knob-cap"></span><small>{scanning?"STOP":"SCAN"}</small></button>
-              </div>
-              <div className="speaker-grille" aria-hidden="true">{Array.from({length:42},(_,i)=><i key={i}/>)}</div>
-              <div className="radio-leds"><i className={connected?"led on":"led"}/><span>{scanning?"SCANNING":connected?"READY":"OFF"}</span></div>
-            </div>
             <div className="radio-face">
-              <div className="radio-screen"><div className="lcd-icons"><Signal size={13}/><LockKeyhole size={12}/><MapPin size={12}/><BatteryMedium size={14}/><span className="lcd-bars"><i/><i/><i/><i/></span></div><div className="radio-zone">ZONE {channels.find(x=>x.id===channelId)?.zoneName?.replace(/^ZONE\s*/i,"")||"1"}</div><div className="radio-channel-name">{channelName}</div><div className="radio-channel-number">CH {channels.find(x=>x.id===channelId)?.number||"--"}</div><div className={ptt?"radio-status tx":connected?"radio-status":"radio-status off"}>{ptt?"TX":connected?"RX":"—"}<span className="activity-meter"><i/><i/><i/><i/><i/><i/></span></div>{ptt&&radioSession?.callsign&&<div className="radio-callsign">{radioSession.callsign}</div>}</div>
-              <div className="radio-face-controls"><div className="radio-side-label">REPEATER NATION</div><div className="radio-key-row"><button className="face-key" onClick={()=>stepChannel(-1)}><ChevronUp/><span>CH UP</span></button><button className="face-key" onClick={()=>stepChannel(1)}><DownIcon/><span>CH DN</span></button><button className={menuOpen?"face-key active":"face-key"} onClick={()=>setMenuOpen(v=>!v)}><Menu/><span>MENU</span></button><button className="face-key" onClick={connected?disconnect:connect}><Power/><span>{connected?"OFF":"ON"}</span></button></div><button className={ptt?"face-ptt pressed":"face-ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic/><span>PTT</span></button></div>
+              <div className="radio-screen"><div className="radio-zone">ZONE-{channels.find(x=>x.id===channelId)?.zoneName||"RADIO"}</div><div className="radio-channel">{channelName}<strong>CH {channels.find(x=>x.id===channelId)?.number||"--"}</strong></div><div className={ptt?"radio-status tx":connected?"radio-status":"radio-status off"}>{error|| (ptt?"TRANSMITTING":connected?"LISTENING":"DISCONNECTED")}</div>{(ptt||state==="receiving")&&radioSession?.callsign&&<div className="radio-callsign">{radioSession.callsign}</div>}</div>
+              <div className="radio-face-controls"><button className="face-button" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}<span>{muted?"MUTE":"VOL"}</span></button><button className={ptt?"face-ptt pressed":"face-ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={26}/><span>PTT</span></button><button className="face-button" onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power/><span>{connected?"OFF":"ON"}</span></button></div>
             </div>
-            {menuOpen&&<div className="radio-utility menu-panel"><label>ZONE<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>CHANNEL<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>}
+            <div className="radio-utility"><label>ZONE<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>CHANNEL<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>
             <div className="device-row"><span>Microphone</span><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span><small>Space / Numpad 0 = PTT</small></div>
             {error&&<div className="error">{error}</div>}
           </section>
@@ -216,43 +190,43 @@ function RadioApp({session,onSignOut}){
 
 export default function App(){
   const [session,setSession]=useState(null);
-  const [loading,setLoading]=useState(true);
-
+  const [authChecking,setAuthChecking]=useState(true);
   useEffect(()=>{
-    let active=true;
-    const boot=async()=>{
+    const handler=e=>setSession(e.detail);
+    window.addEventListener("rn-radio-session",handler);
+    let unlisten=null;
+    const handleDeepLink=async(urls)=>{
+      for(const url of urls||[]){
+        if(!String(url).startsWith("repeaternation://oauth/")) continue;
+        const restored=await restoreSessionFromOAuth(url);
+        if(restored){
+          window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:restored}));
+          setSession(restored);
+          window.history.replaceState({},document.title,"/");
+        }
+      }
+      setAuthChecking(false);
+    };
+    (async()=>{
       try{
-        const restored=await restoreSessionFromOAuth();
-        if(active && restored){setSession(restored);setLoading(false);return;}
-      }catch{}
-      if(active)setLoading(false);
-    };
-    boot();
-
-    const onSession=e=>{
-      if(e.detail)setSession(e.detail);
-    };
-    window.addEventListener("rn-radio-session",onSession);
-
-    let unlisten;
-    getCurrent().then(urls=>{
-      const url=Array.isArray(urls)?urls[0]:urls;
-      if(url) restoreSessionFromOAuth(String(url)).then(s=>{if(active&&s)setSession(s)});
-    }).catch(()=>{});
-
-    onOpenUrl(urls=>{
-      const url=Array.isArray(urls)?urls[0]:urls;
-      if(url) restoreSessionFromOAuth(String(url)).then(s=>{if(active&&s)setSession(s)});
-    }).then(fn=>{unlisten=fn}).catch(()=>{});
-
+        const current=await getCurrent();
+        if(current?.length){
+          await handleDeepLink(current);
+        }else{
+          const restored=await restoreSessionFromOAuth();
+          if(restored) setSession(restored);
+          setAuthChecking(false);
+        }
+        unlisten=await onOpenUrl(handleDeepLink);
+      }catch{
+        setAuthChecking(false);
+      }
+    })();
     return()=>{
-      active=false;
-      window.removeEventListener("rn-radio-session",onSession);
-      if(typeof unlisten==="function")unlisten();
+      window.removeEventListener("rn-radio-session",handler);
+      if(unlisten) unlisten();
     };
   },[]);
-
-  if(loading)return <main className="login-shell boot-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Starting radio…</p></main>;
-  if(!session)return <Login/>;
-  return <RadioApp session={session} onSignOut={()=>setSession(null)}/>;
+  if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Checking your sign-in…</p></main>;
+  return session?<RadioApp session={session} onSignOut={()=>setSession(null)}/>:<Login/>;
 }
