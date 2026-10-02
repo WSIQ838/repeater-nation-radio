@@ -1,5 +1,12 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.10
+
+**Fresh checkouts run on every platform.**
+
+- `src-tauri/icons/icon.png` is now committed (512×512, made from `icon.svg`). Without it, `npx tauri dev` from a fresh clone failed to compile on Linux and Mac with "failed to open icon icons/icon.png". Windows was not affected, since it takes the window icon from `icon.ico`.
+- Version set to 0.2.10 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.9
 
 **Two more radios** from Sean's pictures.
