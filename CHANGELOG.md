@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.9
+
+**Two more radios** from Sean's pictures.
+
+- **Classic portable**: a small gray-green display with three softkeys run by the three dot buttons under it, a home key, a phone key (answers an incoming call, otherwise opens Contacts), nav pad and keypad.
+- **Rugged portable (green)**: a high-visibility green body with two softkeys on the dot buttons, a back key, a menu key that pages through the softkey menu, nav pad and keypad.
+- Seven radios in the picker now. All of them run the same radio and mapped buttons.
+- Version set to 0.2.9 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.8
 
 **Radios from Sean's re-uploaded pictures.**

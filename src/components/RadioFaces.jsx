@@ -12,6 +12,8 @@ export const FACES=[
   {id:"mobile-head",label:"Compact mobile head",note:"Four softkeys, round knob, keypad, 1–3 buttons"},
   {id:"keypad-portable",label:"Keypad portable",note:"Zone/channel and message cards, P1/P2, keypad"},
   {id:"smart-portable-p",label:"Touchscreen portable",note:"Touch screen plus P1–P6 buttons"},
+  {id:"classic-portable",label:"Classic portable",note:"Small display, three softkeys, home and phone keys"},
+  {id:"rugged-portable",label:"Rugged portable (green)",note:"High-visibility body, two softkeys, menu and back"},
 ];
 export const DEFAULT_FACE="control-head";
 const FACE_KEY="rn-face",RENAMED={handheld:"keypad-portable",mobile:"mobile-head","smart-portable":"smart-portable-p"};
@@ -143,6 +145,38 @@ function KeypadPortable(p){
   </div>;
 }
 
+// Classic keypad portables: a small display with softkeys driven by the dot buttons
+// under it. "classic" has three softkeys plus home and phone keys; "rugged" has two
+// softkeys plus back and menu keys and a high-visibility body.
+function ClassicPortable({variant="classic",...p}){
+  const f=useFace(p);
+  const n=variant==="rugged"?2:3;
+  const [row,next]=usePaged(f,n);
+  const phone=()=>{if(p.incoming)p.onAnswer?.();else p.onTab("calls")};
+  return <div className={"pt cl "+variant} style={{"--apx-bright":0.55+f.brightness*0.15}}>
+    <TopKnobs p={p} f={f} antenna={variant==="rugged"?"right":"left"}/>
+    <div className="pt-body"><SidePtt p={p}/>
+      <div className="pt-face">
+        {variant==="rugged"?<div className="cl-badge">REPEATER NATION</div>:<div className="pt-logo"><Radio size={14}/></div>}
+        {variant==="rugged"&&<div className="cl-vents"><i/><i/><i/></div>}
+        <FaceDisplay p={p} f={f} className={"apx-display cl-display "+variant} menus={false} softRow={row}/>
+        <div className={"cl-dots n"+n}>{row.map((k,i)=><button type="button" key={i} className={"pt-key dot "+(k.tone||"")} onClick={()=>press(k)} disabled={!k.act||k.disabled} aria-label={k.label||"Unused softkey"}>{"•".repeat(i+1)}</button>)}</div>
+        <div className="cl-navrow">
+          {variant==="rugged"
+            ?<button type="button" className="pt-key" onClick={()=>{f.setView("home");f.setEntry("")}} title="Back"><Undo2 size={13}/></button>
+            :<button type="button" className="pt-key home" onClick={f.goHome} title="Home"><Home size={13}/></button>}
+          <Nav f={f}/>
+          {variant==="rugged"
+            ?<button type="button" className="pt-key" onClick={next} title="Menu (more softkeys)"><ListChecks size={13}/></button>
+            :<button type="button" className="pt-key phone" onClick={phone} title={p.incoming?"Answer call":"Contacts / calls"}><Phone size={13}/></button>}
+        </div>
+        <Keypad f={f} className="kp-keypad cl-keypad"/>
+        {variant==="classic"&&<div className="cl-contacts"><i/><i/><i/><i/></div>}
+      </div>
+    </div>
+  </div>;
+}
+
 // The keypad portable's home screen: status icons, date and time, a zone/channel card
 // and a message card (activity, a call, or the last transmission heard).
 function KeypadScreen({p,f,row}){
@@ -241,5 +275,7 @@ export function RadioFace({face=DEFAULT_FACE,...p}){
   if(face==="mobile-head")return <MobileHead {...p}/>;
   if(face==="keypad-portable")return <KeypadPortable {...p}/>;
   if(face==="smart-portable-p")return <SmartPortable pkeys {...p}/>;
+  if(face==="classic-portable")return <ClassicPortable {...p}/>;
+  if(face==="rugged-portable")return <ClassicPortable variant="rugged" {...p}/>;
   return <ControlHead {...p}/>;
 }
