@@ -1,7 +1,16 @@
-import { Room, RoomEvent, Track, ConnectionState, createLocalAudioTrack } from "livekit-client";
 import { config } from "./config";
 
+// livekit-client is most of the bundle; load it on first use (or prewarm) instead of at startup.
+let livekitModule=null;
+const livekit=()=>livekitModule||(livekitModule=import("livekit-client").catch(err=>{livekitModule=null;throw err}));
+
+// Load the voice library and open DNS/TLS to the voice server ahead of the first connect.
+export async function prewarmRadio(livekitUrl=config.livekitUrl){
+  try{const {Room}=await livekit();await new Room().prepareConnection(livekitUrl)}catch{}
+}
+
 export async function connectRadio(token, livekitUrl=config.livekitUrl, callbacks={}) {
+  const { Room, RoomEvent } = await livekit();
   if(!token) throw new Error("A LiveKit token is required.");
   const room=new Room({adaptiveStream:true,dynacast:true});
   room.on(RoomEvent.ParticipantConnected,p=>callbacks.onParticipantConnected?.(p));
@@ -18,6 +27,7 @@ export async function listAudioDevices(){
 }
 
 export async function publishMicrophone(room,deviceId) {
+  const { Track, ConnectionState, createLocalAudioTrack } = await livekit();
   if(!room || room.state!==ConnectionState.Connected) throw new Error("Radio connection is not active.");
   const track=await createLocalAudioTrack(deviceId?{deviceId:{exact:deviceId}}:undefined);
   await room.localParticipant.publishTrack(track,{name:"radio-microphone",source:Track.Source.Microphone,dtx:true,red:true});

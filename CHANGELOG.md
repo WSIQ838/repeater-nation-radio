@@ -2,8 +2,14 @@
 
 ## 0.1.14
 
-- Selecting a zone or channel now tunes the radio and connects to it automatically. This covers the zone and channel knobs, the nav pad, keypad entry, P1–P5, the softkeys and the Programming dropdowns. The radio waits 600 ms after the last change, so spinning a knob joins only the channel it stops on. Mute stays as it was. Choosing "All Zones" keeps the current channel and does not reconnect.
+- Selecting a zone or channel now tunes the radio and connects to it automatically. This covers the zone and channel knobs, the nav pad, keypad entry, P1–P5, the softkeys and the Programming dropdowns. The radio waits 350 ms after the last change, so spinning a knob joins only the channel it stops on. Mute stays as it was. Choosing "All Zones" keeps the current channel and does not reconnect.
 - A connect that finishes after you have already switched channels is dropped instead of taking over. A stale room's disconnect event no longer clears the active room.
+- Faster startup: the voice library (`livekit-client`) loads after sign-in instead of at launch. Startup JavaScript went from 965 KB to 406 KB. The login screen appeared in 405 ms instead of 505 ms at 4× CPU throttling (median of 6 runs).
+- The connection to the voice server (DNS and TLS) is set up while the radio screen opens, so the first connect is quicker.
+- Channel switches no longer make a "release PTT" server call unless you actually asked for the floor. That removes one round trip from every zone or channel change.
+- Channels and zones now load in parallel instead of one after the other.
+- Removed the unused `@livekit/components-react` and `@livekit/components-styles` packages. The app's CSS went from 39 KB to 19.5 KB, and the radio face looks the same.
+- Release builds now use Tauri's size-optimized profile: LTO, a single codegen unit, `opt-level = "s"`, stripped symbols and abort on panic. On Linux the app binary went from 25.2 MB to 9.2 MB and the `.deb` from 7.2 MB to 3.7 MB.
 - Version set to 0.1.14 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
 ## 0.1.13

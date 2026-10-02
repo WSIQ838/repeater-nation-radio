@@ -7,10 +7,11 @@ import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
+import {prewarmRadio} from "./lib/livekit";
 import {ControlHead,PalmMic} from "./components/ControlHead";
 import "./apx.css";
 
-const AUTO_CONNECT_SETTLE_MS=600;
+const AUTO_CONNECT_SETTLE_MS=350;
 
 function Login(){
   const [email,setEmail]=useState("");
@@ -129,6 +130,7 @@ function RadioApp({session,onSignOut}){
   const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId));
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id);
 
+  useEffect(()=>{prewarmRadio()},[]);
   useEffect(()=>{
     let active=true;
     listRadioChannels().then(list=>{

@@ -19,8 +19,12 @@ export function useRadio(channelId, channelInfo=null) {
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
   useEffect(()=>{refreshDevices()},[refreshDevices]);
 
+  // Set once a floor request goes out, so releasing (and every channel switch) only
+  // calls the server when there is actually something to release.
+  const floorAskedRef=useRef(false);
   const releasePTT=useCallback(async()=>{
     pttRequestRef.current++;
+    const asked=floorAskedRef.current;floorAskedRef.current=false;
     floorRef.current=false;
     if(renewRef.current)clearInterval(renewRef.current);
     renewRef.current=null;
@@ -28,7 +32,7 @@ export function useRadio(channelId, channelInfo=null) {
     const mic=micRef.current;
     micRef.current=null;
     if(mic)await unpublishMicrophone(room,mic);
-    try{await issueRadioPTT(channelId,"release")}catch{}
+    if(asked){try{await issueRadioPTT(channelId,"release")}catch{}}
     if(roomRef.current)setState("listening");
   },[channelId]);
 
@@ -66,6 +70,7 @@ export function useRadio(channelId, channelInfo=null) {
     if(!roomRef.current||!session){setError("Connect to the radio first.");return}
     if(!session.canTransmit){setError("You are not authorized to transmit on this channel.");return}
     try {
+      floorAskedRef.current=true;
       const result=await issueRadioPTT(channelId,"request");
       if(requestId!==pttRequestRef.current)return;
       if(!result?.ok) throw new Error(result?.error||"Could not reach the radio server.");

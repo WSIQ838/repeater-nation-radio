@@ -26,3 +26,11 @@ tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 [features]
 custom-protocol = ["tauri/custom-protocol"]
 default = ["custom-protocol"]
+
+# Smaller, faster release binary (Tauri's recommended release profile).
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
