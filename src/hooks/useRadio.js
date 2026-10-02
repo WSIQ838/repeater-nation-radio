@@ -32,14 +32,21 @@ export function useRadio(channelId, channelInfo=null) {
     if(roomRef.current)setState("listening");
   },[channelId]);
 
+  // Each connect/disconnect bumps the generation, so a connect that finishes after the
+  // user has already switched channels drops its room instead of taking over.
+  const connGenRef=useRef(0);
   const connect=useCallback(async()=>{
+    const gen=++connGenRef.current;
     setError("");setState("connecting");
     try {
       const sessionData=await issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number);
+      if(gen!==connGenRef.current)return null;
       if(!sessionData?.ok) throw new Error(sessionData?.error||"Could not start radio session.");
-      const room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;micRef.current=null;cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready")}});
+      let room=null;
+      room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{if(roomRef.current!==room)return;if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;micRef.current=null;cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready")}});
+      if(gen!==connGenRef.current){await disconnectRadio(room);return null}
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
-    } catch(err){setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
+    } catch(err){if(gen!==connGenRef.current)return null;setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
   },[channelId,channelInfo?.zoneId,channelInfo?.number,refresh,attachAudio,cleanupAudio]);
 
   useEffect(()=>{for(const el of audioElsRef.current.values())el.volume=muted?0:1},[muted]);
@@ -84,10 +91,11 @@ export function useRadio(channelId, channelInfo=null) {
   },[channelId,session,releasePTT]);
 
   const disconnect=useCallback(async()=>{
+    connGenRef.current++;
     await releasePTT();
     cleanupAudio();
-    await disconnectRadio(roomRef.current);
-    roomRef.current=null;
+    const room=roomRef.current;roomRef.current=null;
+    await disconnectRadio(room);
     setSession(null);
     setParticipants([]);
     setState("ready");

@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
@@ -9,6 +9,8 @@ import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 import {ControlHead,PalmMic} from "./components/ControlHead";
 import "./apx.css";
+
+const AUTO_CONNECT_SETTLE_MS=600;
 
 function Login(){
   const [email,setEmail]=useState("");
@@ -148,14 +150,24 @@ function RadioApp({session,onSignOut}){
     if(!next){setZoneId("");return}
     setPtt(false);await disconnect();
     const first=channels.find(c=>c.zoneId===next);
-    setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");
+    setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");setTuneSeq(n=>n+1);
   };
   const selectChannel=async next=>{
     if(next===channelId)return;
     setPtt(false);await disconnect();
     const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio");
     if(c?.zoneId)setZoneId(c.zoneId);
+    setTuneSeq(n=>n+1);
   };
+  // Picking a zone or channel tunes the radio there: after a short settle (so spinning
+  // a knob does not join every channel it passes) connect to the new channel.
+  const [tuneSeq,setTuneSeq]=useState(0),connectRef=useRef(connect);
+  connectRef.current=connect;
+  useEffect(()=>{
+    if(!tuneSeq||!channelId)return;
+    const id=setTimeout(()=>connectRef.current().catch(()=>{}),AUTO_CONNECT_SETTLE_MS);
+    return()=>clearTimeout(id);
+  },[tuneSeq]);
   const chooseZone=e=>selectZone(e.target.value);
   const chooseChannel=e=>selectChannel(e.target.value);
   const down=async()=>{if(!connected||ptt)return;setPtt(true);try{await requestPTT(micDeviceId)}catch{setPtt(false)}};

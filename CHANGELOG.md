@@ -1,5 +1,11 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.14
+
+- Selecting a zone or channel now tunes the radio and connects to it automatically. This covers the zone and channel knobs, the nav pad, keypad entry, P1–P5, the softkeys and the Programming dropdowns. The radio waits 600 ms after the last change, so spinning a knob joins only the channel it stops on. Mute stays as it was. Choosing "All Zones" keeps the current channel and does not reconnect.
+- A connect that finishes after you have already switched channels is dropped instead of taking over. A stale room's disconnect event no longer clears the active room.
+- Version set to 0.1.14 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.13
 
 - Version set to 0.1.13 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`, past the existing `radio-v0.1.12` tag (main had been reset to a 0.1.3 backup).
