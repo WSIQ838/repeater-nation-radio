@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.12
+
+**Old radios removed.** The wide mobile head, compact mobile head, keypad portable, touchscreen portable, classic portable and rugged green portable are gone from the radio picker, so only the dispatch control head redone from Sean's O7 photo is left.
+
+- Each radio comes back one at a time, rebuilt from the picture Sean sends for it.
+- The shared radio logic (`useFace` and `FaceDisplay` in `ControlHead.jsx`) stays, so each new radio only needs its own layout.
+- If one of the removed radios was chosen, the app opens on the dispatch control head.
+- Version set to 0.2.12 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.11
 
 **Dispatch control head redone from Sean's O7 photo**, the first radio in the one-at-a-time redo.
