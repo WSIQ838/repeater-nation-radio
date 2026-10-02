@@ -31,16 +31,26 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="") {
   // Set once a floor request goes out, so releasing (and every channel switch) only
   // calls the server when there is actually something to release.
   const floorAskedRef=useRef(false);
+  // The published microphone: {track, deviceId, room}. Muted while not transmitting.
+  const pubRef=useRef(null);
+  const dropPublished=useCallback(async()=>{
+    const pub=pubRef.current;pubRef.current=null;
+    if(!pub)return;
+    await unpublishMicrophone(pub.room,pub.track);
+    try{pub.track.stop()}catch{}
+  },[]);
   const releasePTT=useCallback(async()=>{
     pttRequestRef.current++;
     const asked=floorAskedRef.current;floorAskedRef.current=false;
     floorRef.current=false;
     if(renewRef.current)clearInterval(renewRef.current);
     renewRef.current=null;
-    const room=roomRef.current;
-    const mic=micRef.current;
+    // Keep the mic published but muted, so the next PTT only unmutes it instead of
+    // renegotiating a new track with the voice server (and, on Bluetooth headsets,
+    // switching audio profiles) every time.
     micRef.current=null;
-    if(mic)await unpublishMicrophone(room,mic);
+    const pub=pubRef.current;
+    if(pub){try{await pub.track.mute()}catch{}}
     if(asked){try{await issueRadioPTT(channelId,"release")}catch{}}
     if(roomRef.current)setState("listening");
   },[channelId]);
@@ -56,7 +66,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="") {
       if(gen!==connGenRef.current)return null;
       if(!sessionData?.ok) throw new Error(sessionData?.error||"Could not start radio session.");
       let room=null;
-      room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{if(roomRef.current!==room)return;if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;micRef.current=null;cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready")}});
+      room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{if(roomRef.current!==room)return;if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;micRef.current=null;if(pubRef.current?.room===room){try{pubRef.current.track.stop()}catch{}pubRef.current=null}cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready")}});
       if(gen!==connGenRef.current){await disconnectRadio(room);return null}
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
     } catch(err){if(gen!==connGenRef.current)return null;setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
@@ -80,26 +90,41 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="") {
     if(!session.canTransmit){setError("You are not authorized to transmit on this channel.");return}
     try {
       floorAskedRef.current=true;
-      // Open the mic while the floor request is in flight instead of after it, so
-      // audio starts as soon as the floor is granted.
-      const micPromise=openMicrophone(deviceId);
-      micPromise.catch(()=>{});
-      let result;
-      try{result=await issueRadioPTT(channelId,"request")}catch(err){micPromise.then(t=>t.stop(),()=>{});throw err}
-      const dropMic=()=>micPromise.then(t=>t.stop(),()=>{});
-      if(requestId!==pttRequestRef.current){dropMic();return}
-      if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
-      if(!result.granted){dropMic();setError(result.reason==="busy"?"Channel is busy — someone else is transmitting.":result.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return}
-      const track=await micPromise;
-      // Device names are only visible after the first mic permission, so refresh them now.
-      refreshDevices();
-      if(requestId!==pttRequestRef.current){track.stop();try{await issueRadioPTT(channelId,"release")}catch{}return}
+      const room=roomRef.current,pub=pubRef.current;
+      const deny=r=>setError(r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");
       let mic;
-      try{mic=await publishMicrophoneTrack(roomRef.current,track)}catch(err){track.stop();throw err}
-      if(requestId!==pttRequestRef.current){
-        await unpublishMicrophone(roomRef.current,mic);
-        try{await issueRadioPTT(channelId,"release")}catch{}
-        return;
+      if(pub&&pub.room===room&&pub.deviceId===deviceId){
+        // Fast path: the mic is already published (muted); unmute once the floor is granted.
+        const result=await issueRadioPTT(channelId,"request");
+        if(requestId!==pttRequestRef.current)return;
+        if(!result?.ok)throw new Error(result?.error||"Could not reach the radio server.");
+        if(!result.granted){deny(result);return}
+        await pub.track.unmute();
+        if(requestId!==pttRequestRef.current){try{await pub.track.mute()}catch{}try{await issueRadioPTT(channelId,"release")}catch{}return}
+        mic=pub.track;
+      }else{
+        // First PTT on this room or device: open the mic while the floor request is in
+        // flight instead of after it, so audio starts as soon as the floor is granted.
+        const micPromise=openMicrophone(deviceId);
+        micPromise.catch(()=>{});
+        let result;
+        try{result=await issueRadioPTT(channelId,"request")}catch(err){micPromise.then(t=>t.stop(),()=>{});throw err}
+        const dropMic=()=>micPromise.then(t=>t.stop(),()=>{});
+        if(requestId!==pttRequestRef.current){dropMic();return}
+        if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
+        if(!result.granted){dropMic();deny(result);return}
+        const track=await micPromise;
+        // Device names are only visible after the first mic permission, so refresh them now.
+        refreshDevices();
+        if(requestId!==pttRequestRef.current){track.stop();try{await issueRadioPTT(channelId,"release")}catch{}return}
+        await dropPublished();
+        try{mic=await publishMicrophoneTrack(room,track)}catch(err){track.stop();throw err}
+        pubRef.current={track:mic,deviceId,room};
+        if(requestId!==pttRequestRef.current){
+          try{await mic.mute()}catch{}
+          try{await issueRadioPTT(channelId,"release")}catch{}
+          return;
+        }
       }
       micRef.current=mic;
       floorRef.current=true;setError("");setState("transmitting");
@@ -113,18 +138,19 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="") {
       floorRef.current=false;
       try{await issueRadioPTT(channelId,"release")}catch{}
     }
-  },[channelId,session,releasePTT,refreshDevices]);
+  },[channelId,session,releasePTT,refreshDevices,dropPublished]);
 
   const disconnect=useCallback(async()=>{
     connGenRef.current++;
     await releasePTT();
+    await dropPublished();
     cleanupAudio();
     const room=roomRef.current;roomRef.current=null;
     await disconnectRadio(room);
     setSession(null);
     setParticipants([]);
     setState("ready");
-  },[releasePTT,cleanupAudio]);
+  },[releasePTT,cleanupAudio,dropPublished]);
 
   return {state,error,session,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect,room:roomRef.current};
 }

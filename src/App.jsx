@@ -194,7 +194,7 @@ function BluetoothPtt({status,setStatus}){
 
 function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
-  const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio"}])).values()),[channels]);
+  const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio",order:c.zoneOrder??999}])).values()).sort((a,b)=>a.order-b.order),[channels]);
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
   const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId), speakerId);
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id, speakerId);
@@ -205,7 +205,11 @@ function RadioApp({session,onSignOut}){
     listRadioChannels().then(list=>{
       if(!active)return;
       setChannels(list);
-      const current=list.find(x=>x.id===channelId)||list.find(x=>x.id===config.defaultChannelId)||list[0];
+      // Start in the ALL zone (or the first zone) on its lowest channel.
+      const zoneList=[...new Map(list.filter(c=>c.zoneId).map(c=>[c.zoneId,c])).values()].sort((a,b)=>(a.zoneOrder??999)-(b.zoneOrder??999));
+      const startZone=(zoneList.find(c=>/^all$/i.test(String(c.zoneName||"").trim()))||zoneList[0])?.zoneId;
+      const inZone=list.filter(c=>c.zoneId===startZone).sort((a,b)=>(a.number??0)-(b.number??0));
+      const current=inZone[0]||list.find(x=>x.id===config.defaultChannelId)||list[0];
       if(current){setChannelId(current.id);setChannelName(current.name);setZoneId(current.zoneId||"")}
     }).catch(err=>console.error("[radio] channel load failed",err));
     return()=>{active=false};
@@ -217,8 +221,7 @@ function RadioApp({session,onSignOut}){
   const currentChannel=channels.find(x=>x.id===channelId);
   const selectZone=async next=>{
     if(next===zoneId)return;
-    // "All Zones" only widens the channel list; keep the current channel.
-    if(!next){setZoneId("");return}
+    if(!next)return;
     setPttState(false);await disconnect();
     const first=channels.find(c=>c.zoneId===next);
     setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");setTuneSeq(n=>n+1);
@@ -361,7 +364,7 @@ function RadioApp({session,onSignOut}){
               <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up} pttName={pttName}/>
               <div className="apx-program">
                 <span className="label">PROGRAMMING</span>
-                <label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
+                <label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
                 <label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label>
                 <label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label>
                 <label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label>

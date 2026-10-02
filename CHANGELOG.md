@@ -1,5 +1,13 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.19
+
+- The radio now starts in the ALL zone on its first channel. The zone list is just the real zones (ALL, GMRS, HAM, in the order set on the website); the extra "All Zones" entry, which showed every zone's channels mixed together and didn't auto-connect, is gone.
+- Zones are ordered by their website display order instead of by whichever zone's channel came first.
+- Less PTT lag: after the first transmit, the microphone stays published but muted while you listen, so the next PTT only unmutes it. Before, every PTT opened the mic and set up a new audio track with the voice server, and on Bluetooth headsets switched audio profiles each time. Keying up now takes only the floor request to the radio server. The mic is closed when you disconnect, change channel or pick another microphone. (While connected, Windows shows the microphone as in use after your first transmit.)
+- Profiled the interface at 6× CPU slowdown: the production build answers a knob, PTT or keypad press in about 56 ms (about 10 ms on a normal PC), with no background work while idle. `npx tauri dev` runs React's development mode, which measured about 6× slower (360 ms), so judge speed on a built app.
+- Version set to 0.1.19 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.18
 
 - Fixed the update check saying "OFFLINE / Could not check GitHub" while online. The cause is that `WSIQ838/repeater-nation-radio` is a private repository, and GitHub answers 404 to apps that aren't signed in to it. Every failure used to be shown as offline.

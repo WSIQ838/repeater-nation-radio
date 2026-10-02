@@ -135,6 +135,7 @@ export async function listRadioChannels() {
   ]);
 
   const zoneMap = new Map((zones || []).map((z) => [z.id, z.name]));
+  const zoneOrder = new Map((zones || []).map((z, i) => [z.id, z.display_order ?? i]));
 
   const allowedChannels = (channels || []).filter((c) => {
     const zoneName = zoneMap.get(c.zone_id) || "Radio";
@@ -148,6 +149,7 @@ export async function listRadioChannels() {
     number: c.number,
     zoneId: c.zone_id,
     zoneName: zoneMap.get(c.zone_id) || "Radio",
+    zoneOrder: zoneOrder.get(c.zone_id) ?? 999,
     label: (zoneMap.get(c.zone_id) || "Radio") + " · " + c.name,
   }));
 }
