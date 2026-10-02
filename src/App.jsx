@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic} from "lucide-react";
+import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
@@ -14,6 +14,8 @@ import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,s
 import {ControlHead,PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
+import {clearTraffic,deleteTraffic,getAudio,listTraffic,loadTrafficSettings,onTrafficChange,prune,recordTrack,saveTrafficSettings,saveTransmission} from "./lib/traffic";
+import {setSink} from "./hooks/useRadio";
 import {DEFAULT_VOLUME,announce,canAnnounce,loadFeatures,loadVolumes,playTone,saveFeatures,saveVolumes} from "./lib/tones";
 import "./apx.css";
 
@@ -223,6 +225,63 @@ function ConsoleView({channels,zones,cfg,setCfg,on,onToggle,onSelect,connected,s
   </section>;
 }
 
+// Traffic log: every recorded transmission, newest first, with playback.
+const fmtMs=ms=>{const s=Math.max(1,Math.round(ms/1000));return s<60?s+" s":Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+const fmtMB=b=>(b/1048576).toFixed(b<10485760?1:0)+" MB";
+function TrafficLog({channels,settings,setSettings,speakerId,volume}){
+  const [items,setItems]=useState([]),[error,setError]=useState(""),[filter,setFilter]=useState(""),[search,setSearch]=useState(""),[playing,setPlaying]=useState(""),[continuous,setContinuous]=useState(false);
+  const audioRef=useRef(null),listRef=useRef([]),contRef=useRef(continuous);contRef.current=continuous;
+  useEffect(()=>{
+    let alive=true;
+    const load=()=>listTraffic().then(x=>{if(alive){setItems(x);setError("")}}).catch(e=>alive&&setError(e.message||"Recordings can't be read on this system."));
+    prune().catch(()=>{});load();
+    const off=onTrafficChange(load);
+    return()=>{alive=false;off();stop()};
+  },[]);
+  const shown=items.filter(x=>(!filter||x.channelId===filter)&&(!search||x.name.toLowerCase().includes(search.toLowerCase())));
+  listRef.current=shown;
+  const stop=()=>{const a=audioRef.current;audioRef.current=null;if(a){a.pause();URL.revokeObjectURL(a.src)}setPlaying("")};
+  const play=async id=>{
+    stop();
+    const blob=await getAudio(id).catch(()=>null);if(!blob)return;
+    const a=new Audio(URL.createObjectURL(blob));a.volume=volume;setSink(a,speakerId);audioRef.current=a;setPlaying(id);
+    a.onended=()=>{
+      if(audioRef.current!==a)return;stop();
+      // Continuous playback runs forward in time (up the newest-first list).
+      const list=listRef.current,at=list.findIndex(x=>x.id===id);
+      if(contRef.current&&at>0)play(list[at-1].id);
+    };
+    a.play().catch(()=>stop());
+  };
+  const used=items.reduce((n,x)=>n+(x.size||0),0);
+  let day="";
+  return <section className="panel full traffic">
+    <div className="panel-title"><History size={17}/> Traffic log<span className="traffic-used">{items.length} recordings · {fmtMB(used)} of {settings.maxMB} MB</span></div>
+    <div className="traffic-bar">
+      <label><input type="checkbox" checked={settings.enabled} onChange={e=>setSettings({...settings,enabled:e.target.checked})}/> Record all traffic</label>
+      <label>Keep<select value={settings.days} onChange={e=>setSettings({...settings,days:Number(e.target.value)})}>{[1,7,30,90].map(d=><option key={d} value={d}>{d===1?"1 day":d+" days"}</option>)}</select></label>
+      <label>Channel<select value={filter} onChange={e=>setFilter(e.target.value)}><option value="">All</option>{channels.map(c=><option key={c.id} value={c.id}>{c.zoneName} · {c.name}</option>)}</select></label>
+      <input type="search" placeholder="Search callsign or name" value={search} onChange={e=>setSearch(e.target.value)}/>
+      <label><input type="checkbox" checked={continuous} onChange={e=>setContinuous(e.target.checked)}/> Play continuously</label>
+      <button type="button" className="traffic-clear" disabled={!items.length} onClick={()=>{if(window.confirm("Delete every recording in the traffic log?")){stop();clearTraffic()}}}><Trash2 size={14}/> Clear all</button>
+    </div>
+    {error&&<div className="error">{error}</div>}
+    {!shown.length?<div className="empty">{items.length?"No recordings match.":settings.enabled?"Transmissions on your selected, scanned and console channels are recorded here, including your own.":"Recording is off."}</div>
+    :<div className="traffic-list">{shown.map(x=>{
+      const d=new Date(x.at).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}),head=d!==day?(day=d):null;
+      return <div key={x.id}>{head&&<div className="traffic-day">{head}</div>}
+        <div className={"traffic-row"+(playing===x.id?" playing":"")+(x.own?" own":"")}>
+          <button type="button" className="mini-icon" onClick={()=>playing===x.id?stop():play(x.id)} aria-label={playing===x.id?"Stop":"Play"}>{playing===x.id?<Square size={14}/>:<Play size={14}/>}</button>
+          <span className="traffic-time">{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span>
+          <strong>{x.own?"You":x.name}</strong>
+          <span className="traffic-ch">{x.zone?x.zone+" · ":""}{x.channel}</span>
+          <span className="traffic-len">{fmtMs(x.ms)}</span>
+          <button type="button" className="mini-icon" onClick={()=>{if(playing===x.id)stop();deleteTraffic(x.id)}} aria-label="Delete recording"><Trash2 size={14}/></button>
+        </div></div>;
+    })}</div>}
+  </section>;
+}
+
 function LastHeard({items,onReplay}){
   return <section className="panel last-heard"><div className="panel-title"><RefreshCw size={17}/> Last heard</div>
     {items.length?items.map(x=><div className="member" key={x.id}><div><strong>{x.name}</strong><span>{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})} · {Math.max(1,Math.round(x.ms/1000))} s</span></div><button onClick={()=>onReplay(x.id)} disabled={!x.url} title={x.url?"Play this transmission again":"Replay isn't available on this system"}>Replay</button></div>)
@@ -302,9 +361,29 @@ function RadioApp({session,onSignOut}){
     setVolumes(v=>{const all={...v,[channelId]:next};saveVolumes(all);return all});
     setFlash({text:"Volume "+next});
   };
-  const radioEvents={onTalkEnd:e=>{if(featuresRef.current.rogerBeep&&e.ms>300&&!mutedRef.current)tone("roger")}};
+  // Traffic recording: transmissions heard are saved by the radio and scan/console hooks,
+  // and your own are recorded from the mic while you transmit.
+  const [trafficSettings,setTrafficSettingsState]=useState(loadTrafficSettings),trafficRef=useRef(trafficSettings);trafficRef.current=trafficSettings;
+  const setTrafficSettings=v=>{setTrafficSettingsState(v);saveTrafficSettings(v);prune(v).catch(()=>{})};
+  const saveRecording=e=>{if(trafficRef.current.enabled)saveTransmission(e).catch(err=>console.warn("[traffic] save failed",err))};
+  const ownRecRef=useRef(null);
+  const radioEvents={
+    onTalkEnd:e=>{if(featuresRef.current.rogerBeep&&e.ms>300&&!mutedRef.current)tone("roger")},
+    onRecorded:saveRecording,
+    onOwnTalkStart:mic=>{
+      if(!trafficRef.current.enabled||ownRecRef.current)return;
+      const c=channelsRef.current.find(x=>x.id===channelIdRef.current);
+      ownRecRef.current={r:recordTrack(mic?.mediaStreamTrack),at:Date.now(),channelId:c?.id||"",channel:c?.name||"",zone:c?.zoneName||""};
+    },
+  };
   const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect,quality,onAir,lastHeard,replay}=useRadio(channelId, channels.find(x=>x.id===channelId), speakerId, volume/10, radioEvents);
   const mutedRef=useRef(muted);mutedRef.current=muted;
+  const channelsRef=useRef(channels),channelIdRef=useRef(channelId);channelsRef.current=channels;channelIdRef.current=channelId;
+  useEffect(()=>{
+    if(state==="transmitting"||!ownRecRef.current)return;
+    const x=ownRecRef.current;ownRecRef.current=null;const ms=Date.now()-x.at;
+    x.r.stop().then(res=>{if(res)saveRecording({at:x.at,ms,channelId:x.channelId,channel:x.channel,zone:x.zone,name:"You",own:true,blob:res.blob})});
+  },[state]);
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id, speakerId);
 
   useEffect(()=>{prewarmRadio()},[]);
@@ -338,7 +417,7 @@ function RadioApp({session,onSignOut}){
   const levels=useMemo(()=>Object.fromEntries(consoleChannels.map(c=>[c.id,(volumes[c.id]??DEFAULT_VOLUME)/10])),[consoleChannels,volumes]);
   const {active:scanActive,status:scanStatus,activity,nuisanceDelete}=useScan({
     enabled:(scanOn||consoleOn)&&connected,channels:consoleOn?consoleChannels:scanChannels,mode:consoleOn?"monitor":"scan",
-    levels,mutedIds:consoleCfg.muted||[],priorityId:scan.priority,volume:volume/10,muted,outputDeviceId:speakerId,suppress:!consoleOn&&(!!onAir||ptt),
+    levels,mutedIds:consoleCfg.muted||[],onRecorded:trafficSettings.enabled?saveRecording:null,priorityId:scan.priority,volume:volume/10,muted,outputDeviceId:speakerId,suppress:!consoleOn&&(!!onAir||ptt),
   });
   // Scan and the monitor console share the listening rooms, so only one runs at a time.
   const toggleScan=()=>{setConsoleOn(false);setScanOn(v=>!v);setFlash({text:scanOn?"Scan off":"Scan on"})};
@@ -533,7 +612,7 @@ function RadioApp({session,onSignOut}){
       <div className="topbar-right"><button type="button" className="mini-open" onClick={toggleMini} title="Mini radio (always on top)"><Minimize2 size={15}/> Mini</button><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":"Ready"}<ChevronDown size={14}/></div></div>
     </header>
     <div className="body">
-      <aside className="sidebar">{[["radio","Radio",Radio],["console","Console",LayoutGrid],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
+      <aside className="sidebar">{[["radio","Radio",Radio],["console","Console",LayoutGrid],["log","Log",History],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
       <main className="content">
         {tab==="radio"&&<>
           <section className="hero apx-hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
@@ -567,6 +646,7 @@ function RadioApp({session,onSignOut}){
         {tab==="console"&&<ConsoleView channels={channels} zones={zones} cfg={consoleCfg} setCfg={setConsoleCfg} on={consoleOn} onToggle={toggleConsole} onSelect={selectChannel} connected={connected}
           selectedId={channelId} activity={activity||{}} mainTalker={onAir?.name||""} lastTalk={lastTalk} status={scanStatus} volumes={volumes} onLevel={setLevel}
           onMuteSelected={()=>setMuted(!muted)} muted={muted} state={state} ptt={ptt} onDown={down} onUp={up} pttName={pttName}/>}
+        {tab==="log"&&<TrafficLog channels={channels} settings={trafficSettings} setSettings={setTrafficSettings} speakerId={speakerId} volume={volume/10}/>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
         {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray}/></div><div className="setting keymap-setting"><span>Button mapping</span><KeyMap {...keymapProps}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}

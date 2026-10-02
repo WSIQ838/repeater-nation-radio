@@ -1,5 +1,16 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.4
+
+Radio features, part 5: **Traffic recorder and playback log**.
+
+- Every transmission is recorded on your PC: your selected channel, scanned channels, console channels, and your own transmissions. Blips under 0.4 s are skipped.
+- New **Log** page (left menu): recordings newest first, grouped by day, with time, who (your own show as "You"), zone and channel, and length. Play / stop any recording through your chosen speaker, delete one, or Clear all.
+- Filter by channel, search by callsign or name, and "Play continuously" to keep playing forward in time from the one you start.
+- "Record all traffic" (on by default) and "Keep" 1, 7 (default), 30 or 90 days. Recordings older than that are removed, and the oldest are removed once the log passes 300 MB.
+- Recordings are stored in the app's own storage on this PC only; nothing is uploaded.
+- Version set to 0.2.4 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.3
 
 Radio features, part 4: **Monitor console** (dispatch style).

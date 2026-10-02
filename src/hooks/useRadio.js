@@ -8,7 +8,8 @@ export function setSink(el,deviceId){if(el?.setSinkId)el.setSinkId(deviceId||"")
 const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
 const LAST_HEARD_MAX=10;
 
-// events: {onTalkStart(entry), onTalkEnd(entry)} for tones and announcements.
+// events: {onTalkStart(entry), onTalkEnd(entry)} for tones and announcements,
+// onRecorded({...item, blob}) for each recorded transmission heard, onOwnTalkStart(micTrack).
 export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=1, events={}) {
   const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0);
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
@@ -17,6 +18,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   const outputRef=useRef(outputDeviceId);outputRef.current=outputDeviceId;
   const volumeRef=useRef(volume);volumeRef.current=volume;
   const eventsRef=useRef(events);eventsRef.current=events;
+  const chanRef=useRef(null);chanRef.current={channelId,channel:channelInfo?.name||"",zone:channelInfo?.zoneName||""};
   const [quality,setQuality]=useState("unknown"),[onAir,setOnAir]=useState(null),[lastHeard,setLastHeard]=useState([]);
   const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);
   const refreshDevices=useCallback(async()=>{try{setDevices(await listAudioDevices())}catch{}},[]);
@@ -41,7 +43,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   const onAirRef=useRef(new Map());
   const txStart=useCallback((track,participant)=>{
     if(!track||track.kind!=="audio"||onAirRef.current.has(participant.identity))return;
-    const entry={identity:participant.identity,name:nameOf(participant),start:Date.now(),chunks:[]};
+    const entry={identity:participant.identity,name:nameOf(participant),start:Date.now(),chunks:[],where:chanRef.current};
     if(typeof MediaRecorder!=="undefined"&&track.mediaStreamTrack){
       try{const rec=new MediaRecorder(new MediaStream([track.mediaStreamTrack]));rec.ondataavailable=e=>{if(e.data?.size)entry.chunks.push(e.data)};rec.start();entry.rec=rec}catch{}
     }
@@ -54,8 +56,10 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     onAirRef.current.delete(entry.identity);
     entry.ms=Date.now()-entry.start;
     const finish=()=>{
-      const url=entry.chunks.length?URL.createObjectURL(new Blob(entry.chunks,{type:entry.rec?.mimeType||"audio/webm"})):null;
+      const blob=entry.chunks.length?new Blob(entry.chunks,{type:entry.rec?.mimeType||"audio/webm"}):null;
+      const url=blob?URL.createObjectURL(blob):null;
       const item={id:entry.start+":"+entry.identity,identity:entry.identity,name:entry.name,at:entry.start,ms:entry.ms,url};
+      if(blob)eventsRef.current.onRecorded?.({...item,...entry.where,blob});
       setLastHeard(list=>{const next=[item,...list.filter(x=>x.id!==item.id)];for(const old of next.slice(LAST_HEARD_MAX))if(old.url)URL.revokeObjectURL(old.url);return next.slice(0,LAST_HEARD_MAX)});
     };
     if(entry.rec&&entry.rec.state!=="inactive"){entry.rec.onstop=finish;try{entry.rec.stop()}catch{finish()}}else finish();
@@ -183,6 +187,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       }
       micRef.current=mic;
       floorRef.current=true;setError("");setState("transmitting");
+      eventsRef.current.onOwnTalkStart?.(mic);
       renewRef.current=setInterval(async()=>{
         if(!floorRef.current)return;
         try{const r=await issueRadioPTT(channelId,"renew");if(!r?.ok)throw new Error()}catch{releasePTT()}

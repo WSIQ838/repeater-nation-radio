@@ -242,3 +242,21 @@ body.mini-mode{min-width:0;overflow:hidden}
 .console-level{display:flex;align-items:center;gap:8px;font-size:12px;color:#9aa4ae}
 .console-level input{flex:1}
 .console-tile-head{min-height:22px}.console-level input,.features input[type=range]{accent-color:#f28a25}
+
+/* Traffic log */
+.traffic .panel-title{flex-wrap:wrap}
+.traffic-used{margin-left:auto;font-weight:400;font-size:12px;color:#7e8995}
+.traffic-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:12px 0;font-size:12px;color:#c3cad2}
+.traffic-bar label{display:flex;align-items:center;gap:6px}
+.traffic-bar select,.traffic-bar input[type=search]{background:#0b0f14;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 7px}
+.traffic-bar input[type=search]{min-width:190px}
+.traffic-clear{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid #4a2a2a;background:#1c1214;color:#ff9a9a;border-radius:7px;padding:6px 10px;cursor:pointer;font-size:12px}
+.traffic-clear:disabled{opacity:.4;cursor:not-allowed}
+.traffic-list{display:flex;flex-direction:column}
+.traffic-day{margin:12px 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8c97a3}
+.traffic-row{display:grid;grid-template-columns:32px 80px minmax(90px,1fr) minmax(120px,1.4fr) 50px 32px;align-items:center;gap:10px;padding:5px 4px;border-bottom:1px solid #1c2229;font-size:12px}
+.traffic-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.traffic-row.own strong{color:#f2a65a}
+.traffic-row.playing{background:#13202a}
+.traffic-time,.traffic-len{color:#8d98a5;font-variant-numeric:tabular-nums}
+.traffic-ch{color:#9aa4ae;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
