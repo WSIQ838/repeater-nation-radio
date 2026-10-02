@@ -8,13 +8,13 @@ import {STATUSES,statusClass} from "../lib/status";
 // needs a layout here and an entry in FACES. Names are generic on purpose.
 export const FACES=[
   {id:"control-head",label:"Dispatch control head",note:"Full keypad, ten softkeys, P1–P5"},
+  {id:"wide-head",label:"Wide mobile head",note:"Two knobs, five softkeys, nav diamond"},
   {id:"mobile-head",label:"Compact mobile head",note:"Four softkeys, round knob, keypad, 1–3 buttons"},
-  {id:"keypad-portable",label:"Keypad portable",note:"Two softkeys, P1/P2, nav pad and keypad"},
-  {id:"smart-portable",label:"Touchscreen portable",note:"Touch screen with status, zone/channel and messages"},
-  {id:"smart-portable-p",label:"Touchscreen portable with P keys",note:"Touch screen plus P1–P6 buttons"},
+  {id:"keypad-portable",label:"Keypad portable",note:"Zone/channel and message cards, P1/P2, keypad"},
+  {id:"smart-portable-p",label:"Touchscreen portable",note:"Touch screen plus P1–P6 buttons"},
 ];
 export const DEFAULT_FACE="control-head";
-const FACE_KEY="rn-face",RENAMED={handheld:"keypad-portable",mobile:"mobile-head"};
+const FACE_KEY="rn-face",RENAMED={handheld:"keypad-portable",mobile:"mobile-head","smart-portable":"smart-portable-p"};
 export const loadFace=()=>{try{let v=localStorage.getItem(FACE_KEY);v=RENAMED[v]||v;return FACES.some(f=>f.id===v)?v:DEFAULT_FACE}catch{return DEFAULT_FACE}};
 export const saveFace=v=>{try{localStorage.setItem(FACE_KEY,v)}catch{}};
 
@@ -84,6 +84,42 @@ function MobileHead(p){
   </div>;
 }
 
+// Wide mobile head: volume and channel knobs either side of a wide display, five
+// softkeys, a nav diamond and home key. P switches the softkeys between menu rows.
+function WideHead(p){
+  const f=useFace(p);
+  const {state,connected,muted,volume=7,onPower,onMute,onVolume}=p;
+  const [alt,setAlt]=useState(false);
+  const row=(alt?f.top:f.bottom).slice(0,5);
+  return <div className="wh" style={{"--apx-bright":0.55+f.brightness*0.15}}>
+    <div className="wh-col">
+      <button type="button" className={"mh-btn round power"+(connected?" on":"")} onClick={onPower} disabled={state==="connecting"} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power size={14}/></button>
+      <div className="mh-port" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div>
+    </div>
+    <div className="wh-col">
+      <Knob className="wh-knob" angle={muted?-135:-135+volume*27} title={muted?"Volume (muted, click to unmute)":`Volume ${volume} (scroll to change, click to mute)`} onClick={onMute} onStep={dir=>onVolume?.(-dir)}/>
+      <div className="wh-pair">
+        <button type="button" className="mh-btn round" onClick={()=>f.setBrightness(b=>(b+1)%4)} title="Display brightness"><Sun size={13}/></button>
+        <button type="button" className={"mh-btn round"+(alt?" lit":"")} onClick={()=>setAlt(v=>!v)} title="P: switch softkey menu">P</button>
+      </div>
+    </div>
+    <div className="wh-center">
+      <div className="wh-brand">REPEATER NATION</div>
+      <FaceDisplay p={p} f={f} className="apx-display wh-display" menus={false} softRow={row}/>
+      <div className="wh-softkeys">{row.map((k,i)=><button type="button" key={i} className={"mh-btn soft "+(k.tone||"")} onClick={()=>press(k)} disabled={!k.act||k.disabled} aria-label={k.label||"Unused softkey"}/>)}</div>
+    </div>
+    <div className="wh-col">
+      <Knob className="wh-knob" angle={f.channelIndex*30} title="Channel (click or scroll to change)" onClick={()=>f.stepChannel(1)} onStep={f.stepChannel}/>
+      <div className="wh-diamond"><Nav f={f}/></div>
+    </div>
+    <div className="wh-col">
+      <span className="mh-emerg big" aria-hidden="true" title="Emergency (not used)"/>
+      <div className="wh-leds"><i className={f.ledTx?"tx":f.ledRx?"rx":f.ledCall?"call":""}/></div>
+      <button type="button" className="mh-btn round home" onClick={f.goHome} title="Home"><Home size={13}/></button>
+    </div>
+  </div>;
+}
+
 // Keypad portable: two-softkey display, P1/P2, nav pad, OK and back/home, full keypad.
 function KeypadPortable(p){
   const f=useFace(p);
@@ -93,7 +129,7 @@ function KeypadPortable(p){
     <div className="pt-body"><SidePtt p={p}/>
       <div className="pt-face">
         <div className="pt-brand">REPEATER NATION</div>
-        <FaceDisplay p={p} f={f} className="apx-display kp-display" menus={false} softRow={row}/>
+        {f.view==="home"&&!f.entry?<KeypadScreen p={p} f={f} row={row}/>:<FaceDisplay p={p} f={f} className="apx-display kp-display" menus={false} softRow={row}/>}
         <div className="kp-controls">
           <button type="button" className="pt-key" onClick={()=>press(row[0])} disabled={!row[0].act} title={row[0].label||"P1"}>P1</button>
           <Nav f={f}/>
@@ -104,6 +140,29 @@ function KeypadPortable(p){
         <Keypad f={f} className="kp-keypad"/>
       </div>
     </div>
+  </div>;
+}
+
+// The keypad portable's home screen: status icons, date and time, a zone/channel card
+// and a message card (activity, a call, or the last transmission heard).
+function KeypadScreen({p,f,row}){
+  const {zoneName,channelName,connected,ptt,muted,scanning,incoming,call,lastHeard=[]}=p;
+  const now=new Date(),b=f.banner,last=lastHeard[0];
+  const live=["rx","tx","call","warn"].includes(b.tone);
+  return <div className="kp-screen" style={{filter:"brightness(var(--apx-bright))"}}>
+    <div className="kp-icons">
+      <span className="ss-bars">{[1,2,3,4].map(n=><i key={n} className={n<=f.bars?"on":""}/>)}</span>
+      <b>{connected?(ptt?"TX":"RX"):"OFF"}</b>{scanning&&<b>Z</b>}{muted?<VolumeX size={12}/>:<Volume2 size={12}/>}{(incoming||call)&&<Phone size={12}/>}
+      <span className="kp-batt"/>
+    </div>
+    <div className="kp-date"><span>{now.toLocaleDateString([],{month:"2-digit",day:"2-digit",year:"numeric"})}</span><span>{now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span></div>
+    <div className="kp-card"><span>{zoneName||"Zone"}</span><strong>{channelName}</strong></div>
+    <div className={"kp-card msg "+(live?b.tone:"")}>
+      {live?<><span>{b.title}</span><strong>{b.sub||""}</strong></>
+      :last?<><span>Last heard</span><strong>{last.name}</strong><small>{new Date(last.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</small></>
+      :<><span>{b.title}</span><strong>{b.sub||""}</strong></>}
+    </div>
+    <div className="kp-soft">{row.map((k,i)=><span key={i} className={k.tone||""}>{k.label}</span>)}</div>
   </div>;
 }
 
@@ -178,9 +237,9 @@ function SmartPortable({pkeys=false,...p}){
 }
 
 export function RadioFace({face=DEFAULT_FACE,...p}){
+  if(face==="wide-head")return <WideHead {...p}/>;
   if(face==="mobile-head")return <MobileHead {...p}/>;
   if(face==="keypad-portable")return <KeypadPortable {...p}/>;
-  if(face==="smart-portable")return <SmartPortable {...p}/>;
   if(face==="smart-portable-p")return <SmartPortable pkeys {...p}/>;
   return <ControlHead {...p}/>;
 }

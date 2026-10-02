@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.8
+
+**Radios from Sean's re-uploaded pictures.**
+
+- New **Wide mobile head** (slim dash head): power button and mic jack, a volume knob with brightness and P buttons, a wide display with five softkeys (P switches between the two softkey menus), a channel knob, nav diamond, home key and the orange emergency key (drawn only).
+- **Keypad portable** restyled: a color screen with status icons, date and time, a zone/channel card and a message card (who is talking, a call, or the last transmission heard), and the two blue menu items above P1/P2.
+- The touchscreen portable without P keys is removed (it was dropped from the pictures); anyone who chose it now gets the touchscreen portable with P1–P6, now just called "Touchscreen portable".
+- Radios in the picker: Dispatch control head, Wide mobile head, Compact mobile head, Keypad portable, Touchscreen portable.
+- Version set to 0.2.8 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.7
 
 **Radios from Sean's pictures.** The radio picker now has the radios Sean asked for (the two placeholder radios from 0.2.6 are replaced; a saved choice moves to the closest new one).
