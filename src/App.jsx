@@ -1,7 +1,7 @@
 import {useEffect,useMemo,useState} from "react";
 import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
 import {config} from "./lib/config";
-import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,clearSession,listRadioChannels} from "./lib/auth";
+import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
 import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
@@ -16,6 +16,12 @@ function Login(){
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
   const [googleBusy,setGoogleBusy]=useState(false);
+  const [authStatus,setAuthStatus]=useState(null);
+  useEffect(()=>{
+    const onStatus=e=>{setAuthStatus(e.detail);if(e.detail?.error)setGoogleBusy(false)};
+    window.addEventListener("rn-auth-status",onStatus);
+    return()=>window.removeEventListener("rn-auth-status",onStatus);
+  },[]);
 
   const submit=async e=>{
     e?.preventDefault();
@@ -49,6 +55,7 @@ function Login(){
     <h1>Repeater Nation Radio</h1>
     <p className="muted">Sign in with your existing Repeater Nation account.</p>
     <button type="button" className="google-login" onClick={googleLogin} disabled={busy||googleBusy}><span className="google-g">G</span>{googleBusy?"Signing in with Google…":"Continue with Google"}</button>
+    {authStatus&&<div className={authStatus.error?"error":"auth-status"}>{authStatus.message}</div>}
     <div className="login-divider"><span>or</span></div>
     <form onSubmit={submit} className="login-form">
       <label>Email<input type="email" autoComplete="username" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" disabled={busy}/></label>
@@ -211,10 +218,10 @@ export default function App(){
   useEffect(()=>{
     const handler=e=>setSession(e.detail);
     window.addEventListener("rn-radio-session",handler);
-    let unlisten=null;
+    let unlisten=null,disposed=false;
     const handleDeepLink=async(urls)=>{
       for(const url of urls||[]){
-        if(!String(url).startsWith("repeaternation://oauth/")) continue;
+        if(!String(url).startsWith("repeaternation://oauth/")){reportAuthStatus("Ignored an unexpected link: "+String(url).split("?")[0],true);continue}
         const restored=await restoreSessionFromOAuth(url);
         if(restored){
           window.dispatchEvent(new CustomEvent("rn-radio-session",{detail:restored}));
@@ -224,22 +231,22 @@ export default function App(){
       }
       setAuthChecking(false);
     };
+    // Listen for links first so a getCurrent failure cannot leave the app deaf to the OAuth return.
+    onOpenUrl(handleDeepLink).then(fn=>{if(disposed)fn();else unlisten=fn}).catch(err=>reportAuthStatus("This build cannot receive sign-in links: "+(err?.message||err),true));
     (async()=>{
       try{
         const current=await getCurrent();
         if(current?.length){
           await handleDeepLink(current);
-        }else{
-          const restored=await restoreSessionFromOAuth();
-          if(restored) setSession(restored);
-          setAuthChecking(false);
+          return;
         }
-        unlisten=await onOpenUrl(handleDeepLink);
-      }catch{
-        setAuthChecking(false);
-      }
+      }catch{}
+      const restored=await restoreSessionFromOAuth();
+      if(restored) setSession(restored);
+      setAuthChecking(false);
     })();
     return()=>{
+      disposed=true;
       window.removeEventListener("rn-radio-session",handler);
       if(unlisten) unlisten();
     };

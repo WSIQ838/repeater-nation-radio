@@ -43,21 +43,41 @@ export async function loginWithGoogle() {
   const base = config.base44AppBaseUrl || config.appUrl;
   const fromUrl = `${config.appUrl}/oauth/callback`;
   const loginUrl = `${base}/api/apps/auth/login?app_id=${encodeURIComponent(config.base44AppId)}&from_url=${encodeURIComponent(fromUrl)}`;
-  return openUrl(loginUrl);
+  await openUrl(loginUrl);
+  reportAuthStatus("Google sign-in opened in your browser. Finish there, then allow it to open Repeater Nation Radio.");
+}
+
+// Sign-in progress for the login screen, so a failed browser hand-off says where it stopped.
+export function reportAuthStatus(message, error = false) {
+  console[error ? "error" : "info"]("[auth]", message);
+  window.dispatchEvent(new CustomEvent("rn-auth-status", { detail: { message, error } }));
 }
 
 export async function restoreSessionFromOAuth(url = "") {
+  const fromLink = Boolean(url);
   try {
     const raw = url || window.location.href;
     const parsed = new URL(raw);
     const query = new URLSearchParams(parsed.search);
     const hash = new URLSearchParams(String(parsed.hash || "").replace(/^#/, ""));
     const token = query.get("access_token") || hash.get("access_token");
-    if (!token) return null;
+    if (!token) {
+      if (fromLink) {
+        const keys = [...query.keys(), ...hash.keys()].join(", ") || "none";
+        reportAuthStatus(`The sign-in link reached the app without a token (link fields: ${keys}).`, true);
+      }
+      return null;
+    }
+    if (fromLink) reportAuthStatus("Sign-in link received. Loading your account…");
     client().auth.setToken(token);
     const member = await client().auth.me();
+    if (!member && fromLink) reportAuthStatus("The token was accepted but no account came back.", true);
     return member ? { member } : null;
-  } catch {
+  } catch (err) {
+    if (fromLink) {
+      const detail = err?.response?.data?.detail || err?.response?.data?.message || err?.message || String(err);
+      reportAuthStatus(`Could not finish sign-in: ${detail}`, true);
+    }
     return null;
   }
 }
