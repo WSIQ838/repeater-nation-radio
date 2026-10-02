@@ -8,7 +8,7 @@ import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 import {SCAN_MAX,useScan} from "./hooks/useScan";
-import {prewarmRadio} from "./lib/livekit";
+import {canShareStatus,prewarmRadio,shareStatus} from "./lib/livekit";
 import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
 import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {ControlHead,PalmMic} from "./components/ControlHead";
@@ -291,7 +291,20 @@ function LastHeard({items,onReplay}){
 
 function MemberName({participant,talking}){
   const info=useMemo(()=>{try{return participant?.metadata?JSON.parse(participant.metadata):{}}catch{return {}}},[participant]);
-  return <div className="member"><strong>{info.callsign||info.displayName||participant?.name||participant?.identity||"Member"}</strong><span className={talking?"talking":""}>{talking?"Transmitting":info.callsign&&info.displayName?info.displayName:"Connected"}</span></div>
+  const status=participant?.attributes?.status||"";
+  return <div className="member"><strong>{info.callsign||info.displayName||participant?.name||participant?.identity||"Member"}</strong>{status&&<em className={"status-chip "+statusClass(status)}>{status}</em>}<span className={talking?"talking":""}>{talking?"Transmitting":info.callsign&&info.displayName?info.displayName:"Connected"}</span></div>
+}
+
+// Member status, shown next to your name on every radio on the channel.
+const STATUSES=["Available","En Route","At Scene","Busy","Returning","Out of Service"];
+const statusClass=s=>"st-"+String(s).toLowerCase().replace(/[^a-z]+/g,"-");
+const STATUS_KEY="rn-status";
+function StatusButtons({status,onStatus,shared,connected}){
+  return <div className="status-panel">
+    <span className="label">STATUS</span>
+    <div className="status-buttons">{STATUSES.map(s=><button type="button" key={s} className={(s===status?"on ":"")+statusClass(s)} onClick={()=>onStatus(s===status?"":s)}>{s}</button>)}</div>
+    <small>{!status?"Pick a status to show it next to your name.":!connected?"Shown to others once you connect.":shared?"Other radios on this channel see your status.":"Only shown on this radio for now: the radio server doesn't let the app share it yet."}</small>
+  </div>;
 }
 
 const readPref=key=>{try{return localStorage.getItem(key)}catch{return null}};
@@ -376,7 +389,7 @@ function RadioApp({session,onSignOut}){
       ownRecRef.current={r:recordTrack(mic?.mediaStreamTrack),at:Date.now(),channelId:c?.id||"",channel:c?.name||"",zone:c?.zoneName||""};
     },
   };
-  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect,quality,onAir,lastHeard,replay}=useRadio(channelId, channels.find(x=>x.id===channelId), speakerId, volume/10, radioEvents);
+  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect,quality,onAir,lastHeard,replay,room:radioRoom}=useRadio(channelId, channels.find(x=>x.id===channelId), speakerId, volume/10, radioEvents);
   const mutedRef=useRef(muted);mutedRef.current=muted;
   const channelsRef=useRef(channels),channelIdRef=useRef(channelId);channelsRef.current=channels;channelIdRef.current=channelId;
   useEffect(()=>{
@@ -405,6 +418,15 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
 
   const connected=state==="listening"||state==="transmitting";
+  // Member status: shared as a LiveKit attribute and re-applied on every connect.
+  const [myStatus,setMyStatus]=useState(()=>readPref(STATUS_KEY)||""),[statusShared,setStatusShared]=useState(false);
+  const chooseStatus=s=>{setMyStatus(s);writePref(STATUS_KEY,s);setFlash({text:s?"Status: "+s:"Status cleared"})};
+  useEffect(()=>{
+    if(!connected||!radioRoom){setStatusShared(false);return}
+    let alive=true;
+    shareStatus(radioRoom,myStatus).then(ok=>{if(alive)setStatusShared(ok)}).catch(()=>{if(alive)setStatusShared(false)});
+    return()=>{alive=false};
+  },[connected,radioRoom,myStatus]);
   // Scan list (saved) and scan on/off. The default list is the current zone's channels.
   const [scanCfg,setScanCfgState]=useState(loadScan),[scanOn,setScanOn]=useState(false);
   const [consoleCfgState,setConsoleCfgState]=useState(loadConsole),[consoleOn,setConsoleOn]=useState(false);
@@ -504,6 +526,7 @@ function RadioApp({session,onSignOut}){
     else if(action==="volume_up"||action==="volume_down")changeVolume(action==="volume_up"?1:-1);
     else if(action==="scan")toggleScan();
     else if(action==="mini")toggleMini();
+    else if(action.startsWith("status_")){const st=STATUSES[Number(action.slice(7))-1];if(st)chooseStatus(st===myStatus?"":st)}
     else if(action==="console"){if(connected)toggleConsole()}
     else if(action==="nuisance")nuisance();
     else if(action==="answer"){if(incoming)accept()}
@@ -636,6 +659,7 @@ function RadioApp({session,onSignOut}){
                 <label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label>
                 <label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label>
                 <PttLearn bindings={pttBindings} learning={learnFor==="ptt"} onLearn={()=>learn("ptt")} onCancel={()=>learn("")} onEdit={()=>setTab("settings")}/>
+                <StatusButtons status={myStatus} onStatus={chooseStatus} shared={statusShared} connected={connected}/>
                 <div className="apx-program-foot"><span>{participants.length} on channel</span><span>{muted?"Speaker muted":"Speaker on"}</span></div>
               </div>
             </div>

@@ -122,6 +122,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         onTrackUnmuted:(pub,participant)=>{if(pub?.track)txStart(pub.track,participant)},
         onParticipantDisconnected:participant=>txEnd(participant),
         onQuality:q=>{if(roomRef.current===room)setQuality(q)},
+        onAttributes:()=>{if(roomRef.current===room)refresh()},
         onDisconnected:()=>{if(roomRef.current!==room)return;clearOnAir();setQuality("unknown");if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;micRef.current=null;if(pubRef.current?.room===room){try{pubRef.current.track.stop()}catch{}pubRef.current=null}cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready")}});
       if(gen!==connGenRef.current){await disconnectRadio(room);return null}
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;

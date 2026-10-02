@@ -20,6 +20,7 @@ export const ACTIONS=[
   {id:"who",label:"Who's On",group:"Radio"},
   {id:"bright_up",label:"Display brighter",group:"Radio"},
   {id:"bright_down",label:"Display dimmer",group:"Radio"},
+  ...["Available","En Route","At Scene","Busy","Returning","Out of Service"].map((label,i)=>({id:"status_"+(i+1),label:"Status: "+label,group:"Status"})),
   {id:"answer",label:"Answer call",group:"Calls"},
   {id:"decline",label:"Decline call",group:"Calls"},
   {id:"end_call",label:"End call",group:"Calls"},

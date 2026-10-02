@@ -23,6 +23,7 @@ export async function connectRadio(token, livekitUrl=config.livekitUrl, callback
   room.on(RoomEvent.TrackUnsubscribed,(track,pub,participant)=>callbacks.onTrackUnsubscribed?.(track,pub,participant));
   room.on(RoomEvent.TrackMuted,(pub,participant)=>{if(participant!==room.localParticipant)callbacks.onTrackMuted?.(pub,participant)});
   room.on(RoomEvent.TrackUnmuted,(pub,participant)=>{if(participant!==room.localParticipant)callbacks.onTrackUnmuted?.(pub,participant)});
+  room.on(RoomEvent.ParticipantAttributesChanged,(changed,participant)=>{if(participant!==room.localParticipant)callbacks.onAttributes?.(changed,participant)});
   room.on(RoomEvent.ConnectionQualityChanged,(quality,participant)=>{if(participant===room.localParticipant)callbacks.onQuality?.(quality)});
   room.on(RoomEvent.Disconnected,reason=>callbacks.onDisconnected?.(reason));
   await room.connect(livekitUrl,token);
@@ -61,6 +62,16 @@ export function isPublished(room,track){
 export async function unpublishMicrophone(room,track) {
   if(!room||!track)return;
   try{await room.localParticipant.unpublishTrack(track,true)}catch{}
+}
+
+// Share a member status (At Scene, En Route…) as a participant attribute, so every radio
+// on the channel sees it, including members who join later. Needs the radio server to
+// grant canUpdateOwnMetadata; returns false when it doesn't.
+export function canShareStatus(room){return !!room?.localParticipant?.permissions?.canUpdateMetadata}
+export async function shareStatus(room,status){
+  if(!canShareStatus(room))return false;
+  await room.localParticipant.setAttributes({status:status||""});
+  return true;
 }
 
 export async function disconnectRadio(room){if(!room)return;await room.disconnect()}

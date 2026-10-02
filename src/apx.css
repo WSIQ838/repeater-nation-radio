@@ -260,3 +260,19 @@ body.mini-mode{min-width:0;overflow:hidden}
 .traffic-row.playing{background:#13202a}
 .traffic-time,.traffic-len{color:#8d98a5;font-variant-numeric:tabular-nums}
 .traffic-ch{color:#9aa4ae;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Member status */
+.status-panel{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.status-panel small{color:#7e8995;font-size:11px}
+.status-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.status-buttons button{font-size:11px;padding:6px 4px;border-radius:6px;border:1px solid #2a3139;background:#151a21;color:#c3cad2;cursor:pointer}
+.status-buttons button.on{color:#111;font-weight:700;background:#9aa4ae;border-color:#9aa4ae}
+.status-buttons button.on.st-available{background:#46c77a;border-color:#46c77a}
+.status-buttons button.on.st-en-route{background:#f2c14e;border-color:#f2c14e}
+.status-buttons button.on.st-at-scene{background:#f28a25;border-color:#f28a25}
+.status-buttons button.on.st-busy,.status-buttons button.on.st-out-of-service{background:#d25a5a;border-color:#d25a5a;color:#fff}
+.status-buttons button.on.st-returning{background:#5aa2e6;border-color:#5aa2e6}
+.status-chip{font-style:normal;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:#2a323c;color:#dce3ea;margin-left:auto;margin-right:8px}
+.status-chip.st-available{background:#163021;color:#7be0a2}.status-chip.st-en-route{background:#3a3115;color:#f2c14e}
+.status-chip.st-at-scene{background:#3a2412;color:#f6a65a}.status-chip.st-busy,.status-chip.st-out-of-service{background:#3a1616;color:#ff8a8a}
+.status-chip.st-returning{background:#132a3d;color:#8cc4f5}

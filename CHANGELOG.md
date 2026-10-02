@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.5
+
+Radio features, part 6: **Status buttons**.
+
+- Status buttons on the radio page (under Programming): Available, En Route, At Scene, Busy, Returning, Out of Service. Tap one to set it, tap it again to clear it. It is remembered and re-applied every time you connect or change channel.
+- Every member's status shows as a colored tag next to their name in Who's On.
+- Each status can be mapped to a button (Settings › Button mapping › Status).
+- **Needs a radio-server change to reach other radios**: the server must allow the app to update its own participant attributes (`canUpdateOwnMetadata`). Until then your status shows only on your own radio, and the radio says so under the buttons. Nothing else changes once the server allows it.
+- Version set to 0.2.5 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.4
 
 Radio features, part 5: **Traffic recorder and playback log**.
