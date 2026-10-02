@@ -15,6 +15,7 @@ export const ACTIONS=[
   {id:"scan",label:"Scan on / off",group:"Channel & zone"},
   {id:"nuisance",label:"Nuisance delete (skip scanned channel)",group:"Channel & zone"},
   {id:"home",label:"Home",group:"Radio"},
+  {id:"mini",label:"Mini radio on / off",group:"Radio"},
   {id:"who",label:"Who's On",group:"Radio"},
   {id:"bright_up",label:"Display brighter",group:"Radio"},
   {id:"bright_down",label:"Display dimmer",group:"Radio"},

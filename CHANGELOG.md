@@ -1,5 +1,18 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.2
+
+Radio features, part 3: **Mini radio, tray icon and notifications**.
+
+- **Mini radio**: the new "Mini" button (top right), the tray menu or a mapped button shrinks the radio to a small window that stays on top of other windows. It shows the zone, channel, signal bars and who is talking or being scanned, with PTT, channel up/down, power, mute and volume. Incoming calls can be answered or declined from it. The expand button puts the full radio back at its old size.
+- The radio stays connected while switching between full and mini; nothing reconnects.
+- **Tray icon** (Windows, Mac, and Linux desktops with AppIndicator): click it to bring the radio up; its menu has Show radio, Mini radio on / off, Mute / unmute speaker and Quit. Hovering it shows the current channel, and "(off)" or "(muted)".
+- Settings › Radio features › "Close button keeps the radio running in the tray": when on, closing the window hides it to the tray and keeps listening (Quit from the tray menu exits). Off by default, and only offered when the tray icon is available.
+- **Notifications** while the radio is behind other windows or hidden in the tray: incoming calls (on by default), and optionally "someone is talking" on your channel or a scanned channel (off by default, at most once a minute per person and channel).
+- New mappable action: Mini radio on / off.
+- Linux builds need `libayatana-appindicator3-dev` (added to the Linux workflow). Without AppIndicator installed the app runs without a tray icon instead of failing.
+- Version set to 0.2.2 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.1
 
 Radio features, part 2: **Scan**.

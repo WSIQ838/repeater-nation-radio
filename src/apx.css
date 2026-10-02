@@ -186,3 +186,32 @@
 .features select,.features input[type=range]{background:#0b0f14;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:4px 6px}
 .features small{color:#7e8995}
 .scan-zone{display:block;margin:6px 0 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8c97a3}
+
+/* Mini radio (always-on-top compact window) */
+body.mini-mode{min-width:0;overflow:hidden}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.mini-open{display:inline-flex;align-items:center;gap:6px;border:1px solid #29313b;background:#151a21;color:#c3cad2;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer}
+.mini-open:hover{color:#fff;border-color:#3a4450}
+.mini-radio{height:100vh;display:flex;flex-direction:column;gap:8px;padding:10px 12px;background:linear-gradient(160deg,#25282d,#121417);color:#e9edf2;user-select:none}
+.mini-top{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:1px;color:#8d98a5;text-transform:uppercase}
+.mini-zone{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-bars{display:inline-flex;align-items:flex-end;gap:2px;height:12px}
+.mini-bars i{width:3px;background:#3b434c;border-radius:1px}
+.mini-bars i:nth-child(1){height:4px}.mini-bars i:nth-child(2){height:7px}.mini-bars i:nth-child(3){height:10px}.mini-bars i:nth-child(4){height:12px}
+.mini-bars i.on{background:#46c77a}
+.mini-channel{display:flex;align-items:center;gap:6px;background:#f4f5f2;color:#0d0f12;border-radius:6px;padding:6px 4px;font-family:"Arial Narrow",Arial,Helvetica,sans-serif}
+.mini-channel>div{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column}
+.mini-channel strong{font-size:19px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-channel small{font-size:11px;color:#4b525a}
+.mini-channel .mini-icon{color:#0d0f12;background:transparent}
+.mini-status{font-size:12px;padding:5px 8px;border-radius:5px;background:#0c0f13;color:#9aa4ae;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini-radio.rx .mini-status{background:#163021;color:#7be0a2}
+.mini-radio.tx .mini-status{background:#3a1616;color:#ff8a8a}
+.mini-controls{display:flex;align-items:center;gap:6px;margin-top:auto}
+.mini-controls .primary,.mini-controls .danger{flex:1;justify-content:center;padding:9px}
+.mini-icon{border:0;cursor:pointer;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;background:#1b222a;color:#c3cad2;flex:none}
+.mini-icon:hover{color:#fff}.mini-icon.lit{color:#46c77a}.mini-icon:disabled{opacity:.45;cursor:not-allowed}
+.mini-ptt{flex:1;height:40px;border:0;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:700;background:#2a323c;color:#e9edf2;touch-action:none}
+.mini-ptt.pressed{background:#d23b3b;color:#fff}
+.mini-ptt:disabled{opacity:.45;cursor:not-allowed}
+.mini-vol{min-width:18px;text-align:center;font-size:12px;color:#9aa4ae}

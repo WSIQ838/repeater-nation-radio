@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
+import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw,Minimize2} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
@@ -12,6 +12,8 @@ import {prewarmRadio} from "./lib/livekit";
 import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
 import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {ControlHead,PalmMic} from "./components/ControlHead";
+import {MiniRadio} from "./components/MiniRadio";
+import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
 import {DEFAULT_VOLUME,announce,canAnnounce,loadFeatures,loadVolumes,playTone,saveFeatures,saveVolumes} from "./lib/tones";
 import "./apx.css";
 
@@ -138,13 +140,16 @@ function UpdateStatus(){
   return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date · {String(__APP_VERSION__)}</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div></div>;
 }
 
-function RadioFeatures({features,setFeature}){
+function RadioFeatures({features,setFeature,hasTray}){
   return <div className="features">
     <label>Talk-permit tone<input type="checkbox" checked={features.permitTone} onChange={e=>setFeature("permitTone",e.target.checked)}/></label>
     <label>Busy tone<input type="checkbox" checked={features.busyTone} onChange={e=>setFeature("busyTone",e.target.checked)}/></label>
     <label>Roger beep after each received transmission<input type="checkbox" checked={features.rogerBeep} onChange={e=>setFeature("rogerBeep",e.target.checked)}/></label>
     <label>Time-out timer<select value={features.tot} onChange={e=>setFeature("tot",Number(e.target.value))}>{[[0,"Off"],[30,"30 s"],[60,"60 s"],[120,"2 min"],[180,"3 min"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
     <label>Tone volume<input type="range" min="0" max="1" step="0.1" value={features.toneVolume} onChange={e=>setFeature("toneVolume",Number(e.target.value))}/></label>
+    <label>Notify incoming calls when the radio is in the background<input type="checkbox" checked={features.notifyCalls} onChange={e=>setFeature("notifyCalls",e.target.checked)}/></label>
+    <label>Notify when someone talks while the radio is in the background<input type="checkbox" checked={features.notifyTalk} onChange={e=>setFeature("notifyTalk",e.target.checked)}/></label>
+    {hasTray&&<label>Close button keeps the radio running in the tray<input type="checkbox" checked={features.closeToTray} onChange={e=>setFeature("closeToTray",e.target.checked)}/></label>}
     <label>Announce channel changes{canAnnounce()?<input type="checkbox" checked={features.announce} onChange={e=>setFeature("announce",e.target.checked)}/>:<small>Not available on this system</small>}</label>
   </div>;
 }
@@ -348,6 +353,7 @@ function RadioApp({session,onSignOut}){
     else if(action==="mute")setMuted(!muted);
     else if(action==="volume_up"||action==="volume_down")changeVolume(action==="volume_up"?1:-1);
     else if(action==="scan")toggleScan();
+    else if(action==="mini")toggleMini();
     else if(action==="nuisance")nuisance();
     else if(action==="answer"){if(incoming)accept()}
     else if(action==="decline"){if(incoming)decline()}
@@ -413,14 +419,46 @@ function RadioApp({session,onSignOut}){
   const pttBindings=(keymap||[]).filter(b=>b.action==="ptt"),pttName=pttBindings.map(b=>b.label||b.code).join(" / ");
   const keymapProps={keymap:keymap||[],caps:hwCaps,learnFor,notice:mapNotice,onLearn:learn,onRemove:i=>updateKeymap(keymap.filter((_,k)=>k!==i)),onToggleGlobal:i=>updateKeymap(keymap.map((b,k)=>k===i?{...b,global:!b.global}:b)),onReset:()=>{updateKeymap(defaultBindings(!!hwCaps?.global_keys));setMapNotice("Button mapping reset to defaults.")}};
 
+  // Mini radio: the same window shrunk to a small always-on-top radio.
+  const [mini,setMini]=useState(false),miniSeen=useRef(false);
+  const toggleMini=()=>setMini(m=>!m);
+  useEffect(()=>{if(!miniSeen.current&&!mini)return;miniSeen.current=true;setMiniWindow(mini)},[mini]);
+  // Tray icon: tooltip shows the channel; its menu toggles the mini radio and mute.
+  const [hasTray,setHasTray]=useState(false);
+  useEffect(()=>{
+    const where=currentChannel?`${currentChannel.zoneName?currentChannel.zoneName+" ":""}CH ${currentChannel.number??""} ${currentChannel.name}`:channelName;
+    setTray(`Repeater Nation Radio · ${where}${connected?"":" (off)"}${muted?" (muted)":""}`,!!features.closeToTray).then(setHasTray);
+  },[channelName,currentChannel?.id,connected,muted,features.closeToTray]);
+  useEffect(()=>listenTray(action=>{if(action==="mini")setMini(m=>!m);else if(action==="mute")runRef.current("mute")}),[]);
+  // Notifications while the radio is behind other windows or hidden in the tray.
+  useEffect(()=>{
+    if(!incoming||!featuresRef.current.notifyCalls||!appInBackground())return;
+    notify("Incoming radio call",(incoming.caller_display_name||incoming.caller_callsign||"A member")+" is calling you");
+  },[incoming?.id]);
+  const talkNotified=useRef(new Map());
+  const notifyTalk=(where,who)=>{
+    if(!who||!featuresRef.current.notifyTalk||!appInBackground())return;
+    const key=where+"|"+who,now=Date.now();
+    if(now-(talkNotified.current.get(key)||0)<60000)return;
+    talkNotified.current.set(key,now);notify(where,who+" is talking");
+  };
+  useEffect(()=>{notifyTalk(channelName,onAir?.name)},[onAir?.identity]);
+  useEffect(()=>{if(scanActive)notifyTalk("Scan · "+scanActive.name,scanActive.talker)},[scanActive?.channelId,scanActive?.talker]);
+
   const logout=async()=>{await disconnect();await endCall();await clearSession();onSignOut()};
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
 
+  if(mini)return <MiniRadio
+    channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
+    state={state} connected={connected} ptt={ptt} muted={muted} quality={quality} onAir={onAir} scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} incoming={incoming}
+    onDown={down} onUp={up} onChannel={dir=>runAction(dir>0?"channel_up":"channel_down")} onMute={()=>setMuted(!muted)} onVolume={changeVolume}
+    onPower={()=>runAction("power")} onExpand={()=>setMini(false)} onAnswer={accept} onDecline={decline}
+  />;
   return <div className="app-shell">
     <header className="topbar">
       <div className="brand"><div className="brand-mark small"><Radio size={20}/></div><div><strong>Repeater Nation</strong><span>RADIO</span></div></div>
-      <div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":"Ready"}<ChevronDown size={14}/></div>
+      <div className="topbar-right"><button type="button" className="mini-open" onClick={toggleMini} title="Mini radio (always on top)"><Minimize2 size={15}/> Mini</button><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":"Ready"}<ChevronDown size={14}/></div></div>
     </header>
     <div className="body">
       <aside className="sidebar">{[["radio","Radio",Radio],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
@@ -456,7 +494,7 @@ function RadioApp({session,onSignOut}){
         </>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature}/></div><div className="setting keymap-setting"><span>Button mapping</span><KeyMap {...keymapProps}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray}/></div><div className="setting keymap-setting"><span>Button mapping</span><KeyMap {...keymapProps}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>

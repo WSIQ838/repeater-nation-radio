@@ -50,7 +50,7 @@ export const canAnnounce=()=>typeof window!=="undefined"&&!!window.speechSynthes
 
 // Saved radio feature settings.
 const KEY="rn-features";
-export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,tot:60,announce:false,toneVolume:0.6};
+export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,tot:60,announce:false,toneVolume:0.6,notifyCalls:true,notifyTalk:false,closeToTray:false};
 export function loadFeatures(){try{return {...FEATURE_DEFAULTS,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return {...FEATURE_DEFAULTS}}}
 export function saveFeatures(f){try{localStorage.setItem(KEY,JSON.stringify(f))}catch{}}
 
