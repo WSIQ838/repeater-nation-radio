@@ -1,5 +1,30 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.13
+
+**Dash mount head**, built from Sean's APX Mobile photo. It's the second radio in the one-at-a-time redo, and it replaces the old compact mobile head.
+
+- Every part is placed from the photo's own measurements, as on the dispatch control head:
+  - the heatsink top with its center bracket
+  - a left module with power, three LEDs, the brightness key, a small round key and the round mic jack
+  - the display with four softkeys under it
+  - the ridged knob over a four-petal nav diamond
+  - the keypad, with letters beside each digit, and the yellow Home and laptop keys under it
+  - a right module with the orange emergency button and a small round key
+- The display matches the photo: a status icon row, the zone over the channel in capitals, and Zone, Chan, Call and Next labels. The green banner shows only while something is happening (receiving, transmitting, a call or a message).
+- What the controls do:
+  - Zone steps the zone.
+  - Chan opens channel entry: type the number on the keypad, then #.
+  - Call opens Calls.
+  - Next pages to Scan, Recent and Who, then back.
+  - The knob is volume: scroll to change it, click to mute.
+  - The nav diamond changes channel (left and right) and zone (up and down).
+  - The laptop key shows Who's On, and the star key steps the display brightness.
+  - The two unlabeled round keys and the emergency button stay inert.
+- The engraved maker's name reads REPEATER NATION, and the logos on the heatsink and front are left off.
+- In a window narrower than the head, the wide heads zoom down to fit instead of running off the side.
+- Version set to 0.2.13 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.12
 
 **Old radios removed.** The wide mobile head, compact mobile head, keypad portable, touchscreen portable, classic portable and rugged green portable are gone from the radio picker, so only the dispatch control head redone from Sean's O7 photo is left.

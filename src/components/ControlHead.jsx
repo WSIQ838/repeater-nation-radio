@@ -48,6 +48,7 @@ export function useFace(p,{layout}={}){
   scanning=false,scanActive=null,onScan,onNuisance,myStatus="",onStatus}=p;
   const o7=layout==="o7";
   const [view,setView]=useState("home");
+  const [page,setPage]=useState(0);// softkey page on radios with a Next key
   const [entry,setEntry]=useState("");
   const [brightness,setBrightness]=useState(3);
   const [notice,setNotice]=useState("");
@@ -84,7 +85,7 @@ export function useFace(p,{layout}={}){
     }
     setEntry(v=>(v+k).slice(0,3));setView("home");
   };
-  const goHome=()=>{setView("home");setEntry("");onTab("radio")};
+  const goHome=()=>{setView("home");setEntry("");setPage(0);onTab("radio")};
   const oneTouch=i=>{const c=visibleChannels[i];if(c)onChannel(c.id);else setNotice("P"+(i+1)+" not programmed")};
 
   // Context-sensitive softkey labels, like the real radio's menu row.
@@ -112,7 +113,17 @@ export function useFace(p,{layout}={}){
     {label:"End Call",act:onEndCall,tone:"stop"},
     {label:"",act:null},{label:"",act:null},{label:"",act:null},
     {label:"Contacts",act:()=>onTab("calls")},
-  ]:o7?[
+  ]:layout==="apx-mobile"?(page===0?[
+    {label:"Zone",act:()=>stepZone(1)},
+    {label:"Chan",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
+    {label:"Call",act:()=>onTab("calls")},
+    {label:"Next",act:()=>setPage(1)},
+  ]:[
+    {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+    {label:"Recent",act:()=>setView("recent")},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:"Who",act:()=>setView(v=>v==="who"?"home":"who")},
+    {label:"Next",act:()=>setPage(0)},
+  ]):o7?[
     {label:"Channel",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
     scanActive?{label:"Nuis Del",act:onNuisance}:{label:"Page",act:()=>onTab("calls")},
@@ -203,17 +214,21 @@ export function FaceDisplay({p,f,className="apx-display",menus=true,softRow=null
 // photo's own pixel box (radio body at x 42–399, y 19–356) scaled to a 600 px head,
 // so a key can be checked against the picture by its numbers. The siren, horn,
 // lights, PA and emergency keys are vehicle controls and stay inert.
-const O7_K=600/357,r1=n=>Math.round(n*10)/10;
-const at=(x1,y1,x2,y2)=>({left:r1((x1-42)*O7_K),top:r1((y1-19)*O7_K),width:r1((x2-x1)*O7_K),height:r1((y2-y1)*O7_K)});
-const dot=(cx,cy,d)=>at(cx-d/2,cy-d/2,cx+d/2,cy+d/2);
+// Boxes in a photo's own pixels (origin ox,oy) scaled by k into CSS pixels.
+export function photoBoxes(ox,oy,k){
+  const r1=n=>Math.round(n*10)/10;
+  const at=(x1,y1,x2,y2)=>({left:r1((x1-ox)*k),top:r1((y1-oy)*k),width:r1((x2-x1)*k),height:r1((y2-y1)*k)});
+  return {at,dot:(cx,cy,d)=>at(cx-d/2,cy-d/2,cx+d/2,cy+d/2)};
+}
+const {at,dot}=photoBoxes(42,19,600/357);
 const SOFT_X=[[101,130],[135,164],[169,199],[204,232],[237,267]],SOFT_TOP=[121,138],SOFT_BOTTOM=[280,297];
 const KEY_COLS=[[294,320],[325,350],[354,380]],KEY_ROWS=[[149,172],[175,198],[201,224],[227,250]];
 const P_X=[[103,135],[138,168],[173,203],[208,238],[243,275]];
 const MODE_ANGLES=[-50,-12,18,52];// knob pointer at 0, 1, 2 and 3
-const O7_KEYS=[["1",". , ?"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*","space"],["0","shift"],["#","lock"]];
+export const O7_KEYS=[["1",". , ?"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*","space"],["0","shift"],["#","lock"]];
 
 const Svg=({w=24,h=24,children,...r})=><svg viewBox={`0 0 ${w} ${h}`} aria-hidden="true" {...r}>{children}</svg>;
-const O7Icon={
+export const O7Icon={
   horn:<Svg w={34} h={18}><path d="M2 7h4v4H2zM6 7.5h6L28 2v14L12 10.5H6z" fill="currentColor"/><path d="M27 2.5c2 .5 3 3.5 3 6.5s-1 6-3 6.5" fill="none" stroke="currentColor" strokeWidth="1.6"/><path d="M12 11c0 4.5 6 4.5 6 0" fill="none" stroke="currentColor" strokeWidth="1.7"/></Svg>,
   wail:<Svg w={22} h={18}><path d="M2.5 13C3.5 3 8.5 1.5 10.5 9s7.5 8 9-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/></Svg>,
   yelp:<Svg w={22} h={18}><path d="M2.5 15 7.5 4.5l2.5 8 5-9.5.8 12" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/></Svg>,
