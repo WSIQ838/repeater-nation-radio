@@ -33,4 +33,19 @@ export function listenHardware(handlers){
 }
 
 // Prefer a hand mic for audio when nothing has been chosen yet.
-export const HAND_MIC=/hmic|kst|hand ?mic|speaker ?mic|ptt/i;
+export const HAND_MIC=/hmic|kst|hand ?mic|speaker ?mic|ptt|hands-?free/i;
+
+// Bluetooth LE PTT buttons that report on their own service rather than as a key.
+const BLE_KEY="rn-ble-device";
+export function loadBleDevice(){try{return JSON.parse(localStorage.getItem(BLE_KEY))||null}catch{return null}}
+export function saveBleDevice(d){try{d?localStorage.setItem(BLE_KEY,JSON.stringify(d)):localStorage.removeItem(BLE_KEY)}catch{}}
+export async function bleScan(){const [{invoke}]=await api();return invoke("ble_scan")}
+export async function bleConnect(device){if(!inTauri()||!device)return;try{const [{invoke}]=await api();await invoke("ble_connect",{id:device.id,name:device.name})}catch{}}
+export async function bleDisconnect(){if(!inTauri())return;try{const [{invoke}]=await api();await invoke("ble_disconnect")}catch{}}
+export function listenBle(onStatus){
+  if(!inTauri())return()=>{};
+  let off=null,disposed=false;
+  api().then(async([,{listen}])=>{const o=await listen("ble-status",e=>onStatus(e.payload));if(disposed)o();else off=o}).catch(()=>{});
+  return()=>{disposed=true;off?.()};
+}
+export const inDesktopApp=inTauri;

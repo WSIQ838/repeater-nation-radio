@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>Repeater Nation Radio connects to Bluetooth PTT buttons and hand mics.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Repeater Nation Radio uses the microphone to transmit when you press PTT.</string>
+</dict>
+</plist>

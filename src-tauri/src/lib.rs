@@ -1,5 +1,6 @@
 use tauri::Manager;
 
+mod ble;
 mod ptt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -24,7 +25,7 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
-        .invoke_handler(tauri::generate_handler![ptt::ptt_set_binding, ptt::ptt_learn, ptt::ptt_capabilities])
+        .invoke_handler(tauri::generate_handler![ptt::ptt_set_binding, ptt::ptt_learn, ptt::ptt_capabilities, ble::ble_scan, ble::ble_connect, ble::ble_disconnect])
         .setup(|_app| {
             ptt::start(_app.handle().clone());
             // AppImage and dev builds have no installer to register the

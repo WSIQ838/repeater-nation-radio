@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.16
+
+- Bluetooth PTT mics. Settings now has a Bluetooth PTT section: "Find Bluetooth button" lists nearby Bluetooth LE devices, "Use" connects to one, and Learn PTT button then learns its button. This is for buttons that report on their own Bluetooth service instead of as a key. The app reconnects to the button on every launch and after it drops or powers off. "Forget" disconnects it.
+- Bluetooth mics that send their button as a media key (Play/Pause, the usual headset button) or as a Bluetooth keyboard key already work with Learn PTT button from 0.1.15, including with the window unfocused on Windows.
+- A Bluetooth headset mic and speaker ("Hands-Free" in Windows) is now also picked automatically the first time it appears, like a USB hand mic.
+- macOS: added the Bluetooth and microphone permission descriptions (`src-tauri/Info.plist`) that macOS requires.
+- `linux.yml` now also installs `libdbus-1-dev` (needed for Bluetooth on Linux).
+- Version set to 0.1.16 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.15
 
 - Hand mic and hardware PTT support. "Learn PTT button" (in Programming and in Settings) waits for you to press the PTT button on a USB hand mic, foot switch or gamepad, then that button keys the radio. It is saved and restored on the next launch. Clear or Change it from the same place. Esc cancels learning.

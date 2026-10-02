@@ -8,7 +8,7 @@ import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 import {prewarmRadio} from "./lib/livekit";
-import {HAND_MIC,listenHardware,loadBinding,pttCapabilities,saveBinding,setHardwareBinding,setLearning} from "./lib/ptt";
+import {HAND_MIC,bleConnect,bleDisconnect,bleScan,inDesktopApp,listenBle,listenHardware,loadBinding,loadBleDevice,pttCapabilities,saveBinding,saveBleDevice,setHardwareBinding,setLearning} from "./lib/ptt";
 import {ControlHead,PalmMic} from "./components/ControlHead";
 import "./apx.css";
 
@@ -133,6 +133,23 @@ function PttLearn({binding,learning,onLearn,onCancel,onClear}){
   return <div className="ptt-learn"><span>{binding?"PTT button: "+binding.label:"No PTT button set"}</span><button onClick={onLearn}>{binding?"Change":"Learn PTT button"}</button>{binding&&<button onClick={onClear} aria-label="Clear PTT button">Clear</button>}</div>;
 }
 
+const BLE_TEXT={connecting:"Connecting…",connected:"Connected",disconnected:"Reconnecting…",error:"Not connected",off:"Off"};
+function BluetoothPtt({status,setStatus}){
+  const [device,setDevice]=useState(loadBleDevice),[found,setFound]=useState(null),[scanning,setScanning]=useState(false),[scanError,setScanError]=useState("");
+  if(!inDesktopApp())return null;
+  const scan=async()=>{setScanning(true);setScanError("");setFound(null);try{setFound(await bleScan())}catch(e){setScanError(String(e?.message||e||"Bluetooth scan failed."))}setScanning(false)};
+  const use=d=>{const pick={id:d.id,name:d.name};setDevice(pick);saveBleDevice(pick);setFound(null);bleConnect(pick)};
+  const forget=()=>{setDevice(null);saveBleDevice(null);setStatus(null);bleDisconnect()};
+  return <div className="ble-ptt">
+    <p className="muted">For Bluetooth PTT buttons that don't work with Learn PTT button on their own. Pair the button here, then use Learn PTT button and press it.</p>
+    {device?<div className="ble-row"><span><strong>{device.name}</strong> · {BLE_TEXT[status?.state]||"Connecting…"}{status?.state==="error"&&status.message?" · "+status.message:""}</span><button onClick={forget}>Forget</button></div>
+      :<div className="ble-row"><span>No Bluetooth button paired</span><button onClick={scan} disabled={scanning}>{scanning?"Searching…":"Find Bluetooth button"}</button></div>}
+    {device&&<button className="ble-find" onClick={scan} disabled={scanning}>{scanning?"Searching…":"Find a different button"}</button>}
+    {scanError&&<div className="error">{scanError}</div>}
+    {found&&(found.length?<ul className="ble-list">{found.map(d=><li key={d.id}><span>{d.name}{d.rssi!=null?` · ${d.rssi} dBm`:""}</span><button onClick={()=>use(d)}>Use</button></li>)}</ul>:<div className="empty">No Bluetooth devices found. Turn the button on and try again.</div>)}
+  </div>;
+}
+
 function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio"}])).values()),[channels]);
@@ -194,6 +211,9 @@ function RadioApp({session,onSignOut}){
   const downRef=useRef(down),upRef=useRef(up);downRef.current=down;upRef.current=up;
   const bindPtt=b=>{setPttBinding(b);saveBinding(b);setHardwareBinding(b)};
   const learnPtt=on=>{setLearningState(on);setLearning(on)};
+  // A paired Bluetooth PTT button reconnects at startup, whichever tab is open.
+  const [bleStatus,setBleStatus]=useState(null);
+  useEffect(()=>{const off=listenBle(setBleStatus);const saved=loadBleDevice();if(saved)bleConnect(saved);return off},[]);
   useEffect(()=>{
     pttCapabilities().then(setPttCaps);
     setHardwareBinding(loadBinding());
@@ -268,7 +288,7 @@ function RadioApp({session,onSignOut}){
         </>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0{pttName?" or "+pttName:""}</strong></div><div className="setting"><span>PTT button</span><PttLearn binding={pttBinding} learning={learning} onLearn={()=>learnPtt(true)} onCancel={()=>learnPtt(false)} onClear={()=>bindPtt(null)}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0{pttName?" or "+pttName:""}</strong></div><div className="setting"><span>PTT button</span><PttLearn binding={pttBinding} learning={learning} onLearn={()=>learnPtt(true)} onCancel={()=>learnPtt(false)} onClear={()=>bindPtt(null)}/></div><div className="setting ble-setting"><span>Bluetooth PTT</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>

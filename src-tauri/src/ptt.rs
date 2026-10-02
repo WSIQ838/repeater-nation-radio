@@ -64,6 +64,29 @@ fn input(app: &AppHandle, kind: &str, code: String, label: String, pressed: bool
     let _ = app.emit("ptt-hw", pressed);
 }
 
+/// A notification from a Bluetooth LE PTT button. The learned press is a characteristic
+/// plus the value it sends on press; any other value on that characteristic is a release.
+pub(crate) fn input_ble(app: &AppHandle, device: &str, characteristic: &str, value: &[u8]) {
+    let hex: String = value.iter().map(|b| format!("{b:02x}")).collect();
+    let pressed = {
+        let s = state();
+        if s.learning {
+            drop(s);
+            let label = format!("{device} button");
+            return input(app, "ble", format!("{characteristic}={hex}"), label, true);
+        }
+        match &s.binding {
+            Some(b) if b.kind == "ble" => match b.code.split_once('=') {
+                Some((c, v)) if c == characteristic => v == hex,
+                _ => return,
+            },
+            _ => return,
+        }
+    };
+    let code = state().binding.as_ref().map(|b| b.code.clone()).unwrap_or_default();
+    input(app, "ble", code, String::new(), pressed);
+}
+
 #[tauri::command]
 pub fn ptt_set_binding(binding: Option<Binding>) {
     let mut s = state();

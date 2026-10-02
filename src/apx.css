@@ -140,3 +140,11 @@
 .ptt-learn button:hover{border-color:#4a5562}
 .ptt-learn.learning span{color:#f2c14e;animation:ptt-learn-blink 1s steps(2) infinite}
 @keyframes ptt-learn-blink{50%{opacity:.45}}
+.ble-setting{align-items:flex-start}
+.ble-ptt{display:flex;flex-direction:column;gap:8px;flex:1;max-width:440px;font-size:13px}
+.ble-ptt p{margin:0;font-size:12px}
+.ble-row,.ble-list li{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ble-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ble-ptt button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer}
+.ble-ptt button:disabled{opacity:.6;cursor:default}
+.ble-find{align-self:flex-start}
