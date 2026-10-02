@@ -1,5 +1,6 @@
 import { createClient } from "@base44/sdk";
 import { config } from "./config";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 // Keep one Base44 client for the lifetime of the desktop app.
 // The desktop client must use the public Repeater Nation host for Base44 API
@@ -36,10 +37,10 @@ export async function restoreSession() {
 }
 
 export async function loginWithGoogle() {
-  const authClient = client();
-  // OAuth must return to the installed desktop app, not the Tauri WebView.
-  // The deep-link plugin routes this URL back into Repeater Nation Radio.
-  return authClient.auth.loginWithProvider("google", "/?rn_desktop=1");
+  // Google OAuth must start in the system browser so Base44 can complete
+  // its normal web session flow. The website bridge then sends the token
+  // back to this app through the registered repeaternation:// deep link.
+  return openUrl("https://repeaternation.com/?rn_desktop=1");
 }
 
 export async function restoreSessionFromOAuth(url = "") {
