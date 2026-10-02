@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useState} from "react";
-import {Radio,Users,Phone,Settings,Mic,MicOff,Volume2,VolumeX,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
+import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
@@ -7,6 +7,8 @@ import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
+import {ControlHead,PalmMic} from "./components/ControlHead";
+import "./apx.css";
 
 function Login(){
   const [email,setEmail]=useState("");
@@ -132,18 +134,21 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
 
   const connected=state==="listening"||state==="transmitting";
-  const chooseZone=async e=>{
-    const next=e.target.value;if(next===zoneId)return;
+  const currentChannel=channels.find(x=>x.id===channelId);
+  const selectZone=async next=>{
+    if(next===zoneId)return;
     setPtt(false);await disconnect();
     const first=channels.find(c=>c.zoneId===next);
     setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");
   };
-  const chooseChannel=async e=>{
-    const next=e.target.value;if(next===channelId)return;
+  const selectChannel=async next=>{
+    if(next===channelId)return;
     setPtt(false);await disconnect();
     const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio");
     if(c?.zoneId)setZoneId(c.zoneId);
   };
+  const chooseZone=e=>selectZone(e.target.value);
+  const chooseChannel=e=>selectChannel(e.target.value);
   const down=async()=>{if(!connected||ptt)return;setPtt(true);try{await requestPTT(micDeviceId)}catch{setPtt(false)}};
   const up=async()=>{if(!ptt)return;setPtt(false);await releasePTT()};
 
@@ -167,16 +172,26 @@ function RadioApp({session,onSignOut}){
       <aside className="sidebar">{[["radio","Radio",Radio],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
       <main className="content">
         {tab==="radio"&&<>
-          <section className="hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
-          <section className="radio-card radio-face-card">
-            <div className="channel-head radio-face-head"><div><span className="label">REPEATER NATION RADIO</span><h3>{channelName}</h3></div><span className={connected?"status-pill":"status-pill offline-pill"}>{ptt?"TRANSMIT":connected?"LISTENING":"OFFLINE"}</span></div>
-            <div className="radio-face">
-              <div className="radio-screen"><div className="radio-zone">ZONE-{channels.find(x=>x.id===channelId)?.zoneName||"RADIO"}</div><div className="radio-channel">{channelName}<strong>CH {channels.find(x=>x.id===channelId)?.number||"--"}</strong></div><div className={ptt?"radio-status tx":connected?"radio-status":"radio-status off"}>{error|| (ptt?"TRANSMITTING":connected?"LISTENING":"DISCONNECTED")}</div>{(ptt||state==="receiving")&&radioSession?.callsign&&<div className="radio-callsign">{radioSession.callsign}</div>}</div>
-              <div className="radio-face-controls"><button className="face-button" onClick={()=>setMuted(!muted)}>{muted?<VolumeX/>:<Volume2/>}<span>{muted?"MUTE":"VOL"}</span></button><button className={ptt?"face-ptt pressed":"face-ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic size={26}/><span>PTT</span></button><button className="face-button" onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power/><span>{connected?"OFF":"ON"}</span></button></div>
+          <section className="hero apx-hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
+          <section className="apx-stage">
+            <ControlHead
+              channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
+              zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId}
+              state={state} connected={connected} ptt={ptt} muted={muted} error={error} callsign={radioSession?.callsign||callsign} participants={participants}
+              incoming={incoming} call={call} callState={callState}
+              onPower={connected?disconnect:connect} onMute={()=>setMuted(!muted)} onChannel={selectChannel} onZone={selectZone} onTab={setTab}
+              onAnswer={accept} onDecline={decline} onEndCall={endCall}
+            />
+            <div className="apx-side">
+              <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up}/>
+              <div className="apx-program">
+                <span className="label">PROGRAMMING</span>
+                <label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
+                <label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label>
+                <label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label>
+                <div className="apx-program-foot"><span>{participants.length} on channel</span><span>{muted?"Speaker muted":"Speaker on"}</span></div>
+              </div>
             </div>
-            <div className="radio-utility"><label>ZONE<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>CHANNEL<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>
-            <div className="device-row"><span>Microphone</span><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span><small>Space / Numpad 0 = PTT</small></div>
-            {error&&<div className="error">{error}</div>}
           </section>
           <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div>{incoming?<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>:call?<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>:<div className="empty">Open Calls to see available members.</div>}</section></div>
         </>}
