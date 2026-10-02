@@ -4,11 +4,11 @@ import {Power,Sun,SunDim,Volume2,VolumeX,Megaphone,Hand,Lightbulb,Siren,Zap,Wave
 // APX O7-style control head. Every live control maps to an existing radio action;
 // the vehicle-only keys (siren, lights, horn, PA, emergency) are drawn for looks and stay inert.
 
-const KEYPAD=[["1",". ? !"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]];
+export const KEYPAD=[["1",". ? !"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]];
 
 // Scrolling a knob turns it one detent per notch. The listener is non-passive so the
 // wheel does not also scroll the page, and trackpad deltas are summed into detents.
-function Knob({className="",angle=0,label,onClick,onStep,children,title}){
+export function Knob({className="",angle=0,label,onClick,onStep,children,title}){
   const ref=useRef(null),stepRef=useRef(onStep),accRef=useRef(0);
   stepRef.current=onStep;
   useEffect(()=>{
@@ -37,14 +37,15 @@ function Clock(){
   return <span>{now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
 }
 
-export function ControlHead({
-  channelName,channelNumber,zoneName,zones,zoneId,visibleChannels,channelId,
+// Shared radio behaviour for every radio face: display views, keypad entry, softkey
+// menus, banner text, signal bars and mapped-button commands. A face only draws it.
+export function useFace(p){
+  const {channelName,channelNumber,zoneName,zones,zoneId,visibleChannels,channelId,
   state,connected,ptt,muted,error,callsign,participants,
   incoming,call,callState,
   onPower,onMute,onChannel,onZone,onTab,onAnswer,onDecline,onEndCall,command,
   quality="unknown",onAir=null,volume=7,onVolume,lastHeard=[],onReplay,flash,
-  scanning=false,scanActive=null,onScan,onNuisance,
-}){
+  scanning=false,scanActive=null,onScan,onNuisance}=p;
   const [view,setView]=useState("home");
   const [entry,setEntry]=useState("");
   const [brightness,setBrightness]=useState(3);
@@ -147,6 +148,52 @@ export function ControlHead({
   const bars=connected?(QUALITY_BARS[quality]??4):state==="connecting"?1:0;
   const ledTx=ptt,ledRx=!!(onAir||scanActive)&&!ptt,ledCall=!!(incoming||call);
 
+  return {view,setView,entry,setEntry,brightness,setBrightness,notice,setNotice,channelIndex,zoneIndex,stepChannel,stepZone,pressKey,goHome,oneTouch,top,bottom,replayLast,banner,bars,ledTx,ledRx,ledCall};
+}
+
+// The display contents (menus, status icons, channel/zone, Who's On, Recent, banner).
+export function FaceDisplay({p,f,className="apx-display",menus=true,softRow=null}){
+  const {channelName,channelNumber,zoneName,connected,ptt,muted,participants,incoming,call,quality="unknown",lastHeard=[],scanning=false}=p;
+  const {view,entry,top,bottom,banner,bars}=f;
+  return <div className={className}>
+            {menus&&<div className="apx-menu top">{top.map((k,i)=><span key={i}>{k.label}</span>)}</div>}
+            <div className="apx-icons">
+              <span className="apx-bars" title={connected?"Connection: "+(quality==="unknown"?"checking":quality):"No signal"}>{[1,2,3,4].map(n=><i key={n} className={n<=bars?"on":""}/>)}</span>
+              <Signal size={12} className={connected?"lit":""}/>
+              {muted?<VolumeX size={12} className="lit-red"/>:<Volume2 size={12}/>}
+              {ptt&&<span className="apx-tag tx">TX</span>}
+              {connected&&!ptt&&<span className="apx-tag">RX</span>}
+              {scanning&&<span className="apx-tag">SCAN</span>}
+              {(incoming||call)&&<Phone size={12} className="lit"/>}
+              <span className="apx-icons-right"><Users size={12}/>{participants.length}<Clock/></span>
+            </div>
+            <div className="apx-main">
+              {view==="recent"?<div className="apx-who apx-recent">
+                <strong>Recent</strong>
+                {lastHeard.length?lastHeard.slice(0,4).map(x=><span key={x.id}>{x.name}<i>{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})} · {Math.max(1,Math.round(x.ms/1000))}s</i></span>):<span className="dim">Nothing heard yet</span>}
+              </div>:view==="who"?<div className="apx-who">
+                <strong>Who's On</strong>
+                {participants.length?participants.slice(0,4).map(p=>{let info={};try{info=p.metadata?JSON.parse(p.metadata):{}}catch{}return <span key={p.identity}>{info.callsign||info.displayName||p.name||p.identity}</span>}):<span className="dim">{connected?"Nobody else on channel":"Not connected"}</span>}
+                {participants.length>4&&<span className="dim">+{participants.length-4} more</span>}
+              </div>:entry?<div className="apx-entry"><small>Channel number</small><strong>CH {entry}<i>_</i></strong><small># Enter · * Clear</small></div>:<>
+                <div className="apx-zone">{zoneName||"All Zones"}</div>
+                <div className="apx-channel">{channelName}</div>
+                <div className="apx-chnum">CH {channelNumber??"--"}</div>
+              </>}
+            </div>
+            <div className={"apx-banner "+banner.tone}>
+              <strong>{banner.title}</strong>
+              {banner.sub&&<span>{banner.icon&&<banner.icon size={11}/>} {banner.sub}</span>}
+            </div>
+            {menus?<div className="apx-menu bottom">{bottom.map((k,i)=><span key={i} className={k.tone||""}>{k.label}</span>)}</div>:softRow&&<div className="apx-menu bottom">{softRow.map((k,i)=><span key={i} className={k.tone||""}>{k.label}</span>)}</div>}
+          
+  </div>;
+}
+
+export function ControlHead(p){
+  const {zoneName,state,connected,muted,volume=7,visibleChannels,onPower,onMute,onVolume}=p;
+  const f=useFace(p);
+  const {view,setView,entry,setEntry,brightness,setBrightness,notice,setNotice,channelIndex,zoneIndex,stepChannel,stepZone,pressKey,goHome,oneTouch,top,bottom,replayLast,banner,bars,ledTx,ledRx,ledCall}=f;
   return <div className="apx-head" style={{"--apx-bright":0.55+brightness*0.15}}>
     <div className="apx-bezel">
       {/* Top accessory row */}
@@ -185,38 +232,7 @@ export function ControlHead({
         {/* Center: softkeys + display */}
         <div className="apx-center">
           <div className="apx-softkeys">{top.map((k,i)=><button type="button" key={i} className="apx-soft" onClick={k.act||undefined} disabled={!k.act||k.disabled} aria-label={k.label||"Unused softkey"}/>)}</div>
-          <div className="apx-display">
-            <div className="apx-menu top">{top.map((k,i)=><span key={i}>{k.label}</span>)}</div>
-            <div className="apx-icons">
-              <span className="apx-bars" title={connected?"Connection: "+(quality==="unknown"?"checking":quality):"No signal"}>{[1,2,3,4].map(n=><i key={n} className={n<=bars?"on":""}/>)}</span>
-              <Signal size={12} className={connected?"lit":""}/>
-              {muted?<VolumeX size={12} className="lit-red"/>:<Volume2 size={12}/>}
-              {ptt&&<span className="apx-tag tx">TX</span>}
-              {connected&&!ptt&&<span className="apx-tag">RX</span>}
-              {scanning&&<span className="apx-tag">SCAN</span>}
-              {(incoming||call)&&<Phone size={12} className="lit"/>}
-              <span className="apx-icons-right"><Users size={12}/>{participants.length}<Clock/></span>
-            </div>
-            <div className="apx-main">
-              {view==="recent"?<div className="apx-who apx-recent">
-                <strong>Recent</strong>
-                {lastHeard.length?lastHeard.slice(0,4).map(x=><span key={x.id}>{x.name}<i>{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})} · {Math.max(1,Math.round(x.ms/1000))}s</i></span>):<span className="dim">Nothing heard yet</span>}
-              </div>:view==="who"?<div className="apx-who">
-                <strong>Who's On</strong>
-                {participants.length?participants.slice(0,4).map(p=>{let info={};try{info=p.metadata?JSON.parse(p.metadata):{}}catch{}return <span key={p.identity}>{info.callsign||info.displayName||p.name||p.identity}</span>}):<span className="dim">{connected?"Nobody else on channel":"Not connected"}</span>}
-                {participants.length>4&&<span className="dim">+{participants.length-4} more</span>}
-              </div>:entry?<div className="apx-entry"><small>Channel number</small><strong>CH {entry}<i>_</i></strong><small># Enter · * Clear</small></div>:<>
-                <div className="apx-zone">{zoneName||"All Zones"}</div>
-                <div className="apx-channel">{channelName}</div>
-                <div className="apx-chnum">CH {channelNumber??"--"}</div>
-              </>}
-            </div>
-            <div className={"apx-banner "+banner.tone}>
-              <strong>{banner.title}</strong>
-              {banner.sub&&<span>{banner.icon&&<banner.icon size={11}/>} {banner.sub}</span>}
-            </div>
-            <div className="apx-menu bottom">{bottom.map((k,i)=><span key={i} className={k.tone||""}>{k.label}</span>)}</div>
-          </div>
+          <FaceDisplay p={p} f={f}/>
           <div className="apx-softkeys">{bottom.map((k,i)=><button type="button" key={i} className={"apx-soft "+(k.tone||"")} onClick={k.act||undefined} disabled={!k.act} aria-label={k.label||"Unused softkey"}/>)}</div>
         </div>
 

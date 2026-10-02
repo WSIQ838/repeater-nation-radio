@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.6
+
+**Change radios.** Pick which radio the app looks like; every radio works the same.
+
+- Three radios: **Dispatch control head** (the current one), **Portable handheld** (top channel and volume knobs, a side PTT button you can hold with the mouse, three softkeys that page through the menu with the ☰ key, nav pad and keypad) and **GMRS mobile** (wide amber display with a big channel number, VOL and CH knobs, F1–F4 keys for the display's menu, and MON, SCAN, ZONE, WHO, RCNT and CALL buttons).
+- Choose from Programming › Radio on the radio page, or Settings › Radio. The choice is remembered.
+- All radios share the same display logic, softkey menus, keypad channel entry and mapped buttons, so new radios are quick to add.
+- Version set to 0.2.6 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.5
 
 Radio features, part 6: **Status buttons**.
