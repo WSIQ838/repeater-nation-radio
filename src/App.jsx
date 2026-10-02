@@ -112,7 +112,7 @@ function MemberName({participant}){
 }
 
 function RadioApp({session,onSignOut}){
-  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState("");
+  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(""),[menuOpen,setMenuOpen]=useState(false),[scanning,setScanning]=useState(false);
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId&& !/^admin\s*testing$/i.test(String(c.zoneName||""))).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio"}])).values()),[channels]);
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
   const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId));
@@ -138,6 +138,24 @@ function RadioApp({session,onSignOut}){
     const first=channels.find(c=>c.zoneId===next);
     setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");
   };
+  const stepChannel=async direction=>{
+    if(!channels.length)return;
+    const list=visibleChannels.length?visibleChannels:channels;
+    const index=Math.max(0,list.findIndex(c=>c.id===channelId));
+    const next=list[(index+direction+list.length)%list.length];
+    if(next) await chooseChannel({target:{value:next.id}});
+  };
+  const toggleScan=()=>{
+    if(scanning){setScanning(false);return}
+    if(!connected||visibleChannels.length<2)return;
+    setScanning(true);
+  };
+  useEffect(()=>{
+    if(!scanning)return;
+    const timer=setInterval(()=>stepChannel(1),1400);
+    return()=>clearInterval(timer);
+  },[scanning,channelId,visibleChannels.length,connected]);
+
   const chooseChannel=async e=>{
     const next=e.target.value;if(next===channelId)return;
     setPtt(false);await disconnect();
@@ -170,11 +188,19 @@ function RadioApp({session,onSignOut}){
           <section className="hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
           <section className="radio-card radio-face-card">
             <div className="channel-head radio-face-head"><div><span className="label">REPEATER NATION RADIO</span><h3>{channelName}</h3></div><span className={connected?"status-pill":"status-pill offline-pill"}>{ptt?"TRANSMIT":connected?"LISTENING":"OFFLINE"}</span></div>
+            <div className="radio-control-head">
+              <div className="radio-top-knobs">
+                <button className="top-knob" onClick={()=>setMuted(!muted)} aria-label="Volume"><span className="knob-cap"></span><small>VOL</small></button>
+                <button className="top-knob" onClick={toggleScan} aria-label="Channel scan"><span className="knob-cap"></span><small>{scanning?"STOP":"SCAN"}</small></button>
+              </div>
+              <div className="speaker-grille" aria-hidden="true">{Array.from({length:42},(_,i)=><i key={i}/>)}</div>
+              <div className="radio-leds"><i className={connected?"led on":"led"}/><span>{scanning?"SCANNING":connected?"READY":"OFF"}</span></div>
+            </div>
             <div className="radio-face">
               <div className="radio-screen"><div className="lcd-icons"><Signal size={13}/><LockKeyhole size={12}/><MapPin size={12}/><BatteryMedium size={14}/><span className="lcd-bars"><i/><i/><i/><i/></span></div><div className="radio-zone">ZONE {channels.find(x=>x.id===channelId)?.zoneName?.replace(/^ZONE\s*/i,"")||"1"}</div><div className="radio-channel-name">{channelName}</div><div className="radio-channel-number">CH {channels.find(x=>x.id===channelId)?.number||"--"}</div><div className={ptt?"radio-status tx":connected?"radio-status":"radio-status off"}>{ptt?"TX":connected?"RX":"—"}<span className="activity-meter"><i/><i/><i/><i/><i/><i/></span></div>{ptt&&radioSession?.callsign&&<div className="radio-callsign">{radioSession.callsign}</div>}</div>
-              <div className="radio-face-controls"><div className="radio-knob-row"><button className="knob-button" onClick={()=>setMuted(!muted)}><Volume2/><span>VOL</span></button><button className="knob-button"><ScanLine/><span>SCAN</span></button></div><button className={ptt?"face-ptt pressed":"face-ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic/><span>PTT</span></button><div className="radio-key-row"><button className="face-key"><ChevronUp/><span>CH</span></button><button className="face-key"><DownIcon/><span>CH</span></button><button className="face-key"><Menu/><span>MENU</span></button><button className="face-key" onClick={connected?disconnect:connect}><Power/><span>{connected?"OFF":"ON"}</span></button></div></div>
+              <div className="radio-face-controls"><div className="radio-side-label">REPEATER NATION</div><div className="radio-key-row"><button className="face-key" onClick={()=>stepChannel(-1)}><ChevronUp/><span>CH UP</span></button><button className="face-key" onClick={()=>stepChannel(1)}><DownIcon/><span>CH DN</span></button><button className={menuOpen?"face-key active":"face-key"} onClick={()=>setMenuOpen(v=>!v)}><Menu/><span>MENU</span></button><button className="face-key" onClick={connected?disconnect:connect}><Power/><span>{connected?"OFF":"ON"}</span></button></div><button className={ptt?"face-ptt pressed":"face-ptt"} disabled={!connected} onMouseDown={down} onMouseUp={up} onMouseLeave={up} onTouchStart={down} onTouchEnd={up}><Mic/><span>PTT</span></button></div>
             </div>
-            <div className="radio-utility"><label>ZONE<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>CHANNEL<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>
+            {menuOpen&&<div className="radio-utility menu-panel"><label>ZONE<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>CHANNEL<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><span>{participants.length} ON CHANNEL</span></div>}
             <div className="device-row"><span>Microphone</span><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select><span>Speaker</span><span>{muted?"Muted":"Audio on"}</span><small>Space / Numpad 0 = PTT</small></div>
             {error&&<div className="error">{error}</div>}
           </section>
@@ -198,10 +224,6 @@ export default function App(){
       try{
         const restored=await restoreSessionFromOAuth();
         if(active && restored){setSession(restored);setLoading(false);return;}
-      }catch{}
-      try{
-        const restored=await (await import("./lib/auth")).restoreSession();
-        if(active)setSession(restored);
       }catch{}
       if(active)setLoading(false);
     };
