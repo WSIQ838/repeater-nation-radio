@@ -1,9 +1,9 @@
 import {useEffect,useRef,useState} from "react";
-import {Power,Sun,SunDim,Volume2,VolumeX,Megaphone,Hand,Lightbulb,Siren,Zap,Waves,Activity,Home,Mic,Signal,PhoneIncoming,Phone,Users,ChevronUp,ChevronDown,ChevronLeft,ChevronRight,Menu} from "lucide-react";
+import {Power,Volume2,VolumeX,Mic,Signal,PhoneIncoming,Phone,Users} from "lucide-react";
 
-// APX O7-style control head. Every live control maps to an existing radio action;
-// the vehicle-only keys (siren, lights, horn, PA, emergency) are drawn for looks and stay inert.
+// Shared radio face logic, and the O7-style dispatch control head drawn from its reference photo.
 
+export const O7_STATUS_KEYS=["At Scene","En Route","Busy","Returning","Available"];
 export const KEYPAD=[["1",". ? !"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]];
 
 // Scrolling a knob turns it one detent per notch. The listener is non-passive so the
@@ -39,13 +39,14 @@ function Clock(){
 
 // Shared radio behaviour for every radio face: display views, keypad entry, softkey
 // menus, banner text, signal bars and mapped-button commands. A face only draws it.
-export function useFace(p){
+export function useFace(p,{layout}={}){
   const {channelName,channelNumber,zoneName,zones,zoneId,visibleChannels,channelId,
   state,connected,ptt,muted,error,callsign,participants,
   incoming,call,callState,
   onPower,onMute,onChannel,onZone,onTab,onAnswer,onDecline,onEndCall,command,
   quality="unknown",onAir=null,volume=7,onVolume,lastHeard=[],onReplay,flash,
-  scanning=false,scanActive=null,onScan,onNuisance}=p;
+  scanning=false,scanActive=null,onScan,onNuisance,myStatus="",onStatus}=p;
+  const o7=layout==="o7";
   const [view,setView]=useState("home");
   const [entry,setEntry]=useState("");
   const [brightness,setBrightness]=useState(3);
@@ -87,7 +88,9 @@ export function useFace(p){
   const oneTouch=i=>{const c=visibleChannels[i];if(c)onChannel(c.id);else setNotice("P"+(i+1)+" not programmed")};
 
   // Context-sensitive softkey labels, like the real radio's menu row.
-  const top=[
+  // The O7 head's top row holds status keys, as on the photo ("At Scene"…); pressing
+  // the lit one again clears it.
+  const top=o7?O7_STATUS_KEYS.map(s=>({label:s,on:myStatus===s,act:onStatus?()=>onStatus(myStatus===s?"":s):null})):[
     {label:connected?"Off":"Connect",act:onPower,disabled:state==="connecting"},
     {label:muted?"Unmute":"Mute",act:onMute},
     {label:view==="who"?"Back":"Who's On",act:()=>setView(v=>v==="who"?"home":"who")},
@@ -109,6 +112,12 @@ export function useFace(p){
     {label:"End Call",act:onEndCall,tone:"stop"},
     {label:"",act:null},{label:"",act:null},{label:"",act:null},
     {label:"Contacts",act:()=>onTab("calls")},
+  ]:o7?[
+    {label:"Channel",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
+    {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:"Page",act:()=>onTab("calls")},
+    {label:"Contacts",act:()=>onTab("members")},
+    {label:"Recent",act:()=>setView("recent")},
   ]:[
     {label:"Chan −",act:()=>stepChannel(-1)},
     {label:"Chan +",act:()=>stepChannel(1)},
@@ -156,7 +165,7 @@ export function FaceDisplay({p,f,className="apx-display",menus=true,softRow=null
   const {channelName,channelNumber,zoneName,connected,ptt,muted,participants,incoming,call,quality="unknown",lastHeard=[],scanning=false}=p;
   const {view,entry,top,bottom,banner,bars}=f;
   return <div className={className}>
-            {menus&&<div className="apx-menu top">{top.map((k,i)=><span key={i}>{k.label}</span>)}</div>}
+            {menus&&<div className="apx-menu top">{top.map((k,i)=><span key={i} className={k.on?"on":undefined}>{k.label}</span>)}</div>}
             <div className="apx-icons">
               <span className="apx-bars" title={connected?"Connection: "+(quality==="unknown"?"checking":quality):"No signal"}>{[1,2,3,4].map(n=><i key={n} className={n<=bars?"on":""}/>)}</span>
               <Signal size={12} className={connected?"lit":""}/>
@@ -175,7 +184,7 @@ export function FaceDisplay({p,f,className="apx-display",menus=true,softRow=null
                 <strong>Who's On</strong>
                 {participants.length?participants.slice(0,4).map(p=>{let info={};try{info=p.metadata?JSON.parse(p.metadata):{}}catch{}return <span key={p.identity}>{info.callsign||info.displayName||p.name||p.identity}</span>}):<span className="dim">{connected?"Nobody else on channel":"Not connected"}</span>}
                 {participants.length>4&&<span className="dim">+{participants.length-4} more</span>}
-              </div>:entry?<div className="apx-entry"><small>Channel number</small><strong>CH {entry}<i>_</i></strong><small># Enter · * Clear</small></div>:<>
+              </div>:entry||view==="chan"?<div className="apx-entry"><small>Channel number</small><strong>CH {entry}<i>_</i></strong><small># Enter · * Clear</small></div>:<>
                 <div className="apx-zone">{zoneName||"All Zones"}</div>
                 <div className="apx-channel">{channelName}</div>
                 <div className="apx-chnum">CH {channelNumber??"--"}</div>
@@ -190,78 +199,102 @@ export function FaceDisplay({p,f,className="apx-display",menus=true,softRow=null
   </div>;
 }
 
+// O7 control head, laid out from the reference photo. Every position below is the
+// photo's own pixel box (radio body at x 42–399, y 19–356) scaled to a 600 px head,
+// so a key can be checked against the picture by its numbers. The siren, horn,
+// lights, PA and emergency keys are vehicle controls and stay inert.
+const O7_K=600/357,r1=n=>Math.round(n*10)/10;
+const at=(x1,y1,x2,y2)=>({left:r1((x1-42)*O7_K),top:r1((y1-19)*O7_K),width:r1((x2-x1)*O7_K),height:r1((y2-y1)*O7_K)});
+const dot=(cx,cy,d)=>at(cx-d/2,cy-d/2,cx+d/2,cy+d/2);
+const SOFT_X=[[101,130],[135,164],[169,199],[204,232],[237,267]],SOFT_TOP=[121,138],SOFT_BOTTOM=[280,297];
+const KEY_COLS=[[294,320],[325,350],[354,380]],KEY_ROWS=[[149,172],[175,198],[201,224],[227,250]];
+const P_X=[[103,135],[138,168],[173,203],[208,238],[243,275]];
+const MODE_ANGLES=[-50,-12,18,52];// knob pointer at 0, 1, 2 and 3
+const O7_KEYS=[["1",". , ?"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*","space"],["0","shift"],["#","lock"]];
+
+const Svg=({w=24,h=24,children,...r})=><svg viewBox={`0 0 ${w} ${h}`} aria-hidden="true" {...r}>{children}</svg>;
+const O7Icon={
+  horn:<Svg w={34} h={18}><path d="M2 7h4v4H2zM6 7.5h6L28 2v14L12 10.5H6z" fill="currentColor"/><path d="M27 2.5c2 .5 3 3.5 3 6.5s-1 6-3 6.5" fill="none" stroke="currentColor" strokeWidth="1.6"/><path d="M12 11c0 4.5 6 4.5 6 0" fill="none" stroke="currentColor" strokeWidth="1.7"/></Svg>,
+  wail:<Svg w={22} h={18}><path d="M2.5 13C3.5 3 8.5 1.5 10.5 9s7.5 8 9-4" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"/></Svg>,
+  yelp:<Svg w={22} h={18}><path d="M2.5 15 7.5 4.5l2.5 8 5-9.5.8 12" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"/></Svg>,
+  phaser:<Svg w={20} h={22}><path d="M13 1 5 12h5l-3.5 9L15 9.5h-5L13.5 1z" fill="currentColor"/></Svg>,
+  beacon:<Svg w={24} h={22}><path d="M6.5 2.5 7.5 7M9.8 1.5v5.5M12.5 1v6M15.2 1.5v5.5M18.5 2.5 17.5 7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/><path d="M4.5 10h15a7.5 7 0 0 1-15 0z" fill="currentColor"/></Svg>,
+  lightLeft:<Svg w={26} h={18}><path d="M2 4.5l6 1.5M2 9h6M2 13.5l6-1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M11 2.5h3a6.5 6.5 0 0 1 0 13h-3z" fill="currentColor"/></Svg>,
+  lightRight:<Svg w={26} h={18}><path d="M24 4.5l-6 1.5M24 9h-6M24 13.5l-6-1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/><path d="M15 2.5h-3a6.5 6.5 0 0 0 0 13h3z" fill="currentColor"/></Svg>,
+  sun:<Svg w={20} h={20}><circle cx="10" cy="10" r="3.6" fill="currentColor"/><path d="M10 1.5v3M10 15.5v3M1.5 10h3M15.5 10h3M4 4l2.1 2.1M13.9 13.9 16 16M4 16l2.1-2.1M13.9 6.1 16 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></Svg>,
+  dayNight:<Svg w={20} h={20}><circle cx="10.5" cy="11" r="7" fill="currentColor"/><circle cx="14" cy="8.5" r="6" fill="#323136"/><path d="M5 2.5v3M3.5 4h3M2.8 2.3l1.4 1.4M7.2 2.3 5.8 3.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></Svg>,
+  backlight:<Svg w={20} h={20}><circle cx="10" cy="9" r="3" fill="currentColor"/><path d="M10 1.5v2.5M3.5 9H6M14 9h2.5M5 4l1.7 1.7M15 4l-1.7 1.7M8 13h4M8.5 15.5h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M3 18 17 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></Svg>,
+  laptop:<Svg w={24} h={22}><path d="M8 2.5h12l-2.5 10H5.5z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round"/><path d="M4 14h14l-2 4H1.5z" fill="currentColor"/></Svg>,
+  home:<Svg w={22} h={20}><path d="M11 1.5 1.5 9h19z" fill="currentColor"/><path d="M4 10h14v8.5h-4.5v-5h-5v5H4z" fill="currentColor"/></Svg>,
+  space:<Svg w={12} h={6}><path d="M1.5 1v3h9V1" fill="none" stroke="currentColor" strokeWidth="1.4"/></Svg>,
+  shift:<Svg w={12} h={10}><path d="M6 1 1.5 5.5H4V9h4V5.5h2.5z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/></Svg>,
+  lock:<Svg w={12} h={10}><circle cx="4" cy="3.6" r="2.4" fill="none" stroke="currentColor" strokeWidth="1.3"/><circle cx="8" cy="6.6" r="2.4" fill="none" stroke="currentColor" strokeWidth="1.3"/></Svg>,
+};
+
 export function ControlHead(p){
   const {zoneName,state,connected,muted,volume=7,visibleChannels,onPower,onMute,onVolume}=p;
-  const f=useFace(p);
-  const {view,setView,entry,setEntry,brightness,setBrightness,notice,setNotice,channelIndex,zoneIndex,stepChannel,stepZone,pressKey,goHome,oneTouch,top,bottom,replayLast,banner,bars,ledTx,ledRx,ledCall}=f;
-  return <div className="apx-head" style={{"--apx-bright":0.55+brightness*0.15}}>
-    <div className="apx-bezel">
-      {/* Top accessory row */}
-      <div className="apx-top">
-        <div className="apx-top-keys">
-          <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Megaphone size={16}/></button>
-          <button type="button" className="apx-key inert text" tabIndex={-1} aria-hidden="true">Manual</button>
-          <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Waves size={16}/></button>
-          <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Activity size={16}/></button>
-          <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Zap size={16}/></button>
-        </div>
-        <div className="apx-mode">
-          <span className="apx-mode-ticks"><b>0</b><b>1</b><b>2</b><b>3</b></span>
-          <Knob className="apx-mode-knob" angle={-60+(zoneIndex%4)*40} title={"Zone: "+(zoneName||"All zones")+" (click or scroll to change)"} onClick={()=>stepZone(1)} onStep={stepZone}/>
-        </div>
-        <div className="apx-top-keys right">
-          <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Hand size={16}/></button>
-          <button type="button" className="apx-key emergency" tabIndex={-1} aria-hidden="true" title="Emergency (not used)"><span/></button>
-          <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Lightbulb size={16}/></button>
-          <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Siren size={16}/></button>
-          <button type="button" className="apx-key inert text" tabIndex={-1} aria-hidden="true">PA</button>
-        </div>
-      </div>
+  const f=useFace(p,{layout:"o7"});
+  const {setView,brightness,setBrightness,channelIndex,zoneIndex,stepChannel,stepZone,pressKey,goHome,oneTouch,top,bottom,ledTx,ledRx,ledCall}=f;
+  const [night,setNight]=useState(false);
+  const soft=(row,y)=>row.map((k,i)=><button type="button" key={i} className={"o7-soft"+(k.on?" on":"")+(k.tone?" "+k.tone:"")} style={at(SOFT_X[i][0],y[0],SOFT_X[i][1],y[1])}
+    onClick={k.act||undefined} disabled={!k.act||k.disabled} aria-label={k.label||"Unused softkey"} title={k.label||undefined}><i/></button>);
+  const inert=(box,content,cls="")=><div className={"o7-key inert "+cls} style={box} aria-hidden="true">{content}</div>;
+  return <div className="o7" style={{"--apx-bright":0.55+brightness*0.15}}>
+    <div className="o7-seam" style={at(46,112,395,114)}/>
+    <div className="o7-seam" style={at(46,299,395,301)}/>
 
-      <div className="apx-middle">
-        {/* Left column: power, brightness, status LEDs */}
-        <div className="apx-left">
-          <button type="button" className={"apx-round power"+(connected?" on":"")} onClick={onPower} disabled={state==="connecting"} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power size={16}/></button>
-          <div className="apx-leds"><i className={ledTx?"tx":""} title="Transmit"/><i className={ledRx?"rx":""} title="Receive"/><i className={ledCall?"call":""} title="Call"/></div>
-          <div className="apx-bright">
-            <button type="button" className="apx-round small" onClick={()=>setBrightness(b=>Math.min(3,b+1))} title="Brighter"><Sun size={14}/></button>
-            <button type="button" className="apx-round small" onClick={()=>setBrightness(b=>Math.max(0,b-1))} title="Dimmer"><SunDim size={14}/></button>
-          </div>
-        </div>
+    {/* Top accessory keys and the 0–3 mode knob (zone select) */}
+    {inert(at(70,45,110,72),O7Icon.horn)}
+    {inert(at(118,45,158,72),"Manual","text")}
+    {inert(at(70,80,96,103),O7Icon.wail)}
+    {inert(at(101,80,127,103),O7Icon.yelp)}
+    {inert(at(132,80,158,103),O7Icon.phaser)}
+    <div className="o7-collar" style={at(170.5,22,260.5,112)}/>
+    {[["0",182,51],["1",202.5,35.5],["2",229,35.5],["3",249,51]].map(([n,x,y])=><span key={n} className="o7-tick" style={dot(x,y,10.5)}>{n}</span>)}
+    <div className="o7-hold" style={at(181,42,250,110)}><Knob className="o7-mode" angle={MODE_ANGLES[zoneIndex%4]} title={"Zone: "+(zoneName||"All zones")+" (click or scroll to change)"} onClick={()=>stepZone(1)} onStep={stepZone}/></div>
+    {inert(at(283,45,325,72),O7Icon.beacon)}
+    <div className="o7-boss" style={at(349,30,390,77)} aria-hidden="true"/>
+    <div className="o7-emerg" style={dot(367,57,19)} title="Emergency (not used)" aria-hidden="true"/>
+    {inert(at(275,80,302,105),O7Icon.lightLeft)}
+    {inert(at(306,80,333,105),O7Icon.lightRight)}
+    {inert(at(352,80,380,105),"PA","text pa")}
 
-        {/* Center: softkeys + display */}
-        <div className="apx-center">
-          <div className="apx-softkeys">{top.map((k,i)=><button type="button" key={i} className="apx-soft" onClick={k.act||undefined} disabled={!k.act||k.disabled} aria-label={k.label||"Unused softkey"}/>)}</div>
-          <FaceDisplay p={p} f={f}/>
-          <div className="apx-softkeys">{bottom.map((k,i)=><button type="button" key={i} className={"apx-soft "+(k.tone||"")} onClick={k.act||undefined} disabled={!k.act} aria-label={k.label||"Unused softkey"}/>)}</div>
-        </div>
-
-        {/* Right: brand, keypad, nav */}
-        <div className="apx-right">
-          <div className="apx-brand"><span className="apx-brand-mark"><Mic size={11}/></span>REPEATER NATION</div>
-          <div className="apx-keypad">{KEYPAD.map(([d,l])=><button type="button" key={d} className="apx-digit" onClick={()=>pressKey(d)}><b>{d}</b><small>{l}</small></button>)}</div>
-          <div className="apx-navrow">
-            <div className="apx-nav">
-              <button type="button" className="up" onClick={()=>stepZone(-1)} title="Previous zone"><ChevronUp size={14}/></button>
-              <button type="button" className="left" onClick={()=>stepChannel(-1)} title="Previous channel"><ChevronLeft size={14}/></button>
-              <button type="button" className="right" onClick={()=>stepChannel(1)} title="Next channel"><ChevronRight size={14}/></button>
-              <button type="button" className="down" onClick={()=>stepZone(1)} title="Next zone"><ChevronDown size={14}/></button>
-            </div>
-            <button type="button" className="apx-key menu" onClick={()=>setView(v=>v==="who"?"home":"who")} title="Who's On"><Menu size={15}/></button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom row: volume knob, P1–P5, home, channel knob */}
-      <div className="apx-bottom">
-        <Knob className="apx-vol" angle={muted?-135:-135+volume*27} title={muted?"Volume (muted, click to unmute)":`Volume ${volume} (scroll to change, click to mute)`} onClick={onMute} onStep={dir=>onVolume?.(-dir)}/>
-        <div className="apx-pkeys">
-          {[0,1,2,3,4].map(i=><button type="button" key={i} className="apx-pkey" onClick={()=>oneTouch(i)} title={visibleChannels[i]?`P${i+1}: ${visibleChannels[i].name}`:`P${i+1}`}>P{i+1}</button>)}
-          <button type="button" className="apx-pkey home" onClick={goHome} title="Home"><Home size={16}/></button>
-        </div>
-        <Knob className="apx-chan" angle={channelIndex*30} title="Channel (click or scroll to change)" onClick={()=>stepChannel(1)} onStep={stepChannel}/>
-      </div>
+    {/* Left column: power, status LEDs, brightness rocker, day/night, backlight */}
+    <button type="button" className={"o7-round o7-power"+(connected?" on":"")} style={dot(64,134,20)} onClick={onPower} disabled={state==="connecting"} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power size={15} strokeWidth={2.6}/></button>
+    <i className={"o7-led"+(ledTx?" tx":"")} style={at(59,155.5,71,158.5)} title="Transmit"/>
+    <i className={"o7-led"+(ledRx?" rx":"")} style={at(59,165.5,71,168.5)} title="Receive"/>
+    <i className={"o7-led"+(ledCall?" call":"")} style={at(59,175.5,71,178.5)} title="Call"/>
+    <div className="o7-rocker" style={at(55,188,75,231)}>
+      <button type="button" onClick={()=>setBrightness(b=>Math.min(3,b+1))} title="Brighter">+</button>
+      <span>{O7Icon.sun}</span>
+      <button type="button" onClick={()=>setBrightness(b=>Math.max(0,b-1))} title="Dimmer">−</button>
     </div>
+    <button type="button" className={"o7-round"+(night?" lit":"")} style={dot(65,254,19)} onClick={()=>setNight(n=>!n)} title={night?"Day display":"Night display"}>{O7Icon.dayNight}</button>
+    <button type="button" className="o7-round" style={dot(65,279,19)} onClick={()=>setBrightness(b=>b>0?0:3)} title="Backlight">{O7Icon.backlight}</button>
+
+    {/* Softkeys around the display */}
+    {soft(top,SOFT_TOP)}
+    <div className="o7-bezel" style={at(89,147,282,271)}/>
+    <div className="o7-screen" style={at(95,153,276,265)}><FaceDisplay p={p} f={f} className={"o7-display"+(night?" night":"")}/></div>
+    {soft(bottom,SOFT_BOTTOM)}
+
+    {/* Right: badge, keypad, nav pad, Who's On key */}
+    <div className="o7-logo" style={at(292,122,382,141)}><span className="o7-logo-mark"><Mic size={11} strokeWidth={2.6}/></span><b>REPEATER NATION</b></div>
+    {O7_KEYS.map(([d,l],i)=><button type="button" key={d} className="o7-key o7-digit" style={at(KEY_COLS[i%3][0],KEY_ROWS[i/3|0][0],KEY_COLS[i%3][1],KEY_ROWS[i/3|0][1])} onClick={()=>pressKey(d)} aria-label={d}>
+      <b>{d}</b><small>{O7Icon[l]||l}</small></button>)}
+    <div className="o7-key o7-nav" style={at(294,258,347,293)}>
+      <button type="button" className="up" onClick={()=>stepZone(-1)} title="Previous zone"/>
+      <button type="button" className="down" onClick={()=>stepZone(1)} title="Next zone"/>
+      <button type="button" className="left" onClick={()=>stepChannel(-1)} title="Previous channel"/>
+      <button type="button" className="right" onClick={()=>stepChannel(1)} title="Next channel"/>
+    </div>
+    <button type="button" className="o7-key" style={at(357,258,381,293)} onClick={()=>setView(v=>v==="who"?"home":"who")} title="Who's On">{O7Icon.laptop}</button>
+
+    {/* Bottom: volume knob, P1–P5, home, channel knob */}
+    <div className="o7-hold" style={at(46,301,95,350)}><Knob className="o7-vol" angle={muted?-135:-135+volume*27} title={muted?"Volume (muted, click to unmute)":`Volume ${volume} (scroll to change, click to mute)`} onClick={onMute} onStep={dir=>onVolume?.(-dir)}/></div>
+    {P_X.map(([x1,x2],i)=><button type="button" key={i} className={"o7-key o7-pkey"+(i===0?" first":i===4?" last":"")} style={at(x1,312,x2,340)} onClick={()=>oneTouch(i)} title={visibleChannels[i]?`P${i+1}: ${visibleChannels[i].name}`:`P${i+1}`}>P{i+1}</button>)}
+    <button type="button" className="o7-key o7-home" style={at(285,312,331,340)} onClick={goHome} title="Home">{O7Icon.home}</button>
+    <div className="o7-hold" style={at(342,302,392,352)}><Knob className="o7-chan" angle={channelIndex*30} title="Channel (click or scroll to change)" onClick={()=>stepChannel(1)} onStep={stepChannel}/></div>
   </div>
 }
 

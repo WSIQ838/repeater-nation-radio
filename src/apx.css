@@ -1,58 +1,16 @@
-/* APX O7-style control head */
-.apx-stage{display:grid;grid-template-columns:minmax(560px,600px) minmax(220px,1fr);gap:20px;align-items:start}
-.apx-head{--apx-bright:1;padding:10px;border-radius:34px;background:linear-gradient(160deg,#3a3d42,#1b1d20 45%,#101113);box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12)}
-.apx-bezel{border-radius:26px;padding:14px 16px 16px;background:radial-gradient(120% 90% at 50% 0%,#2b2e33,#18191c 70%);box-shadow:inset 0 0 0 1px #0a0b0c,inset 0 2px 6px rgba(255,255,255,.06);display:flex;flex-direction:column;gap:12px;user-select:none}
-.apx-head button{font-family:inherit}
+/* Radio stage: the radio face beside the palm mic and programming column */
+.apx-stage{display:grid;grid-template-columns:600px minmax(220px,1fr);gap:20px;align-items:start}
 
-/* generic rubber keys */
-.apx-key,.apx-soft,.apx-digit,.apx-pkey,.apx-round,.apx-nav button{border:0;cursor:pointer;color:#e8eaed;background:linear-gradient(180deg,#45484d,#2a2c30);box-shadow:0 2px 0 #0c0d0e,0 3px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .05s,background .1s}
-.apx-key:active:not(:disabled),.apx-soft:active:not(:disabled),.apx-digit:active,.apx-pkey:active,.apx-round:active:not(:disabled),.apx-nav button:active{transform:translateY(1px);box-shadow:0 1px 0 #0c0d0e,inset 0 1px 2px rgba(0,0,0,.5)}
-.apx-key{width:44px;height:30px;border-radius:7px;display:grid;place-items:center}
-.apx-key.text{width:auto;padding:0 9px;font-size:11px;font-weight:700}
-.apx-key.inert{cursor:default;color:#c9ccd1;opacity:.85}
-.apx-key.inert:active{transform:none}
-.apx-key.emergency{width:34px;height:34px;border-radius:50%;background:#1d1e21;cursor:default;box-shadow:inset 0 0 0 2px #0b0c0d}
-.apx-key.emergency span{display:block;width:24px;height:24px;margin:auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9a62,#e8551c 60%,#b8400f);box-shadow:0 2px 3px rgba(0,0,0,.6)}
-
-/* top row */
-.apx-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
-.apx-top-keys{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
-.apx-top-keys.right{justify-content:flex-end}
-.apx-mode{position:relative;width:96px;height:84px;display:grid;place-items:end center}
-.apx-mode-ticks{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:0 10px;font-size:10px;color:#e3e5e8;font-weight:700}
-.apx-mode-ticks b:nth-child(2),.apx-mode-ticks b:nth-child(3){transform:translateY(-6px)}
+/* shared rubber keys (keypads and nav pads on the other radios) */
+.apx-digit,.apx-nav button{border:0;cursor:pointer;color:#e8eaed;background:linear-gradient(180deg,#45484d,#2a2c30);box-shadow:0 2px 0 #0c0d0e,0 3px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .05s,background .1s}
+.apx-digit:active,.apx-nav button:active{transform:translateY(1px);box-shadow:0 1px 0 #0c0d0e,inset 0 1px 2px rgba(0,0,0,.5)}
 
 /* knobs */
 .apx-knob{position:relative;border:0;padding:0;background:transparent;cursor:pointer;border-radius:50%}
 .apx-knob-cap{display:block;width:100%;height:100%;border-radius:50%;background:repeating-conic-gradient(from 0deg,#2a2c30 0 6deg,#18191b 6deg 12deg);box-shadow:0 4px 8px rgba(0,0,0,.6),inset 0 0 0 5px #222428,inset 0 0 0 6px #0f1012;transition:transform .2s ease;position:relative}
 .apx-knob-cap:after{content:"";position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle at 40% 35%,#3c3f44,#1c1d20)}
 .apx-knob-cap i{position:absolute;left:50%;top:7%;width:4px;height:32%;margin-left:-2px;border-radius:2px;background:#eef0f2;z-index:1}
-.apx-mode-knob{width:66px;height:66px}
-.apx-mode-knob .apx-knob-cap:after{inset:10%;background:linear-gradient(90deg,#1c1d20 40%,#3b3e43 50%,#1c1d20 60%)}
-.apx-vol,.apx-chan{width:48px;height:48px}
-.apx-vol .apx-knob-cap i,.apx-chan .apx-knob-cap i{top:5%;height:28%;width:3px;margin-left:-1.5px}
 
-/* middle */
-.apx-middle{display:grid;grid-template-columns:44px 1fr 156px;gap:12px;align-items:stretch}
-.apx-left{display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:30px}
-.apx-round{width:34px;height:34px;border-radius:50%;display:grid;place-items:center}
-.apx-round.small{width:30px;height:30px}
-.apx-round.power{color:#3fd47a}
-.apx-round.power.on{color:#7dffad;box-shadow:0 2px 0 #0c0d0e,0 0 10px rgba(63,212,122,.45),inset 0 1px 0 rgba(255,255,255,.14)}
-.apx-round:disabled{opacity:.5;cursor:not-allowed}
-.apx-leds{display:flex;flex-direction:column;gap:7px}
-.apx-leds i{display:block;width:16px;height:4px;border-radius:2px;background:#45484d}
-.apx-leds i.tx{background:#ff3b30;box-shadow:0 0 8px #ff3b30}
-.apx-leds i.rx{background:#30d158;box-shadow:0 0 8px #30d158}
-.apx-leds i.call{background:#ffcc00;box-shadow:0 0 8px #ffcc00}
-.apx-bright{display:flex;flex-direction:column;gap:6px;padding:6px 3px;border-radius:18px;background:#141518}
-
-.apx-center{display:flex;flex-direction:column;gap:8px}
-.apx-softkeys{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
-.apx-soft{height:16px;border-radius:5px}
-.apx-soft:disabled{cursor:default;opacity:.75}
-.apx-soft.go{background:linear-gradient(180deg,#3d6b4b,#24402d)}
-.apx-soft.stop{background:linear-gradient(180deg,#7a3a37,#4a2220)}
 
 /* display */
 .apx-display{filter:brightness(var(--apx-bright));border-radius:6px;border:3px solid #0b0c0d;background:#f4f5f2;color:#0d0f12;font-family:"Arial Narrow",Arial,Helvetica,sans-serif;display:flex;flex-direction:column;min-height:228px;overflow:hidden;box-shadow:0 0 0 2px #2c2e32,inset 0 0 18px rgba(0,0,0,.12)}
@@ -92,26 +50,14 @@
 .apx-banner.idle{background:#8a9097}
 @keyframes apx-blink{50%{opacity:0}}
 
-/* right column */
-.apx-right{display:flex;flex-direction:column;gap:9px}
-.apx-brand{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:1px;color:#e6e8eb}
-.apx-brand-mark{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;border:1.5px solid #e6e8eb}
-.apx-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+/* shared keypad digit and nav pad */
 .apx-digit{height:34px;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
 .apx-digit b{font-size:16px}
 .apx-digit small{font-size:7px;color:#b4b8be;letter-spacing:.5px;min-height:7px}
-.apx-navrow{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
 .apx-nav{position:relative;width:86px;height:86px;border-radius:50%;background:#111214;box-shadow:inset 0 0 0 1px #000}
 .apx-nav button{position:absolute;width:30px;height:28px;border-radius:7px;display:grid;place-items:center;padding:0}
 .apx-nav .up{top:2px;left:28px}.apx-nav .down{bottom:2px;left:28px}
 .apx-nav .left{left:2px;top:29px;width:28px;height:30px}.apx-nav .right{right:2px;top:29px;width:28px;height:30px}
-.apx-key.menu{width:36px;height:34px}
-
-/* bottom row */
-.apx-bottom{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;padding:0 4px}
-.apx-pkeys{display:flex;justify-content:center;gap:8px}
-.apx-pkey{min-width:48px;height:34px;border-radius:9px;font-size:15px;font-weight:700;display:grid;place-items:center}
-.apx-pkey.home{color:#f2c94c}
 
 /* palm mic + programming column */
 .apx-side{display:flex;flex-direction:column;gap:16px}
@@ -133,7 +79,7 @@
 
 /* Shell tweaks to sit with the radio */
 .apx-hero{margin-bottom:18px}
-@media(max-width:1020px){.apx-stage{grid-template-columns:1fr}.apx-head{max-width:600px}.apx-mic-body{max-width:none}}
+@media(max-width:1020px){.apx-stage{grid-template-columns:1fr}.apx-mic-body{max-width:none}}
 .ptt-learn{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:#dce3ea}
 .ptt-learn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ptt-learn button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer}
@@ -474,3 +420,125 @@ button.ss-card{cursor:pointer}
 .cl-badge{align-self:center;padding:3px 14px;border-radius:4px;background:#e9ecef;color:#222;font-size:11px;font-weight:800;letter-spacing:2px;box-shadow:inset 0 0 0 2px #333}
 .cl-vents{display:flex;flex-direction:column;gap:5px;padding:0 24px}
 .cl-vents i{height:6px;border-radius:3px;background:rgba(0,0,0,.25);box-shadow:0 1px 0 rgba(255,255,255,.3)}
+
+/* O7 control head, matched to its reference photo. Boxes are placed inline from the photo's
+   coordinates (ControlHead.jsx); this sets the materials. */
+.o7{--apx-bright:1;position:relative;width:600px;height:566px;flex:none;border-radius:34px;user-select:none;font-family:Arial,"Liberation Sans",Helvetica,sans-serif;color:#f4f4f5;
+  background:radial-gradient(120% 85% at 50% 8%,#47464b,#3d3c41 50%,#353439);
+  box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 0 0 2px #626167,inset 0 0 0 4px #333237,inset 0 3px 0 4px rgba(255,255,255,.05)}
+.o7:before{content:"";position:absolute;inset:4px;border-radius:30px;pointer-events:none;opacity:.55;
+  background-image:radial-gradient(rgba(255,255,255,.05) .8px,transparent 1.1px),radial-gradient(rgba(0,0,0,.14) .8px,transparent 1.1px);background-size:3px 3px,4px 4px;background-position:0 0,1px 2px}
+.o7>*{position:absolute;box-sizing:border-box}
+:where(.o7 button){border:0;padding:0;font-family:inherit;color:#f4f4f5;background:none;cursor:pointer}
+.o7-seam{border-radius:1px;background:linear-gradient(180deg,rgba(0,0,0,.32),rgba(255,255,255,.07))}
+
+/* rubber keys */
+.o7-key{display:grid;place-items:center;border-radius:6px;color:#f4f4f5;background:linear-gradient(180deg,#353438,#29282c);
+  box-shadow:0 0 0 1.6px #1d1c20,0 2px 3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.1);transition:transform .05s}
+.o7-key svg{height:62%;width:auto}
+.o7-key.text{font-size:13px;font-weight:700;letter-spacing:.1px}
+.o7-key.pa{font-size:19px;font-weight:700}
+.o7-key.inert{cursor:default}
+button.o7-key:active,.o7-soft:active:not(:disabled),.o7-round:active:not(:disabled){transform:translateY(1px);box-shadow:0 0 0 1.6px #1d1c20,inset 0 1px 3px rgba(0,0,0,.55)}
+
+/* mode knob on its raised collar, with the 0–3 positions */
+.o7-collar{border-radius:50%;background:radial-gradient(circle at 50% 45%,#333236 60%,#3e3d42 78%,#3a393e);box-shadow:inset 0 2px 4px rgba(0,0,0,.25)}
+.o7-tick{display:grid;place-items:center;border-radius:50%;background:#1b1a1e;color:#fff;font-size:11px;font-weight:700;line-height:1}
+.o7-hold .apx-knob{width:100%;height:100%}
+.o7-mode .apx-knob-cap{background:radial-gradient(circle at 42% 30%,#302f34,#19181c 72%);box-shadow:0 5px 9px rgba(0,0,0,.6),inset 0 0 0 1.5px #121114}
+.o7-mode .apx-knob-cap:after{inset:2% 34%;border-radius:45%/12%;background:linear-gradient(90deg,#19181c,#333237 30%,#232226 50%,#333237 70%,#19181c);box-shadow:0 0 6px rgba(0,0,0,.6)}
+.o7-mode .apx-knob-cap i{top:7%;height:17%;width:3px;margin-left:-1.5px;background:#d9d9dc;z-index:2}
+.o7-vol .apx-knob-cap{background:repeating-conic-gradient(#2b2a2e 0 5deg,#1f1e22 5deg 10deg);box-shadow:0 4px 7px rgba(0,0,0,.6),inset 0 0 0 1.5px #151417}
+.o7-vol .apx-knob-cap:after{inset:9%;background:radial-gradient(circle at 42% 32%,#48474c,#2a292d 70%)}
+.o7-vol .apx-knob-cap i{top:6%;height:40%;width:3.5px;margin-left:-1.75px;background:#f2f2f2}
+.o7-chan .apx-knob-cap{background:repeating-conic-gradient(#2c2b2f 0 5deg,#1e1d21 5deg 10deg);box-shadow:0 4px 7px rgba(0,0,0,.6),inset 0 0 0 1.5px #151417}
+.o7-chan .apx-knob-cap:after{inset:16%;background:radial-gradient(circle at 45% 38%,#38373c,#222125 75%);box-shadow:0 0 0 1px #151417}
+.o7-chan .apx-knob-cap i{display:none}
+
+/* emergency button in its raised corner guard */
+.o7-boss{border-radius:8px 18px 9px 9px;background:linear-gradient(180deg,#323135,#29282c);box-shadow:inset 0 0 0 1.5px #1f1e22,inset 0 2px 3px rgba(255,255,255,.05),0 1px 3px rgba(0,0,0,.4)}
+.o7-emerg{border-radius:50%;background:radial-gradient(circle at 40% 35%,#ec9871,#d66f45 58%,#b4552f);box-shadow:0 0 0 2px #262529,0 2px 3px rgba(0,0,0,.55)}
+
+/* left column */
+.o7-round{display:grid;place-items:center;border-radius:50%;color:#f2f2f2;background:radial-gradient(circle at 50% 35%,#403f44,#29282d);box-shadow:0 0 0 1.6px #1c1b1f,0 2px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1)}
+.o7-round svg{width:70%;height:70%}
+.o7-round.lit svg{color:#ffd65c}
+.o7-power svg{color:#5bc985}
+.o7-power svg{width:62%;height:62%}
+.o7-power.on svg{color:#7dffad}
+.o7-power.on{box-shadow:0 0 0 1.6px #1c1b1f,0 0 9px rgba(63,212,122,.5),inset 0 1px 0 rgba(255,255,255,.1)}
+.o7-power:disabled{opacity:.6;cursor:not-allowed}
+.o7-led{display:block;border-radius:3px;background:#77767c;box-shadow:inset 0 1px 1px rgba(0,0,0,.35)}
+.o7-led.tx{background:#ff3b30;box-shadow:0 0 8px #ff3b30}
+.o7-led.rx{background:#30d158;box-shadow:0 0 8px #30d158}
+.o7-led.call{background:#ffcc00;box-shadow:0 0 8px #ffcc00}
+.o7-rocker{display:flex;flex-direction:column;align-items:stretch;border-radius:17px;background:linear-gradient(90deg,#363539,#29282c);box-shadow:0 0 0 1.6px #1c1b1f,0 2px 3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.09)}
+.o7-rocker button{flex:1;background:transparent;font-size:17px;font-weight:700;line-height:1;border-radius:17px}
+.o7-rocker button:active{background:rgba(0,0,0,.25)}
+.o7-rocker span{display:grid;place-items:center;height:22px}
+.o7-rocker span svg{width:18px;height:18px}
+
+/* softkeys and display */
+.o7-soft{display:grid;place-items:center;border-radius:6px;background:linear-gradient(180deg,#59585e,#4a494f);box-shadow:0 0 0 1.6px #222125,0 2px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.13)}
+.o7-soft i{display:block;width:17px;height:3px;border-radius:2px;background:#e6e6e8}
+.o7-soft:disabled{cursor:default}
+.o7-bezel{border-radius:6px;background:#2a292d;box-shadow:inset 0 1px 4px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.08)}
+.o7-screen{overflow:hidden;border-radius:2px;background:#fff}
+.o7-display{filter:brightness(var(--apx-bright));height:100%;display:grid;grid-template-rows:35px 22px 1fr 37px 22px;background:#fff;color:#000;font-family:Arial,"Liberation Sans",Helvetica,sans-serif}
+.o7-display .apx-menu{display:grid;grid-template-columns:repeat(5,1fr);color:#fff;font-weight:700;text-align:center;background:#454447}
+.o7-display .apx-menu span{display:grid;place-items:center;padding:0 2px;border-right:1px solid #8c8b90;line-height:1.08;min-height:0}
+.o7-display .apx-menu span:last-child{border-right:0}
+.o7-display .apx-menu.top span{font-size:10.5px;padding:0 3px;word-spacing:60px;line-height:1.1}
+.o7-display .apx-menu.top span.on{background:#e8e8e8;color:#000}
+.o7-display .apx-menu.bottom{background:#59585d}
+.o7-display .apx-menu.bottom span{font-size:11.5px;white-space:nowrap;overflow:hidden}
+.o7-display .apx-menu span.go{background:#2f8f43}.o7-display .apx-menu span.stop{background:#b42c25}
+.o7-display .apx-icons{display:flex;align-items:center;gap:7px;padding:0 6px;border:0;color:#000;font-size:12px;font-weight:700}
+.o7-display .apx-icons svg{width:15px;height:15px}
+.o7-display .apx-icons svg.lit{color:#2f9a3f}
+.o7-display .apx-bars{height:15px;gap:1.5px}
+.o7-display .apx-bars i{width:3.5px;background:#cfcfcf}
+.o7-display .apx-bars i:nth-child(1){height:5px}.o7-display .apx-bars i:nth-child(2){height:8px}.o7-display .apx-bars i:nth-child(3){height:11px}.o7-display .apx-bars i:nth-child(4){height:15px}
+.o7-display .apx-bars i.on{background:#3aa346}
+.o7-display .apx-tag{font-size:10px;padding:1px 3px}
+.o7-display .apx-main{min-height:0;padding:0 8px;gap:0}
+.o7-display .apx-zone{font-size:25px;font-weight:700;color:#000;line-height:1.08;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.o7-display .apx-channel{font-size:32px;font-weight:700;letter-spacing:0;line-height:1.08}
+.o7-display .apx-chnum{display:none}
+.o7-display .apx-who{font-size:14px;gap:1px}
+.o7-display .apx-who strong{font-size:15px}
+.o7-display .apx-entry strong{font-size:30px}
+.o7-display .apx-banner{min-height:0;padding:0 6px;line-height:1.12}
+.o7-display .apx-banner strong{font-size:13.5px}
+.o7-display .apx-banner span{font-size:13.5px;font-weight:700}
+.o7-display .apx-banner.rx,.o7-display .apx-banner.listen{background:#3f9c4f}
+.o7-display.night{background:#101114;color:#f1f1f1}
+.o7-display.night .apx-icons,.o7-display.night .apx-zone,.o7-display.night .apx-entry small,.o7-display.night .apx-who .dim{color:#e6e6e6}
+
+/* badge, keypad, nav pad */
+.o7-logo{display:flex;align-items:center;gap:5px;padding:0 2px;color:#f2f2f2}
+.o7-logo-mark{display:grid;place-items:center;flex:none;width:23px;height:23px;border-radius:50%;background:#f2f2f2;color:#2e2d31}
+.o7-logo b{font-size:12.5px;font-weight:900;font-style:italic;letter-spacing:.4px;white-space:nowrap}
+.o7-digit{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1}
+.o7-digit b{font-size:22px;font-weight:700}
+.o7-digit small{display:grid;place-items:center;height:10px;font-size:9.5px;font-weight:700;letter-spacing:.3px}
+.o7-digit small svg{height:10px;width:auto}
+.o7-nav{border-radius:8px}
+.o7-nav:before,.o7-nav:after{content:"";position:absolute;left:50%;width:0;height:0;border:8px solid transparent;margin-left:-8px;pointer-events:none}
+.o7-nav:before{top:6px;border-bottom:8px solid #f2f2f2;border-top:0}
+.o7-nav:after{bottom:6px;border-top:8px solid #f2f2f2;border-bottom:0}
+.o7-nav button{position:absolute;background:transparent;border-radius:6px}
+.o7-nav button:active{background:rgba(0,0,0,.28)}
+.o7-nav .up{left:28%;right:28%;top:0;height:42%}.o7-nav .down{left:28%;right:28%;bottom:0;height:42%}
+.o7-nav .left{left:0;top:0;bottom:0;width:28%}.o7-nav .right{right:0;top:0;bottom:0;width:28%}
+.o7-nav .left:before,.o7-nav .right:before{content:"";position:absolute;top:50%;margin-top:-8px;border:8px solid transparent}
+.o7-nav .left:before{left:8px;border-right:8px solid #f2f2f2;border-left:0}
+.o7-nav .right:before{right:8px;border-left:8px solid #f2f2f2;border-right:0}
+
+/* P keys and home */
+.o7-pkey{font-size:18px;font-weight:700}
+.o7-pkey.first{border-radius:16px 6px 6px 16px}
+.o7-pkey.last{border-radius:6px 16px 16px 6px}
+.o7-home{border-radius:16px}
+.o7-home svg{color:#f1e46a}
+.o7-home svg{height:58%;width:auto}

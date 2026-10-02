@@ -1,5 +1,22 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.11
+
+**Dispatch control head redone from Sean's O7 photo**, the first radio in the one-at-a-time redo.
+
+- Every key, knob and screen area is placed from the photo's own measurements, so the layout matches it: horn and Manual keys, the three siren keys, the 0–3 mode knob on its collar, the light-bar key, the orange emergency button in its corner guard, the two alley-light keys and PA along the top; power, three LEDs, the brightness rocker, day/night and backlight keys down the left; five softkeys above and below the screen; the badge, keypad, rectangular nav pad and the laptop key on the right; volume knob, P1–P5, the yellow home key and the channel knob along the bottom.
+- The screen copies the photo's layout: a two-line label row on top, the status icon row, the zone and channel in large bold type, the green banner and a bottom label row. The bottom labels match the photo (Channel, Scan, Page, Contacts, Recent). The top row holds status keys (At Scene, En Route, Busy, Returning, Available) where the photo has At Scene and the vehicle keys; pressing the lit one again clears it.
+- The badge reads REPEATER NATION where the photo has the maker's logo.
+- What each control does:
+  - Channel opens channel entry: type the number on the keypad, then #.
+  - Page opens Calls and Contacts opens Who's On.
+  - The nav pad changes channel (left and right) and zone (up and down).
+  - The laptop key shows Who's On on the screen.
+  - The day/night key switches the screen to night colors, and the backlight key turns the screen fully dim and back.
+  - The siren, horn, light, PA and emergency keys are vehicle controls and stay inert.
+- The other six radios are unchanged until their own photos come in.
+- Version set to 0.2.11 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.10
 
 **Fresh checkouts run on every platform.**
