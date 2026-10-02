@@ -8,6 +8,7 @@ import {ControlHead,FaceDisplay,Knob,O7Icon,O7_KEYS,photoBoxes,useFace} from "./
 export const FACES=[
   {id:"control-head",label:"Dispatch control head",note:"Full keypad, ten softkeys, P1–P5"},
   {id:"dash-head",label:"Dash mount head",note:"Keypad, four softkeys, knob and nav diamond"},
+  {id:"slim-head",label:"Slim mobile head",note:"Two knobs, five softkeys, P key"},
 ];
 export const DEFAULT_FACE="control-head";
 const FACE_KEY="rn-face";
@@ -21,6 +22,7 @@ const Jack=({style})=><div className="fx-jack" style={style} aria-hidden="true">
   <circle cx="20" cy="20" r="11.5" fill="#141416" stroke="#2b2b2f" strokeWidth="1.2"/>
   {[[20,12],[26,15],[27.5,21.5],[24,27],[16,27],[12.5,21.5],[14,15],[20,20]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="1.3" fill="#3a3a3f"/>)}
 </svg></div>;
+const Screw=({style})=><div className="fx-screw" style={style} aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="9" fill="#18181b"/><circle cx="10" cy="10" r="7.5" fill="#9a9a9f"/><path d="M10 4.8 11.5 8.5 15.2 10 11.5 11.5 10 15.2 8.5 11.5 4.8 10 8.5 8.5z" fill="#2a2a2e"/></svg></div>;
 const NavDiamond=({f,style})=><div className="fx-nav" style={style}>
   <div className="fx-nav-pad">
     <button type="button" onClick={()=>f.stepZone(-1)} title="Previous zone" aria-label="Up"/>
@@ -83,7 +85,43 @@ function DashHead(p){
   </div>
 }
 
+// Slim mobile head (APX 8500 E5 photo, 500×500: radio from x 9–490, y 181–319).
+const E5=photoBoxes(9,181,1.83);
+function SlimHead(p){
+  const f=useFace(p,{layout:"e5"});
+  const {at,dot}=E5;
+  const {connected,state,muted,volume=7,onPower,onMute,onVolume}=p;
+  const [ref,zoom]=useFit(880);
+  return <div ref={ref} className="fx e5" style={{"--apx-bright":0.55+f.brightness*0.15,zoom}}>
+    <div className="e5-body" style={at(10,182,490,318)}/>
+    <Inert className="e5-seam" style={at(53,190,54,312)}/>
+    <Inert className="e5-seam" style={at(445,190,446,312)}/>
+    <div className="fx-engrave" style={at(190,182.3,310,187.5)}>REPEATER NATION</div>
+    <Inert className="e5-power-well" style={dot(34,206,28)}/>
+    <button type="button" className={"fx-round fx-power"+(connected?" on":"")} style={dot(34,206,22)} onClick={onPower} disabled={state==="connecting"} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power strokeWidth={2.6}/></button>
+    <Leds f={f} boxes={[at(47,219.5,63,222),at(47,228,63,230.5),at(47,236.8,63,239.3)]}/>
+    <Screw style={dot(31.7,250,15)}/>
+    <Jack style={dot(50,284.5,52)}/>
+    <div className="fx-hold" style={dot(94,215,58)}><Knob className="e5-knob vol" angle={muted?-135:-135+volume*27} title={muted?"Volume (muted, click to unmute)":`Volume ${volume} (scroll to change, click to mute)`} onClick={onMute} onStep={dir=>onVolume?.(-dir)}/></div>
+    <button type="button" className="fx-key fx-pill" style={at(86,250,118.3,269.3)} onClick={brightnessStep(f)} title="Display brightness">{O7Icon.sun}</button>
+    <button type="button" className="fx-round e5-p" style={dot(107.3,291,23)} onClick={()=>f.setView(v=>v==="recent"?"home":"recent")} title="P: Recent">P</button>
+
+    <div className="fx-bezel" style={at(135,196.7,361.7,276.5)}/>
+    <div className="fx-screen" style={at(138,199.3,360,274.3)}><FaceDisplay p={p} f={f} menus={false} softRow={f.bottom} className="fx-display e5-display"/></div>
+    <Softkeys f={f} box={at} xs={[[133.3,172.7],[181.7,220.7],[230,269],[277.3,316.7],[325.3,365]]} y={[288.3,306.7]}/>
+
+    <div className="fx-hold" style={dot(404,215,58)}><Knob className="e5-knob chan" angle={f.channelIndex*30} title="Channel (click or scroll to change)" onClick={()=>f.stepChannel(1)} onStep={f.stepChannel}/></div>
+    <NavDiamond f={f} style={dot(413.3,278.3,55)}/>
+    <Inert className="fx-emerg-ring" style={dot(464,206,34)}/>
+    <div className="fx-emerg" style={dot(464,206,25)} title="Emergency (not used)" aria-hidden="true"/>
+    <Inert className="e5-blue" style={dot(455,236.7,5.5)}/>
+    <Screw style={dot(468.3,250,15)}/>
+    <button type="button" className="fx-round fx-home" style={dot(465,292.7,26)} onClick={f.goHome} title="Home">{O7Icon.home}</button>
+  </div>
+}
+
 export function RadioFace({face=DEFAULT_FACE,...p}){
   if(face==="dash-head")return <DashHead {...p}/>;
+  if(face==="slim-head")return <SlimHead {...p}/>;
   return <ControlHead {...p}/>;
 }

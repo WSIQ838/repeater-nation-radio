@@ -340,9 +340,9 @@ button.o7-key:active,.o7-soft:active:not(:disabled),.o7-round:active:not(:disabl
 .o7-home svg{color:#f1e46a}
 .o7-home svg{height:58%;width:auto}
 
-/* Photo-matched mobile heads. Boxes are placed inline from
+/* Photo-matched mobile heads (dash mount and slim). Boxes are placed inline from
    each photo's coordinates (RadioFaces.jsx); these set the materials. */
-.apx-stage.face-dash-head{grid-template-columns:1fr;max-width:900px}
+.apx-stage.face-dash-head,.apx-stage.face-slim-head{grid-template-columns:1fr;max-width:900px}
 .fx{--apx-bright:1;position:relative;flex:none;user-select:none;font-family:Arial,"Liberation Sans",Helvetica,sans-serif;color:#f2f2f2}
 .fx>*{position:absolute;box-sizing:border-box}
 :where(.fx button){border:0;padding:0;font-family:inherit;color:#f2f2f2;background:none;cursor:pointer}
@@ -369,6 +369,7 @@ button.fx-key:active,button.fx-round:active:not(:disabled),.fx-soft:active:not(:
 .fx-engrave{display:grid;place-items:center;font-weight:900;letter-spacing:2.5px;color:#2b2b2f;text-shadow:0 1px 0 rgba(255,255,255,.08);font-size:10px;white-space:nowrap}
 .fx-jack svg{width:100%;height:100%}
 .fx-jack{border-radius:50%;background:radial-gradient(circle,#1d1d20 52%,#2c2c30 58%,#1a1a1d 70%,#29292d 100%);box-shadow:0 2px 4px rgba(0,0,0,.6),inset 0 0 0 1.5px #0d0d0f}
+.fx-screw svg{width:100%;height:100%}
 .fx-emerg-ring{border-radius:50%;background:radial-gradient(circle at 50% 40%,#2a292d,#18171a);box-shadow:inset 0 0 0 1.4px #0b0b0d,0 1px 0 rgba(255,255,255,.06)}
 .fx-emerg{border-radius:50%;background:radial-gradient(circle at 40% 35%,#f7a274,#e8682f 58%,#c0501f);box-shadow:0 2px 3px rgba(0,0,0,.55)}
 .fx-hold .apx-knob{width:100%;height:100%}
@@ -424,3 +425,24 @@ button.fx-key:active,button.fx-round:active:not(:disabled),.fx-soft:active:not(:
 .am-digit small svg{height:9px;width:auto}
 .am .fx-nav-pad button{background:radial-gradient(circle at 50% 50%,#2c2b2f,#1e1d21)}
 
+/* Slim mobile head */
+.e5{width:880px;height:252px}
+.e5-body{border-radius:13px;background:linear-gradient(180deg,#26262a,#1c1c1f 40%,#18181b);box-shadow:0 14px 30px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1.5px #303034}
+.e5-seam{background:linear-gradient(90deg,rgba(0,0,0,.5),rgba(255,255,255,.06))}
+.e5 .fx-engrave{font-size:9.5px;letter-spacing:3px}
+.e5-power-well{border-radius:9px;background:#18181a;box-shadow:inset 0 0 0 1.4px #2c2c30,inset 0 2px 3px rgba(0,0,0,.6)}
+.e5-p{font-size:20px;font-weight:700}
+.e5-blue{border-radius:50%;background:#3c7be0;box-shadow:0 0 5px #3c7be0}
+.e5-knob .apx-knob-cap{background:repeating-conic-gradient(#b9b9bd 0 5deg,#57575c 5deg 10deg);box-shadow:0 3px 7px rgba(0,0,0,.65),inset 0 0 0 1.4px #0b0b0d}
+.e5-knob .apx-knob-cap:after{inset:7%;background:radial-gradient(circle at 42% 34%,#353438,#18171a 72%);box-shadow:0 0 0 1.5px #0d0d0f}
+.e5-knob .apx-knob-cap i{top:12%;height:38%;width:4px;margin-left:-2px;background:#ececee;border-radius:2px}
+.e5-knob.chan .apx-knob-cap i{display:none}
+.e5-display .apx-icons{height:19px}
+.e5 .fx-soft i{background:#c9c9cc;height:3.5px}
+.e5-display .apx-zone{font-size:21px}
+.e5-display .apx-channel{font-size:32px}
+.e5-display .apx-banner{height:23px;font-size:16px;font-weight:400}
+.e5-display .apx-banner strong,.e5-display .apx-banner span{font-weight:400}
+.e5-display .apx-banner.listen,.e5-display .apx-banner.idle{background:#1f6fc4;color:#fff}
+.e5-display .apx-menu{height:26px;grid-template-columns:repeat(5,1fr);background:#6a6a6e}
+.e5-display .apx-menu span{font-size:16px;border-right-color:#f2f2f2}

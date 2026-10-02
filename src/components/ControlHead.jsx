@@ -123,7 +123,13 @@ export function useFace(p,{layout}={}){
     {label:"Recent",act:()=>setView("recent")},
     scanActive?{label:"Nuis Del",act:onNuisance}:{label:"Who",act:()=>setView(v=>v==="who"?"home":"who")},
     {label:"Next",act:()=>setPage(0)},
-  ]):o7?[
+  ]):layout==="e5"?[
+    {label:"Call",act:()=>onTab("calls")},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:"RSSI",act:()=>setNotice(connected?"Signal: "+(quality==="unknown"?"checking":quality):"No signal")},
+    {label:"Zone",act:()=>stepZone(1)},
+    {label:"Chan",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
+    {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+  ]:o7?[
     {label:"Channel",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
     scanActive?{label:"Nuis Del",act:onNuisance}:{label:"Page",act:()=>onTab("calls")},

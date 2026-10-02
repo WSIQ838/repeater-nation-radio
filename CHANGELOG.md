@@ -1,5 +1,29 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.14
+
+**Slim mobile head**, built from Sean's APX 8500 E5 photo. It's the third radio in the one-at-a-time redo, and it replaces the old wide mobile head.
+
+- Every part is placed from the photo's own measurements:
+  - power in its well, three LEDs, a screw and the round mic jack on the left
+  - the knurled volume knob, the star brightness key and the round P key
+  - the display with five softkeys under it
+  - the knurled channel knob over a four-petal nav diamond
+  - the orange emergency button in its guard, the small blue LED, a screw and the round yellow Home key on the right
+- The display matches the photo: a status icon row, the zone over the channel in large type, a blue status bar (green while receiving, red while transmitting), and Call, RSSI, Zone, Chan and Scan labels.
+- What the controls do:
+  - Call opens Calls.
+  - RSSI shows the connection's signal quality.
+  - Zone steps the zone.
+  - Chan opens channel entry: type the number on the keypad, then #.
+  - Scan turns scan on and off.
+  - P shows Recent.
+  - The left knob is volume (click to mute) and the right knob is channel.
+  - The nav diamond changes channel (left and right) and zone (up and down).
+  - The emergency button stays inert.
+- The engraved maker's name reads REPEATER NATION.
+- Version set to 0.2.14 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.13
 
 **Dash mount head**, built from Sean's APX Mobile photo. It's the second radio in the one-at-a-time redo, and it replaces the old compact mobile head.
