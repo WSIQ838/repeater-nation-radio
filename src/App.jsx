@@ -74,17 +74,32 @@ function Login(){
   </main>
 }
 
+const UPDATE_FEED="https://api.github.com/repos/WSIQ838/repeater-nation-radio/releases?per_page=20";
+
+// Turn a failed update check into what actually went wrong. GitHub answers 404 for a
+// private repository, so that is not "offline".
+async function describeUpdateError(r){
+  if(!r)return {pill:"OFFLINE",title:"Update check failed",detail:"Could not reach GitHub. Check your internet connection and try again."};
+  if(r.status===404)return {pill:"UNAVAILABLE",title:"Updates can't be checked",detail:"The release page for this app isn't public, so the app can't see new versions."};
+  const left=r.headers?.get?.("x-ratelimit-remaining"),reset=Number(r.headers?.get?.("x-ratelimit-reset"));
+  if(r.status===429||(r.status===403&&left==="0")){
+    const at=reset?new Date(reset*1000).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";
+    return {pill:"LIMITED",title:"Too many update checks",detail:"GitHub's hourly limit was reached"+(at?". Try again after "+at+".":". Try again later.")};
+  }
+  return {pill:"ERROR",title:"Update check failed",detail:"GitHub answered with error "+r.status+". Try again later."};
+}
+
 function UpdateStatus(){
   const [status,setStatus]=useState("checking");
   const [release,setRelease]=useState(null);
+  const [failure,setFailure]=useState(null);
 
   const check=async()=>{
     setStatus("checking");
+    let r=null;
     try{
-      const r=await tauriFetch("https://api.github.com/repos/WSIQ838/repeater-nation-radio/releases?per_page=20",{
-        headers:{Accept:"application/vnd.github+json"}
-      });
-      if(!r.ok)throw new Error("Update service returned "+r.status);
+      try{r=await tauriFetch(UPDATE_FEED,{headers:{Accept:"application/vnd.github+json"}})}catch(e){console.error("[update]",e);r=null}
+      if(!r?.ok)throw new Error("Update service returned "+(r?.status??"no response"));
       const releases=await r.json();
       const candidates=(Array.isArray(releases)?releases:[])
         .filter(x=>!x.draft&&/^radio-v\d+\.\d+\.\d+$/i.test(String(x.tag_name||"")))
@@ -108,6 +123,7 @@ function UpdateStatus(){
       else{setRelease(null);setStatus("current")}
     }catch(e){
       console.error("[update]",e);
+      setFailure(await describeUpdateError(r?.ok?{status:"bad data"}:r));
       setStatus("error");
     }
   };
@@ -116,8 +132,8 @@ function UpdateStatus(){
   const icon=<RefreshCw size={18}/>;
   if(status==="checking")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Checking for updates…</h3></div></div><span className="status-pill">CHECKING</span></div><div className="update-display"><div><strong>Repeater Nation Radio</strong><small>Checking the latest published release</small></div></div></div>;
   if(status==="available")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Update available</h3></div></div><span className="status-pill">READY</span></div><div className="update-display"><div><strong>Version {release.version}</strong><small>A newer Repeater Nation Radio release is ready.</small></div><span className="rx-dot"/></div><div className="update-actions"><button className="primary" onClick={()=>{const asset=/Windows/i.test(navigator.userAgent)?(release.assets||[]).find(a=>/\.exe$/i.test(a.name)):null;openUrl(asset?.browser_download_url||release.html_url)}}>Install update</button></div></div>;
-  if(status==="error")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Update check failed</h3></div></div><span className="status-pill">OFFLINE</span></div><div className="update-display"><div><strong>Could not check GitHub</strong><small>Try again when an internet connection is available.</small></div></div><div className="update-actions"><button onClick={check}>Check again</button></div></div>;
-  return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div></div>;
+  if(status==="error")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>{failure?.title||"Update check failed"}</h3></div></div><span className="status-pill warn">{failure?.pill||"ERROR"}</span></div><div className="update-display"><div><strong>Version {String(__APP_VERSION__)}</strong><small>{failure?.detail||"Try again later."}</small></div></div><div className="update-actions"><button onClick={check}>Check again</button></div></div>;
+  return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date · {String(__APP_VERSION__)}</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div></div>;
 }
 
 function MemberName({participant}){

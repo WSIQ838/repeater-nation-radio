@@ -1,5 +1,12 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.18
+
+- Fixed the update check saying "OFFLINE / Could not check GitHub" while online. The cause is that `WSIQ838/repeater-nation-radio` is a private repository, and GitHub answers 404 to apps that aren't signed in to it. Every failure used to be shown as offline.
+- The update check now says what actually went wrong: offline (no response), "Updates can't be checked" (release page not public, 404), "Too many update checks" with the time GitHub's hourly limit resets (403/429), or the error code.
+- The update panel in Settings is styled again (its CSS was missing, so the text ran together) and shows the installed version.
+- Version set to 0.1.18 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.17
 
 - Button mapping. Settings › Button mapping lists every radio action: push to talk, channel up/down, zone up/down, P1–P5, power, mute, Home, Who's On, display brighter/dimmer, answer/decline/end call, all ten softkeys and the whole keypad (0–9, *, #). Each action can have several buttons. Click "+ Add" and press any keyboard key, media or volume key, Bluetooth hand mic button, USB hand mic button, mouse middle/side button or gamepad button. Esc cancels. "×" removes a button and "Reset to defaults" goes back to Space and Num 0 for PTT.

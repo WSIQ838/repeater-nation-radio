@@ -164,3 +164,14 @@
 .keymap-wait{color:#f2c14e;font-size:12px;display:inline-flex;gap:6px;align-items:center}
 .keymap-reset{align-self:flex-start}
 @media (max-width:700px){.keymap-row{flex-direction:column;align-items:flex-start}.keymap-action{flex:none}}
+/* Update widget (Settings) */
+.update-widget{margin:18px 0;padding:16px;border:1px solid #252d36;border-radius:10px;background:#0c1116;display:flex;flex-direction:column;gap:12px}
+.update-title{display:flex;align-items:center;gap:10px;color:#8d98a5}
+.update-title h3{margin:3px 0 0;font-size:15px;color:#e9edf2}
+.update-display{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:8px;background:#090c10;border:1px solid #1d232a}
+.update-display>div{display:flex;flex-direction:column;gap:4px}
+.update-display strong{font-size:13px}
+.update-display small{color:#8d98a5;font-size:12px;line-height:1.4}
+.update-actions{display:flex;gap:8px}
+.update-actions button:not(.primary){background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:7px;padding:8px 12px;font-size:12px;cursor:pointer}
+.status-pill.warn{background:#2a2414;color:#f2c14e}
