@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { connectRadio, disconnectRadio, openMicrophone, publishMicrophoneTrack, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
+import { connectRadio, disconnectRadio, isPublished, openMicrophone, publishMicrophoneTrack, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
 import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 
 // Route a member's audio to the chosen speaker (WebView2 supports setSinkId; others keep the default).
@@ -93,13 +93,15 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="") {
       const room=roomRef.current,pub=pubRef.current;
       const deny=r=>setError(r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");
       let mic;
-      if(pub&&pub.room===room&&pub.deviceId===deviceId){
-        // Fast path: the mic is already published (muted); unmute once the floor is granted.
+      if(pub&&pub.room===room&&pub.deviceId===deviceId&&pub.track.mediaStreamTrack?.readyState==="live"){
+        // Fast path: the mic is already open. Once the floor is granted, unmute it, and
+        // republish it if the server unpublished it when the floor was last released.
         const result=await issueRadioPTT(channelId,"request");
         if(requestId!==pttRequestRef.current)return;
         if(!result?.ok)throw new Error(result?.error||"Could not reach the radio server.");
         if(!result.granted){deny(result);return}
         await pub.track.unmute();
+        if(!isPublished(room,pub.track))await publishMicrophoneTrack(room,pub.track);
         if(requestId!==pttRequestRef.current){try{await pub.track.mute()}catch{}try{await issueRadioPTT(channelId,"release")}catch{}return}
         mic=pub.track;
       }else{

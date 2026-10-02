@@ -12,7 +12,11 @@ export async function prewarmRadio(livekitUrl=config.livekitUrl){
 export async function connectRadio(token, livekitUrl=config.livekitUrl, callbacks={}) {
   const { Room, RoomEvent } = await livekit();
   if(!token) throw new Error("A LiveKit token is required.");
-  const room=new Room({adaptiveStream:true,dynacast:true});
+  // The radio server revokes publish permission on every PTT release, which makes
+  // LiveKit unpublish the mic. Keep the mic track itself open so the next PTT can
+  // republish it without opening the microphone (or switching a Bluetooth headset's
+  // audio profile) again.
+  const room=new Room({adaptiveStream:true,dynacast:true,stopLocalTrackOnUnpublish:false});
   room.on(RoomEvent.ParticipantConnected,p=>callbacks.onParticipantConnected?.(p));
   room.on(RoomEvent.ParticipantDisconnected,p=>callbacks.onParticipantDisconnected?.(p));
   room.on(RoomEvent.TrackSubscribed,(track,pub,participant)=>callbacks.onTrackSubscribed?.(track,pub,participant));
@@ -42,6 +46,12 @@ export async function publishMicrophoneTrack(room,track) {
 export async function publishMicrophone(room,deviceId) {
   const track=await openMicrophone(deviceId);
   try{return await publishMicrophoneTrack(room,track)}catch(err){track.stop();throw err}
+}
+
+export function isPublished(room,track){
+  if(!room||!track)return false;
+  for(const pub of room.localParticipant.trackPublications.values())if(pub.track===track)return true;
+  return false;
 }
 
 export async function unpublishMicrophone(room,track) {

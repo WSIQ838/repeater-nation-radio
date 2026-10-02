@@ -1,5 +1,10 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.20
+
+- Fixed a 0.1.19 bug that would have made every PTT after the first one silent. The radio server (`radio-ptt`) takes away publish permission on every release, which makes LiveKit unpublish the mic and, by default, stop it. 0.1.19 then only unmuted that stopped track. Now the room keeps the mic track open when it is unpublished (`stopLocalTrackOnUnpublish: false`), and the next PTT unmutes it and publishes it again if the server removed it. Later PTTs still skip opening the microphone and the Bluetooth profile switch. The track is only stopped on disconnect, on channel change or when you pick another microphone.
+- Version set to 0.1.20 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.19
 
 - The radio now starts in the ALL zone on its first channel. The zone list is just the real zones (ALL, GMRS, HAM, in the order set on the website); the extra "All Zones" entry, which showed every zone's channels mixed together and didn't auto-connect, is gone.
