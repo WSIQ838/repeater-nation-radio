@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
-import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw,Minimize2} from "lucide-react";
+import {Radio,Users,Phone,Settings,LogIn,Power,ChevronDown,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
@@ -167,6 +167,62 @@ function ScanList({channels,zones,scan,setScan,status}){
   </div>;
 }
 
+// Monitor console: several channels heard at once, each with its own level and mute,
+// like a dispatch console. PTT talks on the selected channel; any tile can be selected.
+const CONSOLE_KEY="rn-console";
+const loadConsole=()=>{try{const v=JSON.parse(localStorage.getItem(CONSOLE_KEY));if(v&&Array.isArray(v.list))return {muted:[],...v}}catch{}return null};
+const saveConsole=v=>{try{localStorage.setItem(CONSOLE_KEY,JSON.stringify(v))}catch{}};
+const ago=at=>{const s=Math.round((Date.now()-at)/1000);return s<60?s+" s ago":s<3600?Math.round(s/60)+" min ago":new Date(at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})};
+
+function ConsoleTile({channel,selected,talker,last,status,level,off,state,onLevel,onMute,onSelect}){
+  const tx=selected&&state==="transmitting";
+  const line=tx?"Transmitting":talker?"RX · "+talker:status==="connecting"?"Joining…":status==="error"?"Can't join, retrying":last?`Last: ${last.name} · ${ago(last.at)}`:"Quiet";
+  return <div className={"console-tile"+(selected?" selected":"")+(tx?" tx":talker?" rx":"")+(off?" off":"")}>
+    <div className="console-tile-head"><span>{channel.zoneName} · CH {channel.number}</span>{selected?<b>TX</b>:<button type="button" onClick={onSelect} title="Talk on this channel">Select</button>}</div>
+    <strong>{channel.name}</strong>
+    <div className="console-line">{line}</div>
+    <div className="console-level">
+      <button type="button" className="mini-icon" onClick={onMute} title={off?"Unmute":"Mute"} aria-label={off?"Unmute "+channel.name:"Mute "+channel.name}>{off?<VolumeX size={15}/>:<Volume2 size={15}/>}</button>
+      <input type="range" min="0" max="10" step="1" value={level} onChange={e=>onLevel(Number(e.target.value))} aria-label={"Volume "+channel.name}/>
+      <span>{level}</span>
+    </div>
+  </div>;
+}
+
+function ConsoleView({channels,zones,cfg,setCfg,on,onToggle,onSelect,connected,selectedId,activity,mainTalker,lastTalk,status,volumes,onLevel,onMuteSelected,muted,state,ptt,onDown,onUp,pttName}){
+  const [editing,setEditing]=useState(false);
+  const toggle=id=>{const has=cfg.list.includes(id);if(!has&&cfg.list.length>=SCAN_MAX)return;setCfg({...cfg,list:has?cfg.list.filter(x=>x!==id):[...cfg.list,id]})};
+  const tiles=[channels.find(c=>c.id===selectedId),...cfg.list.filter(id=>id!==selectedId).map(id=>channels.find(c=>c.id===id))].filter(Boolean);
+  return <section className="panel full console">
+    <div className="panel-title"><LayoutGrid size={17}/> Monitor console
+      <span className="console-actions">
+        <button type="button" className={on?"danger":"primary"} onClick={onToggle} disabled={!connected&&!on}>{on?"Stop monitoring":"Monitor all"}</button>
+        <button type="button" onClick={()=>setEditing(v=>!v)}>{editing?"Done":"Edit channels"}</button>
+      </span>
+    </div>
+    {!connected&&<div className="empty">Connect the radio to monitor channels.</div>}
+    {editing&&<div className="features console-edit">
+      <small>Tick up to {SCAN_MAX} channels to hear at the same time as your selected channel. Scan turns off while the console is monitoring.</small>
+      {zones.map(z=><div key={z.id}><strong className="scan-zone">{z.name}</strong>{channels.filter(c=>c.zoneId===z.id).map(c=><label key={c.id}>{c.name} · CH {c.number}<input type="checkbox" checked={cfg.list.includes(c.id)} onChange={()=>toggle(c.id)}/></label>)}</div>)}
+    </div>}
+    <div className="console-ptt">
+      <button type="button" className={ptt?"mini-ptt pressed":"mini-ptt"} disabled={!connected}
+        onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture?.(e.pointerId);onDown()}} onPointerUp={onUp} onPointerCancel={onUp} onLostPointerCapture={onUp} onContextMenu={e=>e.preventDefault()}>
+        <Mic size={16}/> PTT on {channels.find(c=>c.id===selectedId)?.name||"selected channel"}
+      </button>
+      <small>{pttName?"or "+pttName:""}</small>
+    </div>
+    <div className="console-grid">{tiles.map(c=>{
+      const sel=c.id===selectedId,offIds=cfg.muted||[];
+      return <ConsoleTile key={c.id} channel={c} selected={sel} state={state}
+        talker={sel?mainTalker:on?activity[c.id]:""} last={lastTalk[c.id]} status={sel?(connected?"on":state):on?status[c.id]:""}
+        level={volumes[c.id]??DEFAULT_VOLUME} off={sel?muted:!on||offIds.includes(c.id)}
+        onLevel={v=>onLevel(c.id,v)} onSelect={()=>onSelect(c.id)}
+        onMute={()=>sel?onMuteSelected():setCfg({...cfg,muted:offIds.includes(c.id)?offIds.filter(x=>x!==c.id):[...offIds,c.id]})}/>;
+    })}</div>
+  </section>;
+}
+
 function LastHeard({items,onReplay}){
   return <section className="panel last-heard"><div className="panel-title"><RefreshCw size={17}/> Last heard</div>
     {items.length?items.map(x=><div className="member" key={x.id}><div><strong>{x.name}</strong><span>{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})} · {Math.max(1,Math.round(x.ms/1000))} s</span></div><button onClick={()=>onReplay(x.id)} disabled={!x.url} title={x.url?"Play this transmission again":"Replay isn't available on this system"}>Replay</button></div>)
@@ -272,11 +328,26 @@ function RadioApp({session,onSignOut}){
   const connected=state==="listening"||state==="transmitting";
   // Scan list (saved) and scan on/off. The default list is the current zone's channels.
   const [scanCfg,setScanCfgState]=useState(loadScan),[scanOn,setScanOn]=useState(false);
+  const [consoleCfgState,setConsoleCfgState]=useState(loadConsole),[consoleOn,setConsoleOn]=useState(false);
+  const consoleCfg=consoleCfgState||{list:channels.filter(c=>c.zoneId===zoneId).map(c=>c.id).slice(0,SCAN_MAX),muted:[]};
+  const setConsoleCfg=v=>{setConsoleCfgState(v);saveConsole(v)};
+  const consoleChannels=useMemo(()=>consoleCfg.list.filter(id=>id!==channelId).map(id=>channels.find(c=>c.id===id)).filter(Boolean),[consoleCfg.list.join(","),channelId,channels]);
   const scan=scanCfg||{list:channels.filter(c=>c.zoneId===zoneId).map(c=>c.id).slice(0,SCAN_MAX),priority:""};
   const setScanCfg=v=>{setScanCfgState(v);saveScan(v)};
   const scanChannels=useMemo(()=>scan.list.filter(id=>id!==channelId).map(id=>channels.find(c=>c.id===id)).filter(Boolean),[scan.list.join(","),channelId,channels]);
-  const {active:scanActive,status:scanStatus,nuisanceDelete}=useScan({enabled:scanOn&&connected,channels:scanChannels,priorityId:scan.priority,volume:volume/10,muted,outputDeviceId:speakerId,suppress:!!onAir||ptt});
-  const toggleScan=()=>{setScanOn(v=>!v);setFlash({text:scanOn?"Scan off":"Scan on"})};
+  const levels=useMemo(()=>Object.fromEntries(consoleChannels.map(c=>[c.id,(volumes[c.id]??DEFAULT_VOLUME)/10])),[consoleChannels,volumes]);
+  const {active:scanActive,status:scanStatus,activity,nuisanceDelete}=useScan({
+    enabled:(scanOn||consoleOn)&&connected,channels:consoleOn?consoleChannels:scanChannels,mode:consoleOn?"monitor":"scan",
+    levels,mutedIds:consoleCfg.muted||[],priorityId:scan.priority,volume:volume/10,muted,outputDeviceId:speakerId,suppress:!consoleOn&&(!!onAir||ptt),
+  });
+  // Scan and the monitor console share the listening rooms, so only one runs at a time.
+  const toggleScan=()=>{setConsoleOn(false);setScanOn(v=>!v);setFlash({text:scanOn?"Scan off":"Scan on"})};
+  const toggleConsole=()=>{setScanOn(false);setConsoleOn(v=>!v);setFlash({text:consoleOn?"Console off":"Console monitoring"})};
+  const setLevel=(id,v)=>{const next=Math.max(0,Math.min(10,v));setVolumes(all=>{const n={...all,[id]:next};saveVolumes(n);return n})};
+  // Who was last heard on each channel, for the console tiles.
+  const [lastTalk,setLastTalk]=useState({});
+  useEffect(()=>{const now=Date.now(),add={};for(const [id,name] of Object.entries(activity||{}))if(name)add[id]={name,at:now};if(Object.keys(add).length)setLastTalk(l=>({...l,...add}))},[activity]);
+  useEffect(()=>{if(onAir?.name)setLastTalk(l=>({...l,[channelId]:{name:onAir.name,at:Date.now()}}))},[onAir?.identity]);
   const nuisance=()=>{const c=nuisanceDelete();if(c)setFlash({text:"Deleted "+c.name+" from scan"})};
   const currentChannel=channels.find(x=>x.id===channelId);
   const selectZone=async next=>{
@@ -354,6 +425,7 @@ function RadioApp({session,onSignOut}){
     else if(action==="volume_up"||action==="volume_down")changeVolume(action==="volume_up"?1:-1);
     else if(action==="scan")toggleScan();
     else if(action==="mini")toggleMini();
+    else if(action==="console"){if(connected)toggleConsole()}
     else if(action==="nuisance")nuisance();
     else if(action==="answer"){if(incoming)accept()}
     else if(action==="decline"){if(incoming)decline()}
@@ -443,7 +515,7 @@ function RadioApp({session,onSignOut}){
     talkNotified.current.set(key,now);notify(where,who+" is talking");
   };
   useEffect(()=>{notifyTalk(channelName,onAir?.name)},[onAir?.identity]);
-  useEffect(()=>{if(scanActive)notifyTalk("Scan · "+scanActive.name,scanActive.talker)},[scanActive?.channelId,scanActive?.talker]);
+  useEffect(()=>{for(const [id,who] of Object.entries(activity||{})){const c=channels.find(x=>x.id===id);if(c)notifyTalk((consoleOn?"":"Scan · ")+c.name,who)}},[activity]);
 
   const logout=async()=>{await disconnect();await endCall();await clearSession();onSignOut()};
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
@@ -461,7 +533,7 @@ function RadioApp({session,onSignOut}){
       <div className="topbar-right"><button type="button" className="mini-open" onClick={toggleMini} title="Mini radio (always on top)"><Minimize2 size={15}/> Mini</button><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":"Ready"}<ChevronDown size={14}/></div></div>
     </header>
     <div className="body">
-      <aside className="sidebar">{[["radio","Radio",Radio],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
+      <aside className="sidebar">{[["radio","Radio",Radio],["console","Console",LayoutGrid],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
       <main className="content">
         {tab==="radio"&&<>
           <section className="hero apx-hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
@@ -492,6 +564,9 @@ function RadioApp({session,onSignOut}){
           <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div>{incoming?<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>:call?<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>:<div className="empty">Open Calls to see available members.</div>}</section></div>
           <LastHeard items={lastHeard} onReplay={replay}/>
         </>}
+        {tab==="console"&&<ConsoleView channels={channels} zones={zones} cfg={consoleCfg} setCfg={setConsoleCfg} on={consoleOn} onToggle={toggleConsole} onSelect={selectChannel} connected={connected}
+          selectedId={channelId} activity={activity||{}} mainTalker={onAir?.name||""} lastTalk={lastTalk} status={scanStatus} volumes={volumes} onLevel={setLevel}
+          onMuteSelected={()=>setMuted(!muted)} muted={muted} state={state} ptt={ptt} onDown={down} onUp={up} pttName={pttName}/>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
         {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray}/></div><div className="setting keymap-setting"><span>Button mapping</span><KeyMap {...keymapProps}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}

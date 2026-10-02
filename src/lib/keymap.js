@@ -13,6 +13,7 @@ export const ACTIONS=[
   {id:"recent",label:"Recent (last heard)",group:"Radio"},
   {id:"replay",label:"Replay last transmission",group:"Radio"},
   {id:"scan",label:"Scan on / off",group:"Channel & zone"},
+  {id:"console",label:"Monitor console on / off",group:"Channel & zone"},
   {id:"nuisance",label:"Nuisance delete (skip scanned channel)",group:"Channel & zone"},
   {id:"home",label:"Home",group:"Radio"},
   {id:"mini",label:"Mini radio on / off",group:"Radio"},

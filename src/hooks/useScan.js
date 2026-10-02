@@ -7,24 +7,43 @@ import { setSink } from "./useRadio";
 // with activity, like a real radio's scan. The selected channel always wins, the
 // priority channel interrupts any other, and after a transmission ends scan stays on
 // that channel for a short hang time so the reply is heard too.
+// mode "monitor" is the dispatch console: every channel plays at once at its own level
+// (levels: channelId -> 0..1, mutedIds: channels turned off), and nothing is suppressed.
 export const SCAN_HANG_MS=3000;
 export const SCAN_MAX=10;
 const RETRY_MS=5000;
+// Changing channel briefly disconnects the radio; keep the listening rooms through that
+// (silenced) instead of leaving and rejoining every one of them.
+const LEAVE_GRACE_MS=4000;
 
 const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
 
-export function useScan({enabled,channels,priorityId,volume=1,muted=false,outputDeviceId="",suppress=false,onLock}){
+export function useScan({enabled,channels,priorityId,volume=1,muted=false,outputDeviceId="",suppress=false,onLock,mode="scan",levels={},mutedIds=[]}){
   const roomsRef=useRef(new Map()); // channelId -> {room, gen, audio: Map(identity->el), onAir: Map(identity->name)}
   const [active,setActive]=useState(null); // {channelId, name, talker}
   const [nuisance,setNuisance]=useState([]);
   const [status,setStatus]=useState({}); // channelId -> "connecting" | "on" | "error"
+  const [activity,setActivity]=useState({}); // channelId -> name of who is talking there
   const lockRef=useRef({channelId:null,until:0}),hangRef=useRef(null);
-  const settingsRef=useRef({});settingsRef.current={volume,muted,outputDeviceId,suppress,priorityId,channels,nuisance,onLock};
+  const settingsRef=useRef({});settingsRef.current={enabled,volume,muted,outputDeviceId,suppress,priorityId,channels,nuisance,onLock,mode,levels,mutedIds};
 
   // Pick which scanned channel is heard and set every scanned member's volume.
   const decide=useCallback(()=>{
-    const {volume,muted,suppress,priorityId,channels,nuisance,onLock}=settingsRef.current;
-    const now=Date.now(),busy=[];
+    const {enabled,volume,muted,suppress,priorityId,channels,nuisance,onLock,mode,levels,mutedIds}=settingsRef.current;
+    const now=Date.now(),busy=[],talking={};
+    if(!enabled){
+      for(const r of roomsRef.current.values())for(const el of r.audio.values())el.volume=0;
+      clearTimeout(hangRef.current);setActive(prev=>prev===null?prev:null);setActivity(prev=>Object.keys(prev).length?{}:prev);onLock?.(null);
+      return;
+    }
+    for(const [id,r] of roomsRef.current)if(r.onAir.size)talking[id]=[...r.onAir.values()].pop();
+    setActivity(prev=>JSON.stringify(prev)===JSON.stringify(talking)?prev:talking);
+    if(mode==="monitor"){
+      for(const [id,r] of roomsRef.current)for(const el of r.audio.values())el.volume=muted||mutedIds.includes(id)?0:(levels[id]??volume);
+      lockRef.current={channelId:null,until:0};clearTimeout(hangRef.current);
+      setActive(prev=>prev===null?prev:null);onLock?.(null);
+      return;
+    }
     for(const c of channels){
       const r=roomsRef.current.get(c.id);
       if(r&&r.onAir.size&&!nuisance.includes(c.id))busy.push(c);
@@ -102,13 +121,15 @@ export function useScan({enabled,channels,priorityId,volume=1,muted=false,output
   const ids=enabled?channels.map(c=>c.id).join(","):"";
   useEffect(()=>{
     const want=new Set(enabled?channels.map(c=>c.id):[]);
-    for(const id of [...roomsRef.current.keys()])if(!want.has(id))drop(id);
-    for(const c of enabled?channels:[])if(!roomsRef.current.has(c.id))join(c);
-    if(!enabled){lockRef.current={channelId:null,until:0};setNuisance([]);}
+    const leave=()=>{for(const id of [...roomsRef.current.keys()])if(!want.has(id))drop(id)};
+    let timer;
+    if(enabled){leave();for(const c of channels)if(!roomsRef.current.has(c.id))join(c)}
+    else timer=setTimeout(()=>{leave();lockRef.current={channelId:null,until:0};setNuisance([])},LEAVE_GRACE_MS);
     decide();
+    return()=>clearTimeout(timer);
   },[ids]);
   useEffect(()=>()=>{for(const id of [...roomsRef.current.keys()])drop(id);clearTimeout(hangRef.current)},[]);
-  useEffect(()=>{decide()},[volume,muted,suppress,priorityId,nuisance.join(",")]);
+  useEffect(()=>{decide()},[volume,muted,suppress,priorityId,nuisance.join(","),mode,JSON.stringify(levels),mutedIds.join(",")]);
   useEffect(()=>{for(const r of roomsRef.current.values())for(const el of r.audio.values())setSink(el,outputDeviceId)},[outputDeviceId]);
 
   // Nuisance delete: skip the channel scan is stopped on until scan is turned off.
@@ -119,5 +140,5 @@ export function useScan({enabled,channels,priorityId,volume=1,muted=false,output
     return settingsRef.current.channels.find(c=>c.id===id)||null;
   },[]);
 
-  return {active,status,nuisance,nuisanceDelete};
+  return {active,status,activity,nuisance,nuisanceDelete};
 }

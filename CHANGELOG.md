@@ -1,5 +1,20 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.3
+
+Radio features, part 4: **Monitor console** (dispatch style).
+
+- New **Console** page (left menu): a tile for your selected channel plus every channel on the console list, each showing zone, channel, who is talking now, and who was last heard and when.
+- **Monitor all** plays every console channel at the same time, like a dispatch console, instead of scan's one-at-a-time. Each tile has its own volume slider (shared with that channel's volume on the radio) and mute.
+- PTT (the console's PTT button, the palm mic, or any mapped button) always talks on the selected (TX) tile. "Select" on any tile makes it the TX channel; the old one keeps being monitored.
+- Monitored channels stay audible while you transmit.
+- "Edit channels" picks up to 10 channels from any zone. Until you change it, the list is your current zone. It is saved on your PC.
+- Scan and the console share the listening connections, so turning one on turns the other off.
+- Changing channel no longer makes scan or the console leave and rejoin every listened channel; they stay joined (silenced) through the switch.
+- Notifications for "someone is talking" now cover console channels too.
+- New mappable action: Monitor console on / off.
+- Version set to 0.2.3 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.2
 
 Radio features, part 3: **Mini radio, tray icon and notifications**.

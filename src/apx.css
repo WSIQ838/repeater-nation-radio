@@ -215,3 +215,30 @@ body.mini-mode{min-width:0;overflow:hidden}
 .mini-ptt.pressed{background:#d23b3b;color:#fff}
 .mini-ptt:disabled{opacity:.45;cursor:not-allowed}
 .mini-vol{min-width:18px;text-align:center;font-size:12px;color:#9aa4ae}
+
+/* Monitor console */
+.console .panel-title{flex-wrap:wrap}
+.console-actions{margin-left:auto;display:flex;gap:8px}
+.console-actions button{font-size:12px;padding:7px 12px;border-radius:8px;border:1px solid #29313b;background:#151a21;color:#c3cad2;cursor:pointer}
+.console-actions .primary{background:#f28a25;color:#111;border-color:#f28a25}
+.console-actions .danger{background:#c94343;color:#fff;border-color:#c94343}
+.console-actions button:disabled{opacity:.45;cursor:not-allowed}
+.console-edit{margin:12px 0;max-width:520px}
+.console-ptt{display:flex;align-items:center;gap:12px;margin:14px 0}
+.console-ptt .mini-ptt{flex:none;padding:0 22px;height:44px}
+.console-ptt small{color:#7e8995}
+.console-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.console-tile{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:10px;border:1px solid #252d36;background:#0c1116}
+.console-tile.selected{border-color:#f28a25}
+.console-tile.rx{border-color:#46c77a;background:#0f1d15}
+.console-tile.tx{border-color:#d23b3b;background:#221012}
+.console-tile.off strong{color:#6f7a86}
+.console-tile strong{font-size:17px}
+.console-tile-head{display:flex;align-items:center;justify-content:space-between;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8c97a3}
+.console-tile-head b{color:#f28a25}
+.console-tile-head button{font-size:11px;border:1px solid #29313b;background:#151a21;color:#c3cad2;border-radius:6px;padding:3px 8px;cursor:pointer}
+.console-line{font-size:12px;color:#8d98a5;min-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.console-tile.rx .console-line{color:#7be0a2}.console-tile.tx .console-line{color:#ff8a8a}
+.console-level{display:flex;align-items:center;gap:8px;font-size:12px;color:#9aa4ae}
+.console-level input{flex:1}
+.console-tile-head{min-height:22px}.console-level input,.features input[type=range]{accent-color:#f28a25}
