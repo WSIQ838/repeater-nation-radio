@@ -39,7 +39,7 @@ export async function loginWithGoogle() {
   const authClient = client();
   // OAuth must return to the installed desktop app, not the Tauri WebView.
   // The deep-link plugin routes this URL back into Repeater Nation Radio.
-  return authClient.auth.loginWithProvider("google", "https://repeaternation.com/oauth/callback");
+  return authClient.auth.loginWithProvider("google", "https://repeaternation.com/?rn_desktop=1");
 }
 
 export async function restoreSessionFromOAuth(url = "") {
