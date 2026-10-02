@@ -1,5 +1,23 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.0
+
+Radio features, part 1 (all in the app, no server changes; same on Windows, macOS and Linux):
+
+- **Talk-permit tone** when the floor is granted, and a **busy tone** when the channel is busy or you can't transmit. The palm mic also lets go by itself when the floor is refused.
+- **Roger beep** (courtesy tone) when someone else's transmission ends. Blips under 0.3 s don't beep, and it is silent while muted.
+- **Time-out timer**: Off, 30 s, 60 s (default), 2 min or 3 min. It beeps 5 s before the limit, then keys you off and shows "Time-out timer".
+- **Receive display**: the banner shows "Receiving" with the talker's callsign, the RX light only lights while someone is talking, and Who's On marks the talker as "Transmitting". A transmission is a member's mic being published or unmuted while they hold the floor.
+- **Last heard** panel on the Radio tab with time and length of the last 10 transmissions, plus a **Recent** softkey view on the display.
+- **Instant replay** of each received transmission: Replay in Last heard, the Replay softkey in the Recent view, or a mapped button. It records with the system's MediaRecorder and stays on your PC only until the app closes. Where the WebView has no MediaRecorder, the Replay button is greyed out.
+- **Signal bars** now show the real connection quality from the voice server: 4 excellent, 3 good, 1 poor, 0 lost.
+- **Volume knob with levels 0–10**, remembered per channel (default 7). Scroll the knob to change it, click to mute. The level flashes on the display.
+- **Voice announcement** of channel changes ("ALL channel 3, US-East"), off by default, where the system has speech.
+- Settings › Radio features has switches for each tone, the time-out timer, the tone volume and announcements.
+- New mappable actions: Volume up, Volume down, Recent and Replay last transmission.
+- Bottom softkeys are now Chan −, Chan +, Zone, Recent, Contacts (Home stays on its own key).
+- Version set to 0.2.0 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.20
 
 - Fixed a 0.1.19 bug that would have made every PTT after the first one silent. The radio server (`radio-ptt`) takes away publish permission on every release, which makes LiveKit unpublish the mic and, by default, stop it. 0.1.19 then only unmuted that stopped track. Now the room keeps the mic track open when it is unpublished (`stopLocalTrackOnUnpublish: false`), and the next PTT unmutes it and publishes it again if the server removed it. Later PTTs still skip opening the microphone and the Bluetooth profile switch. The track is only stopped on disconnect, on channel change or when you pick another microphone.

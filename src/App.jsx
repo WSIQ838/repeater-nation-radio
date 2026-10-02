@@ -11,6 +11,7 @@ import {prewarmRadio} from "./lib/livekit";
 import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
 import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {ControlHead,PalmMic} from "./components/ControlHead";
+import {DEFAULT_VOLUME,announce,canAnnounce,loadFeatures,loadVolumes,playTone,saveFeatures,saveVolumes} from "./lib/tones";
 import "./apx.css";
 
 const AUTO_CONNECT_SETTLE_MS=350;
@@ -136,9 +137,27 @@ function UpdateStatus(){
   return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date · {String(__APP_VERSION__)}</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div></div>;
 }
 
-function MemberName({participant}){
+function RadioFeatures({features,setFeature}){
+  return <div className="features">
+    <label>Talk-permit tone<input type="checkbox" checked={features.permitTone} onChange={e=>setFeature("permitTone",e.target.checked)}/></label>
+    <label>Busy tone<input type="checkbox" checked={features.busyTone} onChange={e=>setFeature("busyTone",e.target.checked)}/></label>
+    <label>Roger beep after each received transmission<input type="checkbox" checked={features.rogerBeep} onChange={e=>setFeature("rogerBeep",e.target.checked)}/></label>
+    <label>Time-out timer<select value={features.tot} onChange={e=>setFeature("tot",Number(e.target.value))}>{[[0,"Off"],[30,"30 s"],[60,"60 s"],[120,"2 min"],[180,"3 min"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+    <label>Tone volume<input type="range" min="0" max="1" step="0.1" value={features.toneVolume} onChange={e=>setFeature("toneVolume",Number(e.target.value))}/></label>
+    <label>Announce channel changes{canAnnounce()?<input type="checkbox" checked={features.announce} onChange={e=>setFeature("announce",e.target.checked)}/>:<small>Not available on this system</small>}</label>
+  </div>;
+}
+
+function LastHeard({items,onReplay}){
+  return <section className="panel last-heard"><div className="panel-title"><RefreshCw size={17}/> Last heard</div>
+    {items.length?items.map(x=><div className="member" key={x.id}><div><strong>{x.name}</strong><span>{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"})} · {Math.max(1,Math.round(x.ms/1000))} s</span></div><button onClick={()=>onReplay(x.id)} disabled={!x.url} title={x.url?"Play this transmission again":"Replay isn't available on this system"}>Replay</button></div>)
+      :<div className="empty">Transmissions you hear show up here, with instant replay.</div>}
+  </section>;
+}
+
+function MemberName({participant,talking}){
   const info=useMemo(()=>{try{return participant?.metadata?JSON.parse(participant.metadata):{}}catch{return {}}},[participant]);
-  return <div className="member"><strong>{info.callsign||info.displayName||participant?.name||participant?.identity||"Member"}</strong><span>{info.callsign&&info.displayName?info.displayName:"Connected"}</span></div>
+  return <div className="member"><strong>{info.callsign||info.displayName||participant?.name||participant?.identity||"Member"}</strong><span className={talking?"talking":""}>{talking?"Transmitting":info.callsign&&info.displayName?info.displayName:"Connected"}</span></div>
 }
 
 const readPref=key=>{try{return localStorage.getItem(key)}catch{return null}};
@@ -196,7 +215,21 @@ function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio",order:c.zoneOrder??999}])).values()).sort((a,b)=>a.order-b.order),[channels]);
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
-  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId), speakerId);
+  // Radio features: tones, time-out timer, announcements and per-channel volume.
+  const [features,setFeatures]=useState(loadFeatures),featuresRef=useRef(features);featuresRef.current=features;
+  const setFeature=(k,v)=>setFeatures(f=>{const next={...f,[k]:v};saveFeatures(next);return next});
+  const [volumes,setVolumes]=useState(loadVolumes);
+  const volume=volumes[channelId]??DEFAULT_VOLUME,volumeRef=useRef(volume);volumeRef.current=volume;
+  const [flash,setFlash]=useState(null);
+  const tone=name=>playTone(name,featuresRef.current.toneVolume*Math.max(0.3,volumeRef.current/10));
+  const changeVolume=dir=>{
+    const next=Math.max(0,Math.min(10,volume+dir));
+    setVolumes(v=>{const all={...v,[channelId]:next};saveVolumes(all);return all});
+    setFlash({text:"Volume "+next});
+  };
+  const radioEvents={onTalkEnd:e=>{if(featuresRef.current.rogerBeep&&e.ms>300&&!mutedRef.current)tone("roger")}};
+  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect,quality,onAir,lastHeard,replay}=useRadio(channelId, channels.find(x=>x.id===channelId), speakerId, volume/10, radioEvents);
+  const mutedRef=useRef(muted);mutedRef.current=muted;
   const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id, speakerId);
 
   useEffect(()=>{prewarmRadio()},[]);
@@ -240,6 +273,8 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{
     if(!tuneSeq||!channelId)return;
     const id=setTimeout(()=>connectRef.current().catch(()=>{}),AUTO_CONNECT_SETTLE_MS);
+    const c=channels.find(x=>x.id===channelId);
+    if(c&&featuresRef.current.announce)announce(`${c.zoneName||""} channel ${c.number??""}, ${c.name}`);
     return()=>clearTimeout(id);
   },[tuneSeq]);
   const chooseZone=e=>selectZone(e.target.value);
@@ -248,7 +283,23 @@ function RadioApp({session,onSignOut}){
   // track it in a ref too: a second "down" from another source must not re-key.
   const pttRef=useRef(false);
   const setPttState=v=>{pttRef.current=v;setPtt(v)};
-  const down=async()=>{if(!connected||pttRef.current||learnFor)return;setPttState(true);try{await requestPTT(micDeviceId)}catch{setPttState(false)}};
+  const down=async()=>{
+    if(!connected||pttRef.current||learnFor)return;
+    setPttState(true);
+    let result="error";
+    try{result=await requestPTT(micDeviceId)}catch{}
+    if(result==="granted"){if(featuresRef.current.permitTone)tone("permit");return}
+    if(result==="stale")return;
+    setPttState(false);
+    if(featuresRef.current.busyTone)tone(result==="busy"?"busy":"error");
+  };
+  // Time-out timer: warn 5 s before the limit, then key off like a real radio.
+  useEffect(()=>{
+    const limit=features.tot;if(state!=="transmitting"||!limit)return;
+    const warn=setTimeout(()=>tone("tot"),Math.max(0,limit-5)*1000);
+    const stop=setTimeout(()=>{upRef.current();tone("timeout");setFlash({text:"Time-out timer"})},limit*1000);
+    return()=>{clearTimeout(warn);clearTimeout(stop)};
+  },[state,features.tot]);
   const up=async()=>{if(!pttRef.current)return;setPttState(false);await releasePTT()};
 
   // Button mapping: every radio action can be bound to keys and hardware buttons.
@@ -273,6 +324,7 @@ function RadioApp({session,onSignOut}){
     else if(/^p[1-5]$/.test(action)){const c=visibleChannels[Number(action[1])-1];if(c)selectChannel(c.id)}
     else if(action==="power"){if(state!=="connecting")(connected?disconnect():connect()).catch(()=>{})}
     else if(action==="mute")setMuted(!muted);
+    else if(action==="volume_up"||action==="volume_down")changeVolume(action==="volume_up"?1:-1);
     else if(action==="answer"){if(incoming)accept()}
     else if(action==="decline"){if(incoming)decline()}
     else if(action==="end_call"){if(call)endCall()}
@@ -359,6 +411,7 @@ function RadioApp({session,onSignOut}){
               incoming={incoming} call={call} callState={callState}
               onPower={connected?disconnect:connect} onMute={()=>setMuted(!muted)} onChannel={selectChannel} onZone={selectZone} onTab={setTab}
               onAnswer={accept} onDecline={decline} onEndCall={endCall} command={faceCommand}
+              quality={quality} onAir={onAir} volume={volume} onVolume={changeVolume} lastHeard={lastHeard} onReplay={replay} flash={flash}
             />
             <div className="apx-side">
               <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up} pttName={pttName}/>
@@ -373,11 +426,12 @@ function RadioApp({session,onSignOut}){
               </div>
             </div>
           </section>
-          <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div>{incoming?<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>:call?<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>:<div className="empty">Open Calls to see available members.</div>}</section></div>
+          <div className="grid"><section className="panel"><div className="panel-title"><Users size={17}/> Who’s On</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section><section className="panel"><div className="panel-title"><Phone size={17}/> Calls</div>{incoming?<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>:call?<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>:<div className="empty">Open Calls to see available members.</div>}</section></div>
+          <LastHeard items={lastHeard} onReplay={replay}/>
         </>}
-        {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
+        {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="setting keymap-setting"><span>Button mapping</span><KeyMap {...keymapProps}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature}/></div><div className="setting keymap-setting"><span>Button mapping</span><KeyMap {...keymapProps}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>

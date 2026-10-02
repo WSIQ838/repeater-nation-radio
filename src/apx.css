@@ -175,3 +175,13 @@
 .update-actions{display:flex;gap:8px}
 .update-actions button:not(.primary){background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:7px;padding:8px 12px;font-size:12px;cursor:pointer}
 .status-pill.warn{background:#2a2414;color:#f2c14e}
+.apx-recent span{display:flex;gap:8px;align-items:baseline}
+.apx-recent i{font-style:normal;font-weight:500;color:#5b636b;font-size:12px}
+.last-heard{margin-top:16px}
+.last-heard .member button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer}
+.last-heard .member button:disabled{opacity:.5;cursor:default}
+.member .talking{color:#65c88b;font-weight:700}
+.features{display:flex;flex-direction:column;gap:8px;min-width:280px}
+.features label{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#d8dde3}
+.features select,.features input[type=range]{background:#0b0f14;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:4px 6px}
+.features small{color:#7e8995}

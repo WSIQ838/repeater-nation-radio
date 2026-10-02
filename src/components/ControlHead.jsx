@@ -42,6 +42,7 @@ export function ControlHead({
   state,connected,ptt,muted,error,callsign,participants,
   incoming,call,callState,
   onPower,onMute,onChannel,onZone,onTab,onAnswer,onDecline,onEndCall,command,
+  quality="unknown",onAir=null,volume=7,onVolume,lastHeard=[],onReplay,flash,
 }){
   const [view,setView]=useState("home");
   const [entry,setEntry]=useState("");
@@ -50,6 +51,8 @@ export function ControlHead({
 
   useEffect(()=>{if(!notice)return;const id=setTimeout(()=>setNotice(""),2200);return()=>clearTimeout(id)},[notice]);
   useEffect(()=>setNotice(""),[state]);
+  // One-off messages from the app (volume level, time-out timer…) show in the banner.
+  useEffect(()=>{if(flash?.text)setNotice(flash.text)},[flash]);
 
   const rawChannelIndex=visibleChannels.findIndex(c=>c.id===channelId);
   const rawZoneIndex=zones.findIndex(z=>z.id===zoneId);
@@ -89,7 +92,13 @@ export function ControlHead({
     {label:"Calls",act:()=>onTab("calls")},
     {label:"Setup",act:()=>onTab("settings")},
   ];
-  const bottom=incoming?[
+  const replayLast=()=>{if(!onReplay?.())setNotice("Nothing to replay yet")};
+  const bottom=view==="recent"?[
+    {label:"Back",act:()=>setView("home")},
+    {label:"Replay",act:replayLast},
+    {label:"",act:null},{label:"",act:null},
+    {label:"Contacts",act:()=>onTab("calls")},
+  ]:incoming?[
     {label:"Answer",act:onAnswer,tone:"go"},
     {label:"Decline",act:onDecline,tone:"stop"},
     {label:"",act:null},{label:"",act:null},
@@ -102,8 +111,8 @@ export function ControlHead({
     {label:"Chan −",act:()=>stepChannel(-1)},
     {label:"Chan +",act:()=>stepChannel(1)},
     {label:"Zone",act:()=>stepZone(1)},
+    {label:"Recent",act:()=>setView("recent")},
     {label:"Contacts",act:()=>onTab("calls")},
-    {label:"Home",act:goHome},
   ];
 
   // Mapped hardware buttons for face-only controls arrive as one-shot commands.
@@ -113,6 +122,8 @@ export function ControlHead({
     const a=command.action;
     if(a==="home")goHome();
     else if(a==="who")setView(v=>v==="who"?"home":"who");
+    else if(a==="recent")setView(v=>v==="recent"?"home":"recent");
+    else if(a==="replay")replayLast();
     else if(a==="bright_up")setBrightness(b=>Math.min(3,b+1));
     else if(a==="bright_down")setBrightness(b=>Math.max(0,b-1));
     else if(/^soft_[tb][1-5]$/.test(a)){const k=(a[5]==="t"?top:bottom)[Number(a[6])-1];if(k?.act&&!k.disabled)k.act()}
@@ -121,6 +132,7 @@ export function ControlHead({
 
   let banner=null;
   if(ptt)banner={tone:"tx",title:"Transmitting",sub:callsign||""};
+  else if(onAir)banner={tone:"rx",title:"Receiving",sub:onAir.name};
   else if(incoming)banner={tone:"rx",title:"Call Received",sub:incoming.caller_display_name||incoming.caller_callsign||"Member",icon:PhoneIncoming};
   else if(call)banner={tone:"call",title:callState==="calling"?"Calling…":"Call Connected",sub:call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member",icon:Phone};
   else if(error)banner={tone:"warn",title:error};
@@ -129,8 +141,9 @@ export function ControlHead({
   else if(connected)banner={tone:"listen",title:"Listening",sub:participants.length+" on channel"};
   else banner={tone:"idle",title:"Radio Off",sub:"Press Connect or power"};
 
-  const bars=connected?4:state==="connecting"?1:0;
-  const ledTx=ptt,ledRx=connected&&!ptt,ledCall=!!(incoming||call);
+  const QUALITY_BARS={excellent:4,good:3,poor:1,lost:0};
+  const bars=connected?(QUALITY_BARS[quality]??4):state==="connecting"?1:0;
+  const ledTx=ptt,ledRx=!!onAir&&!ptt,ledCall=!!(incoming||call);
 
   return <div className="apx-head" style={{"--apx-bright":0.55+brightness*0.15}}>
     <div className="apx-bezel">
@@ -173,7 +186,7 @@ export function ControlHead({
           <div className="apx-display">
             <div className="apx-menu top">{top.map((k,i)=><span key={i}>{k.label}</span>)}</div>
             <div className="apx-icons">
-              <span className="apx-bars" title={bars?"Connected":"No signal"}>{[1,2,3,4].map(n=><i key={n} className={n<=bars?"on":""}/>)}</span>
+              <span className="apx-bars" title={connected?"Connection: "+(quality==="unknown"?"checking":quality):"No signal"}>{[1,2,3,4].map(n=><i key={n} className={n<=bars?"on":""}/>)}</span>
               <Signal size={12} className={connected?"lit":""}/>
               {muted?<VolumeX size={12} className="lit-red"/>:<Volume2 size={12}/>}
               {ptt&&<span className="apx-tag tx">TX</span>}
@@ -182,7 +195,10 @@ export function ControlHead({
               <span className="apx-icons-right"><Users size={12}/>{participants.length}<Clock/></span>
             </div>
             <div className="apx-main">
-              {view==="who"?<div className="apx-who">
+              {view==="recent"?<div className="apx-who apx-recent">
+                <strong>Recent</strong>
+                {lastHeard.length?lastHeard.slice(0,4).map(x=><span key={x.id}>{x.name}<i>{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})} · {Math.max(1,Math.round(x.ms/1000))}s</i></span>):<span className="dim">Nothing heard yet</span>}
+              </div>:view==="who"?<div className="apx-who">
                 <strong>Who's On</strong>
                 {participants.length?participants.slice(0,4).map(p=>{let info={};try{info=p.metadata?JSON.parse(p.metadata):{}}catch{}return <span key={p.identity}>{info.callsign||info.displayName||p.name||p.identity}</span>}):<span className="dim">{connected?"Nobody else on channel":"Not connected"}</span>}
                 {participants.length>4&&<span className="dim">+{participants.length-4} more</span>}
@@ -219,7 +235,7 @@ export function ControlHead({
 
       {/* Bottom row: volume knob, P1–P5, home, channel knob */}
       <div className="apx-bottom">
-        <Knob className="apx-vol" angle={muted?-135:90} title={muted?"Volume (muted, click to unmute)":"Volume (click to mute)"} onClick={onMute}/>
+        <Knob className="apx-vol" angle={muted?-135:-135+volume*27} title={muted?"Volume (muted, click to unmute)":`Volume ${volume} (scroll to change, click to mute)`} onClick={onMute} onStep={dir=>onVolume?.(-dir)}/>
         <div className="apx-pkeys">
           {[0,1,2,3,4].map(i=><button type="button" key={i} className="apx-pkey" onClick={()=>oneTouch(i)} title={visibleChannels[i]?`P${i+1}: ${visibleChannels[i].name}`:`P${i+1}`}>P{i+1}</button>)}
           <button type="button" className="apx-pkey home" onClick={goHome} title="Home"><Home size={16}/></button>
