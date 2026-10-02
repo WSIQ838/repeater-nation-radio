@@ -118,7 +118,7 @@ export async function listRadioChannels() {
 
   const zoneMap = new Map((zones || []).map((z) => [z.id, z.name]));
 
-  return (channels || []).map((c) => ({
+  const allowedChannels = (channels || []).filter((c) => {\n    const zoneName = zoneMap.get(c.zone_id) || "Radio";\n    return !/^admin\\s*testing$/i.test(String(zoneName)) && !/^admin\\s*testing$/i.test(String(c.name || ""));\n  });\n\n  return allowedChannels.map((c) => ({
     id: c.id,
     name: c.name,
     number: c.number,
