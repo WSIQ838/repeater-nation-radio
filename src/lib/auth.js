@@ -37,10 +37,13 @@ export async function restoreSession() {
 }
 
 export async function loginWithGoogle() {
-  // Google OAuth must start in the system browser so Base44 can complete
-  // its normal web session flow. The website bridge then sends the token
-  // back to this app through the registered repeaternation:// deep link.
-  return openUrl("https://repeaternation.com/?rn_desktop=1");
+  // Google refuses sign-in inside an embedded WebView, so start Base44's Google
+  // login in the system browser. Base44 returns the token to the website's
+  // /oauth/callback page, which hands it to this app via repeaternation://.
+  const base = config.base44AppBaseUrl || config.appUrl;
+  const fromUrl = `${config.appUrl}/oauth/callback`;
+  const loginUrl = `${base}/api/apps/auth/login?app_id=${encodeURIComponent(config.base44AppId)}&from_url=${encodeURIComponent(fromUrl)}`;
+  return openUrl(loginUrl);
 }
 
 export async function restoreSessionFromOAuth(url = "") {
