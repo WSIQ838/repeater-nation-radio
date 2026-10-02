@@ -1,5 +1,16 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.7
+
+**Radios from Sean's pictures.** The radio picker now has the radios Sean asked for (the two placeholder radios from 0.2.6 are replaced; a saved choice moves to the closest new one).
+
+- **Compact mobile head**: a wide, short dash-mount head with power and brightness buttons, display with four softkeys (••• pages the menu), a round volume knob, nav pad, 1–3 one-touch channel buttons and a keypad with home and back.
+- **Keypad portable**: a display with two menu items, P1/P2 run those two items, OK pages the menu, back/home, nav pad, keypad, top volume and channel knobs and a side PTT.
+- **Touchscreen portable**: a touch screen like a smart radio's home screen: My Status (tap to change, same as the status buttons), a zone/channel card with up/down and live activity, Scan / Contacts / More tiles, and the last heard transmission with Replay. Incoming calls show Answer / Decline. More opens Who's On (with each member's status), Recent, radio on/off and Setup.
+- **Touchscreen portable with P keys**: the same screen plus P1–P5 one-touch channels and P6 mute.
+- The dispatch control head stays. All radios run the same radio and mapped buttons, and the names stay generic.
+- Version set to 0.2.7 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.6
 
 **Change radios.** Pick which radio the app looks like; every radio works the same.

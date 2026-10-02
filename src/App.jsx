@@ -14,6 +14,7 @@ import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,s
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
+import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
 import {clearTraffic,deleteTraffic,getAudio,listTraffic,loadTrafficSettings,onTrafficChange,prune,recordTrack,saveTrafficSettings,saveTransmission} from "./lib/traffic";
 import {setSink} from "./hooks/useRadio";
@@ -297,8 +298,6 @@ function MemberName({participant,talking}){
 }
 
 // Member status, shown next to your name on every radio on the channel.
-const STATUSES=["Available","En Route","At Scene","Busy","Returning","Out of Service"];
-const statusClass=s=>"st-"+String(s).toLowerCase().replace(/[^a-z]+/g,"-");
 const STATUS_KEY="rn-status";
 function StatusButtons({status,onStatus,shared,connected}){
   return <div className="status-panel">
@@ -644,7 +643,7 @@ function RadioApp({session,onSignOut}){
         {tab==="radio"&&<>
           <section className="hero apx-hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div><button className={connected?"danger":"primary"} onClick={connected?disconnect:connect} disabled={state==="connecting"}><Power size={17}/>{connected?"Disconnect":"Connect"}</button></section>
           <section className={"apx-stage face-"+face}>
-            <RadioFace face={face} onPttDown={down} onPttUp={up}
+            <RadioFace face={face} onPttDown={down} onPttUp={up} myStatus={myStatus} onStatus={chooseStatus}
               channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
               zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId}
               state={state} connected={connected} ptt={ptt} muted={muted} error={error} callsign={radioSession?.callsign||callsign} participants={participants}
