@@ -5,15 +5,17 @@ import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 export function useRadio(channelId, channelInfo=null) {
   const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0);
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
+  // connect() hands attachAudio to LiveKit once, so read mute through a ref to stay current.
+  const mutedRef=useRef(muted);mutedRef.current=muted;
   const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);
   const refreshDevices=useCallback(async()=>{try{setDevices(await listAudioDevices())}catch{}},[]);
   const attachAudio=useCallback((track,participant)=>{
     if(track.kind!=="audio")return;
     const existing=audioElsRef.current.get(participant.identity);
     if(existing){try{existing.remove()}catch{}}
-    const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=muted?0:1;document.body.appendChild(el);audioElsRef.current.set(participant.identity,el);
+    const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=mutedRef.current?0:1;document.body.appendChild(el);audioElsRef.current.set(participant.identity,el);
     el.play().catch(()=>{});
-  },[muted]);
+  },[]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
   useEffect(()=>{refreshDevices()},[refreshDevices]);
 
@@ -35,7 +37,7 @@ export function useRadio(channelId, channelInfo=null) {
     try {
       const sessionData=await issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number);
       if(!sessionData?.ok) throw new Error(sessionData?.error||"Could not start radio session.");
-      const room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{cleanupAudio();roomRef.current=null;setState("ready")}});
+      const room=await connectRadio(sessionData.liveKitToken,sessionData.liveKitUrl,{onTrackSubscribed:attachAudio,onDisconnected:()=>{if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;micRef.current=null;cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready")}});
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
     } catch(err){setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
   },[channelId,channelInfo?.zoneId,channelInfo?.number,refresh,attachAudio,cleanupAudio]);

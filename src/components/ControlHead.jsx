@@ -1,4 +1,4 @@
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {Power,Sun,SunDim,Volume2,VolumeX,Megaphone,Hand,Lightbulb,Siren,Zap,Waves,Activity,Home,Mic,Signal,PhoneIncoming,Phone,Users,ChevronUp,ChevronDown,ChevronLeft,ChevronRight,Menu} from "lucide-react";
 
 // APX O7-style control head. Every live control maps to an existing radio action;
@@ -6,8 +6,25 @@ import {Power,Sun,SunDim,Volume2,VolumeX,Megaphone,Hand,Lightbulb,Siren,Zap,Wave
 
 const KEYPAD=[["1",". ? !"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]];
 
-function Knob({className="",angle=0,label,onClick,onWheel,children,title}){
-  return <button type="button" className={"apx-knob "+className} onClick={onClick} onWheel={onWheel} title={title} aria-label={title}>
+// Scrolling a knob turns it one detent per notch. The listener is non-passive so the
+// wheel does not also scroll the page, and trackpad deltas are summed into detents.
+function Knob({className="",angle=0,label,onClick,onStep,children,title}){
+  const ref=useRef(null),stepRef=useRef(onStep),accRef=useRef(0);
+  stepRef.current=onStep;
+  useEffect(()=>{
+    const el=ref.current;if(!el)return;
+    const onWheel=e=>{
+      if(!stepRef.current)return;
+      e.preventDefault();
+      accRef.current+=e.deltaMode===1?e.deltaY*40:e.deltaY;
+      if(Math.abs(accRef.current)<60)return;
+      const dir=accRef.current>0?1:-1;accRef.current=0;
+      stepRef.current(dir);
+    };
+    el.addEventListener("wheel",onWheel,{passive:false});
+    return()=>el.removeEventListener("wheel",onWheel);
+  },[]);
+  return <button type="button" ref={ref} className={"apx-knob "+className} onClick={onClick} title={title} aria-label={title}>
     <span className="apx-knob-cap" style={{transform:`rotate(${angle}deg)`}}><i/></span>
     {children}
     {label&&<span className="apx-knob-label">{label}</span>}
@@ -32,19 +49,23 @@ export function ControlHead({
   const [notice,setNotice]=useState("");
 
   useEffect(()=>{if(!notice)return;const id=setTimeout(()=>setNotice(""),2200);return()=>clearTimeout(id)},[notice]);
+  useEffect(()=>setNotice(""),[state]);
 
-  const channelIndex=Math.max(0,visibleChannels.findIndex(c=>c.id===channelId));
-  const zoneIndex=Math.max(0,zones.findIndex(z=>z.id===zoneId));
+  const rawChannelIndex=visibleChannels.findIndex(c=>c.id===channelId);
+  const rawZoneIndex=zones.findIndex(z=>z.id===zoneId);
+  const channelIndex=Math.max(0,rawChannelIndex),zoneIndex=Math.max(0,rawZoneIndex);
   const stepChannel=dir=>{
     if(!visibleChannels.length)return;
-    const next=visibleChannels[(channelIndex+dir+visibleChannels.length)%visibleChannels.length];
+    // From "no selection" (-1), +1 lands on the first entry and -1 on the last.
+    const from=rawChannelIndex<0&&dir<0?0:rawChannelIndex;
+    const next=visibleChannels[(from+dir+visibleChannels.length)%visibleChannels.length];
     if(next)onChannel(next.id);
   };
   const stepZone=dir=>{
     if(!zones.length)return;
-    onZone(zones[(zoneIndex+dir+zones.length)%zones.length].id);
+    const from=rawZoneIndex<0&&dir<0?0:rawZoneIndex;
+    onZone(zones[(from+dir+zones.length)%zones.length].id);
   };
-  const wheel=fn=>e=>fn(e.deltaY>0?1:-1);
 
   const pressKey=k=>{
     if(k==="*"){setEntry("");return}
@@ -111,7 +132,7 @@ export function ControlHead({
         </div>
         <div className="apx-mode">
           <span className="apx-mode-ticks"><b>0</b><b>1</b><b>2</b><b>3</b></span>
-          <Knob className="apx-mode-knob" angle={-60+(zoneIndex%4)*40} title={"Zone: "+(zoneName||"All zones")+" (click or scroll to change)"} onClick={()=>stepZone(1)} onWheel={wheel(stepZone)}/>
+          <Knob className="apx-mode-knob" angle={-60+(zoneIndex%4)*40} title={"Zone: "+(zoneName||"All zones")+" (click or scroll to change)"} onClick={()=>stepZone(1)} onStep={stepZone}/>
         </div>
         <div className="apx-top-keys right">
           <button type="button" className="apx-key inert" tabIndex={-1} aria-hidden="true"><Hand size={16}/></button>
@@ -190,7 +211,7 @@ export function ControlHead({
           {[0,1,2,3,4].map(i=><button type="button" key={i} className="apx-pkey" onClick={()=>oneTouch(i)} title={visibleChannels[i]?`P${i+1}: ${visibleChannels[i].name}`:`P${i+1}`}>P{i+1}</button>)}
           <button type="button" className="apx-pkey home" onClick={goHome} title="Home"><Home size={16}/></button>
         </div>
-        <Knob className="apx-chan" angle={channelIndex*30} title="Channel (click or scroll to change)" onClick={()=>stepChannel(1)} onWheel={wheel(stepChannel)}/>
+        <Knob className="apx-chan" angle={channelIndex*30} title="Channel (click or scroll to change)" onClick={()=>stepChannel(1)} onStep={stepChannel}/>
       </div>
     </div>
   </div>
@@ -202,7 +223,7 @@ export function PalmMic({ptt,connected,onDown,onUp}){
     <div className={"apx-mic-body"+(ptt?" keyed":"")}>
       <span className={"apx-mic-led"+(ptt?" on":"")}/>
       <div className="apx-grille"/>
-      <button type="button" className={ptt?"apx-ptt pressed":"apx-ptt"} disabled={!connected} onMouseDown={onDown} onMouseUp={onUp} onMouseLeave={onUp} onTouchStart={onDown} onTouchEnd={onUp}>
+      <button type="button" className={ptt?"apx-ptt pressed":"apx-ptt"} disabled={!connected} onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture?.(e.pointerId);onDown()}} onPointerUp={onUp} onPointerCancel={onUp} onLostPointerCapture={onUp} onContextMenu={e=>e.preventDefault()}>
         <Mic size={18}/><span>PTT</span>
       </button>
       <small>{connected?"Hold to talk · Space / Num 0":"Connect to transmit"}</small>
