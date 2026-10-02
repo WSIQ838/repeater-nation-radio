@@ -2,22 +2,31 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { connectRadio, disconnectRadio, openMicrophone, publishMicrophoneTrack, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
 import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 
-export function useRadio(channelId, channelInfo=null) {
+// Route a member's audio to the chosen speaker (WebView2 supports setSinkId; others keep the default).
+export function setSink(el,deviceId){if(el?.setSinkId)el.setSinkId(deviceId||"").catch(()=>{})}
+
+export function useRadio(channelId, channelInfo=null, outputDeviceId="") {
   const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0);
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
   // connect() hands attachAudio to LiveKit once, so read mute through a ref to stay current.
   const mutedRef=useRef(muted);mutedRef.current=muted;
+  const outputRef=useRef(outputDeviceId);outputRef.current=outputDeviceId;
   const refresh=useCallback(()=>{const room=roomRef.current;if(room)setParticipants(Array.from(room.remoteParticipants.values()))},[]);
   const refreshDevices=useCallback(async()=>{try{setDevices(await listAudioDevices())}catch{}},[]);
   const attachAudio=useCallback((track,participant)=>{
     if(track.kind!=="audio")return;
     const existing=audioElsRef.current.get(participant.identity);
     if(existing){try{existing.remove()}catch{}}
-    const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=mutedRef.current?0:1;document.body.appendChild(el);audioElsRef.current.set(participant.identity,el);
+    const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=mutedRef.current?0:1;setSink(el,outputRef.current);document.body.appendChild(el);audioElsRef.current.set(participant.identity,el);
     el.play().catch(()=>{});
   },[]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
-  useEffect(()=>{refreshDevices()},[refreshDevices]);
+  useEffect(()=>{
+    refreshDevices();
+    const md=navigator.mediaDevices;if(!md?.addEventListener)return;
+    md.addEventListener("devicechange",refreshDevices);return()=>md.removeEventListener("devicechange",refreshDevices);
+  },[refreshDevices]);
+  useEffect(()=>{for(const el of audioElsRef.current.values())setSink(el,outputDeviceId)},[outputDeviceId]);
 
   // Set once a floor request goes out, so releasing (and every channel switch) only
   // calls the server when there is actually something to release.
@@ -82,6 +91,8 @@ export function useRadio(channelId, channelInfo=null) {
       if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
       if(!result.granted){dropMic();setError(result.reason==="busy"?"Channel is busy — someone else is transmitting.":result.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return}
       const track=await micPromise;
+      // Device names are only visible after the first mic permission, so refresh them now.
+      refreshDevices();
       if(requestId!==pttRequestRef.current){track.stop();try{await issueRadioPTT(channelId,"release")}catch{}return}
       let mic;
       try{mic=await publishMicrophoneTrack(roomRef.current,track)}catch(err){track.stop();throw err}
@@ -102,7 +113,7 @@ export function useRadio(channelId, channelInfo=null) {
       floorRef.current=false;
       try{await issueRadioPTT(channelId,"release")}catch{}
     }
-  },[channelId,session,releasePTT]);
+  },[channelId,session,releasePTT,refreshDevices]);
 
   const disconnect=useCallback(async()=>{
     connGenRef.current++;

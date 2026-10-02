@@ -8,6 +8,7 @@ import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 import {prewarmRadio} from "./lib/livekit";
+import {HAND_MIC,listenHardware,loadBinding,pttCapabilities,saveBinding,setHardwareBinding,setLearning} from "./lib/ptt";
 import {ControlHead,PalmMic} from "./components/ControlHead";
 import "./apx.css";
 
@@ -123,12 +124,21 @@ function MemberName({participant}){
   return <div className="member"><strong>{info.callsign||info.displayName||participant?.name||participant?.identity||"Member"}</strong><span>{info.callsign&&info.displayName?info.displayName:"Connected"}</span></div>
 }
 
+const readPref=key=>{try{return localStorage.getItem(key)}catch{return null}};
+const writePref=(key,value)=>{try{localStorage.setItem(key,value)}catch{}};
+const keyLabel=e=>e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,"");
+
+function PttLearn({binding,learning,onLearn,onCancel,onClear}){
+  if(learning)return <div className="ptt-learn learning"><span>Press your PTT button… (Esc cancels)</span><button onClick={onCancel}>Cancel</button></div>;
+  return <div className="ptt-learn"><span>{binding?"PTT button: "+binding.label:"No PTT button set"}</span><button onClick={onLearn}>{binding?"Change":"Learn PTT button"}</button>{binding&&<button onClick={onClear} aria-label="Clear PTT button">Clear</button>}</div>;
+}
+
 function RadioApp({session,onSignOut}){
-  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState("");
+  const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio"}])).values()),[channels]);
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
-  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId));
-  const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id);
+  const {state,error,session:radioSession,participants,muted,setMuted,devices,refreshDevices,connect,requestPTT,releasePTT,disconnect}=useRadio(channelId, channels.find(x=>x.id===channelId), speakerId);
+  const {onlineUsers,incoming,call,callState,error:callError,startCall,accept,decline,endCall}=useDirectCalls(session.member?.id, speakerId);
 
   useEffect(()=>{prewarmRadio()},[]);
   useEffect(()=>{
@@ -150,13 +160,13 @@ function RadioApp({session,onSignOut}){
     if(next===zoneId)return;
     // "All Zones" only widens the channel list; keep the current channel.
     if(!next){setZoneId("");return}
-    setPtt(false);await disconnect();
+    setPttState(false);await disconnect();
     const first=channels.find(c=>c.zoneId===next);
     setZoneId(next);setChannelId(first?.id||"");setChannelName(first?.name||"Radio");setTuneSeq(n=>n+1);
   };
   const selectChannel=async next=>{
     if(next===channelId)return;
-    setPtt(false);await disconnect();
+    setPttState(false);await disconnect();
     const c=channels.find(x=>x.id===next);setChannelId(next);setChannelName(c?.name||"Radio");
     if(c?.zoneId)setZoneId(c.zoneId);
     setTuneSeq(n=>n+1);
@@ -172,15 +182,51 @@ function RadioApp({session,onSignOut}){
   },[tuneSeq]);
   const chooseZone=e=>selectZone(e.target.value);
   const chooseChannel=e=>selectChannel(e.target.value);
-  const down=async()=>{if(!connected||ptt)return;setPtt(true);try{await requestPTT(micDeviceId)}catch{setPtt(false)}};
-  const up=async()=>{if(!ptt)return;setPtt(false);await releasePTT()};
+  // PTT can be keyed from the palm mic, the keyboard and a hardware button at once, so
+  // track it in a ref too: a second "down" from another source must not re-key.
+  const pttRef=useRef(false);
+  const setPttState=v=>{pttRef.current=v;setPtt(v)};
+  const down=async()=>{if(!connected||pttRef.current||learning)return;setPttState(true);try{await requestPTT(micDeviceId)}catch{setPttState(false)}};
+  const up=async()=>{if(!pttRef.current)return;setPttState(false);await releasePTT()};
+
+  // Hardware PTT button (hand mic, foot switch, gamepad), learned once and saved.
+  const [pttBinding,setPttBinding]=useState(loadBinding),[learning,setLearningState]=useState(false),[pttCaps,setPttCaps]=useState({global_keys:false,gamepads:false});
+  const downRef=useRef(down),upRef=useRef(up);downRef.current=down;upRef.current=up;
+  const bindPtt=b=>{setPttBinding(b);saveBinding(b);setHardwareBinding(b)};
+  const learnPtt=on=>{setLearningState(on);setLearning(on)};
+  useEffect(()=>{
+    pttCapabilities().then(setPttCaps);
+    setHardwareBinding(loadBinding());
+    return listenHardware({
+      onPtt:pressed=>pressed?downRef.current():upRef.current(),
+      onLearned:b=>{setLearningState(false);setPttBinding(b);saveBinding(b)},
+      onLearnCancel:()=>setLearningState(false),
+    });
+  },[]);
 
   useEffect(()=>{
-    const keyDown=e=>{if((e.code==="Space"||e.code==="Numpad0")&&connected&&!e.repeat){e.preventDefault();down()}};
-    const keyUp=e=>{if(e.code==="Space"||e.code==="Numpad0"){e.preventDefault();up()}};
+    const isPtt=e=>e.code==="Space"||e.code==="Numpad0"||(pttBinding?.kind==="webkey"&&e.code===pttBinding.code);
+    const keyDown=e=>{
+      // Without a global hook (macOS, Linux) the PTT button is learned from in-window keys.
+      if(learning){if(pttCaps.global_keys)return;e.preventDefault();if(e.code==="Escape")learnPtt(false);else{learnPtt(false);bindPtt({kind:"webkey",code:e.code,label:keyLabel(e)})}return}
+      if(isPtt(e)&&connected&&!e.repeat){e.preventDefault();down()}
+    };
+    const keyUp=e=>{if(isPtt(e)){e.preventDefault();up()}};
     window.addEventListener("keydown",keyDown);window.addEventListener("keyup",keyUp);
     return()=>{window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp)}
-  },[connected,ptt,micDeviceId]);
+  },[connected,ptt,micDeviceId,learning,pttBinding,pttCaps.global_keys]);
+
+  // Remember audio devices, and pick a hand mic automatically the first time one shows up.
+  const touchedRef=useRef(false);
+  useEffect(()=>{if(touchedRef.current)writePref("rn-mic",micDeviceId)},[micDeviceId]);
+  useEffect(()=>{if(touchedRef.current)writePref("rn-speaker",speakerId)},[speakerId]);
+  useEffect(()=>{touchedRef.current=true},[]);
+  useEffect(()=>{
+    const pick=kind=>devices.find(d=>d.kind===kind&&d.deviceId&&d.deviceId!=="default"&&d.deviceId!=="communications"&&HAND_MIC.test(d.label||""));
+    if(readPref("rn-mic")===null){const d=pick("audioinput");if(d)setMicDeviceId(d.deviceId)}
+    if(readPref("rn-speaker")===null){const d=pick("audiooutput");if(d)setSpeakerId(d.deviceId)}
+  },[devices]);
+  const pttName=pttBinding?.label||"";
 
   const logout=async()=>{await disconnect();await endCall();await clearSession();onSignOut()};
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
@@ -206,12 +252,14 @@ function RadioApp({session,onSignOut}){
               onAnswer={accept} onDecline={decline} onEndCall={endCall}
             />
             <div className="apx-side">
-              <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up}/>
+              <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up} pttName={pttName}/>
               <div className="apx-program">
                 <span className="label">PROGRAMMING</span>
                 <label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}><option value="">All Zones</option>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label>
                 <label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label>
                 <label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label>
+                <label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label>
+                <PttLearn binding={pttBinding} learning={learning} onLearn={()=>learnPtt(true)} onCancel={()=>learnPtt(false)} onClear={()=>bindPtt(null)}/>
                 <div className="apx-program-foot"><span>{participants.length} on channel</span><span>{muted?"Speaker muted":"Speaker on"}</span></div>
               </div>
             </div>
@@ -220,7 +268,7 @@ function RadioApp({session,onSignOut}){
         </>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0</strong></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0{pttName?" or "+pttName:""}</strong></div><div className="setting"><span>PTT button</span><PttLearn binding={pttBinding} learning={learning} onLearn={()=>learnPtt(true)} onCancel={()=>learnPtt(false)} onClear={()=>bindPtt(null)}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>

@@ -217,7 +217,7 @@ export function ControlHead({
   </div>
 }
 
-export function PalmMic({ptt,connected,onDown,onUp}){
+export function PalmMic({ptt,connected,onDown,onUp,pttName=""}){
   return <div className="apx-mic">
     <div className="apx-cord"/>
     <div className={"apx-mic-body"+(ptt?" keyed":"")}>
@@ -226,7 +226,7 @@ export function PalmMic({ptt,connected,onDown,onUp}){
       <button type="button" className={ptt?"apx-ptt pressed":"apx-ptt"} disabled={!connected} onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture?.(e.pointerId);onDown()}} onPointerUp={onUp} onPointerCancel={onUp} onLostPointerCapture={onUp} onContextMenu={e=>e.preventDefault()}>
         <Mic size={18}/><span>PTT</span>
       </button>
-      <small>{connected?"Hold to talk · Space / Num 0":"Connect to transmit"}</small>
+      <small>{connected?`Hold to talk · Space / Num 0${pttName?" / "+pttName:""}`:"Connect to transmit"}</small>
     </div>
   </div>
 }

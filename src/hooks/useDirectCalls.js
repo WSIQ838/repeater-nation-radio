@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { directCall, radioPresence } from "../lib/auth";
+import { setSink } from "./useRadio";
 import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone } from "../lib/livekit";
 
 const sameData=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);
 
-export function useDirectCalls(userId) {
+export function useDirectCalls(userId, outputDeviceId="") {
+  const outputRef=useRef(outputDeviceId);outputRef.current=outputDeviceId;
   const roomRef=useRef(null), micRef=useRef(null), callIdRef=useRef(null);
   const audioElsRef=useRef(new Map());
   const [onlineUsers,setOnlineUsers]=useState([]),[incoming,setIncoming]=useState(null),[call,setCall]=useState(null),[callState,setCallState]=useState("idle"),[error,setError]=useState("");
 
+  useEffect(()=>{for(const el of audioElsRef.current.values())setSink(el,outputDeviceId)},[outputDeviceId]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
   const disconnect=useCallback(async()=>{cleanupAudio();await unpublishMicrophone(roomRef.current,micRef.current);micRef.current=null;await disconnectRadio(roomRef.current);roomRef.current=null},[cleanupAudio]);
 
@@ -18,7 +21,7 @@ export function useDirectCalls(userId) {
     if(!tokenData?.ok)throw new Error(tokenData?.error||"Could not join direct call.");
     const room=await connectRadio(tokenData.liveKitToken,tokenData.liveKitUrl,{onTrackSubscribed:(track,_pub,participant)=>{
       if(track.kind!=="audio")return;
-      const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";document.body.appendChild(el);el.play().catch(()=>{});audioElsRef.current.set(participant.identity,el);
+      const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";setSink(el,outputRef.current);document.body.appendChild(el);el.play().catch(()=>{});audioElsRef.current.set(participant.identity,el);
     },onDisconnected:()=>setCallState("idle")});
     roomRef.current=room;
     micRef.current=await publishMicrophone(room);

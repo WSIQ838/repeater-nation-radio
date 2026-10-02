@@ -1,5 +1,19 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.15
+
+- Hand mic and hardware PTT support. "Learn PTT button" (in Programming and in Settings) waits for you to press the PTT button on a USB hand mic, foot switch or gamepad, then that button keys the radio. It is saved and restored on the next launch. Clear or Change it from the same place. Esc cancels learning.
+- On Windows the learned button works even when the app is not the focused window. It can be a keyboard key, a media or volume key (what many USB hand mics send), the middle or side mouse buttons, or a joystick/gamepad button. Only the learned button is passed to the app; other keystrokes are not.
+- If the learned button is a media or volume key (Play/Pause, Mute, Volume) or F13–F24, the app keeps it from also reaching Windows, so keying up doesn't pause music or change the PC volume. Normal typing keys still reach other apps.
+- On macOS and Linux the learned button works while the app is focused (keyboard keys) and from any joystick/gamepad button.
+- New Speaker picker next to Microphone. Radio and direct-call audio play on the chosen speaker (Windows).
+- The microphone and speaker choices are remembered. The first time a device named like a hand mic (for example "KST vHMIC010") appears, it is picked for both automatically. Choosing "System default" yourself is kept.
+- The device list refreshes when a device is plugged in or unplugged, and after the first transmit (Windows only shows device names after mic permission).
+- PTT presses from the palm mic, Space / Num 0 and the hardware button at the same time key the radio once and release once.
+- The palm mic hint shows the learned button.
+- Linux build dependencies in `linux.yml` now include `libudev-dev` (needed for gamepad input).
+- Version set to 0.1.15 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.14
 
 - Selecting a zone or channel now tunes the radio and connects to it automatically. This covers the zone and channel knobs, the nav pad, keypad entry, P1–P5, the softkeys and the Programming dropdowns. The radio waits 350 ms after the last change, so spinning a knob joins only the channel it stops on. Mute stays as it was. Choosing "All Zones" keeps the current channel and does not reconnect.

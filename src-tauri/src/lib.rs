@@ -1,5 +1,7 @@
 use tauri::Manager;
 
+mod ptt;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let mut builder = tauri::Builder::default();
@@ -22,7 +24,9 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
+        .invoke_handler(tauri::generate_handler![ptt::ptt_set_binding, ptt::ptt_learn, ptt::ptt_capabilities])
         .setup(|_app| {
+            ptt::start(_app.handle().clone());
             // AppImage and dev builds have no installer to register the
             // repeaternation:// scheme, so register it at runtime there.
             #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]

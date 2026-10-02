@@ -134,3 +134,9 @@
 /* Shell tweaks to sit with the radio */
 .apx-hero{margin-bottom:18px}
 @media(max-width:1020px){.apx-stage{grid-template-columns:1fr}.apx-head{max-width:600px}.apx-mic-body{max-width:none}}
+.ptt-learn{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:#dce3ea}
+.ptt-learn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptt-learn button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer}
+.ptt-learn button:hover{border-color:#4a5562}
+.ptt-learn.learning span{color:#f2c14e;animation:ptt-learn-blink 1s steps(2) infinite}
+@keyframes ptt-learn-blink{50%{opacity:.45}}
