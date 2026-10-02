@@ -10,6 +10,9 @@
 - Channels and zones now load in parallel instead of one after the other.
 - Removed the unused `@livekit/components-react` and `@livekit/components-styles` packages. The app's CSS went from 39 KB to 19.5 KB, and the radio face looks the same.
 - Release builds now use Tauri's size-optimized profile: LTO, a single codegen unit, `opt-level = "s"`, stripped symbols and abort on panic. On Linux the app binary went from 25.2 MB to 9.2 MB and the `.deb` from 7.2 MB to 3.7 MB.
+- Pressing PTT now opens the microphone while the floor request is still going to the server, instead of after the floor is granted. Keying up takes about as long as the slower of the two instead of both added together (300 ms instead of 500 ms in a test with a 300 ms server and a 200 ms microphone). If the floor is denied, the request fails, or PTT is released first, the microphone is closed again and nothing is sent.
+- The online-member and direct-call check that runs every 3 seconds now asks for both lists at once, never starts a new check while one is still running, and only updates the screen when something changed. Before, it re-drew the whole radio every 3 seconds even when nothing had changed.
+- Production JavaScript now targets the WebView engines Tauri 2 supports (ES2022) instead of older browsers.
 - Version set to 0.1.14 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
 ## 0.1.13

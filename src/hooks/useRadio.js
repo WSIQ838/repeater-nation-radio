@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
+import { connectRadio, disconnectRadio, openMicrophone, publishMicrophoneTrack, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
 import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 
 export function useRadio(channelId, channelInfo=null) {
@@ -71,11 +71,20 @@ export function useRadio(channelId, channelInfo=null) {
     if(!session.canTransmit){setError("You are not authorized to transmit on this channel.");return}
     try {
       floorAskedRef.current=true;
-      const result=await issueRadioPTT(channelId,"request");
-      if(requestId!==pttRequestRef.current)return;
-      if(!result?.ok) throw new Error(result?.error||"Could not reach the radio server.");
-      if(!result.granted){setError(result.reason==="busy"?"Channel is busy — someone else is transmitting.":result.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return}
-      const mic=await publishMicrophone(roomRef.current,deviceId);
+      // Open the mic while the floor request is in flight instead of after it, so
+      // audio starts as soon as the floor is granted.
+      const micPromise=openMicrophone(deviceId);
+      micPromise.catch(()=>{});
+      let result;
+      try{result=await issueRadioPTT(channelId,"request")}catch(err){micPromise.then(t=>t.stop(),()=>{});throw err}
+      const dropMic=()=>micPromise.then(t=>t.stop(),()=>{});
+      if(requestId!==pttRequestRef.current){dropMic();return}
+      if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
+      if(!result.granted){dropMic();setError(result.reason==="busy"?"Channel is busy — someone else is transmitting.":result.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return}
+      const track=await micPromise;
+      if(requestId!==pttRequestRef.current){track.stop();try{await issueRadioPTT(channelId,"release")}catch{}return}
+      let mic;
+      try{mic=await publishMicrophoneTrack(roomRef.current,track)}catch(err){track.stop();throw err}
       if(requestId!==pttRequestRef.current){
         await unpublishMicrophone(roomRef.current,mic);
         try{await issueRadioPTT(channelId,"release")}catch{}

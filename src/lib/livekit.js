@@ -26,12 +26,22 @@ export async function listAudioDevices(){
   return (await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput"||d.kind==="audiooutput");
 }
 
-export async function publishMicrophone(room,deviceId) {
-  const { Track, ConnectionState, createLocalAudioTrack } = await livekit();
+// Opening the mic is split from publishing so PTT can open it while the floor request is in flight.
+export async function openMicrophone(deviceId) {
+  const { createLocalAudioTrack } = await livekit();
+  return createLocalAudioTrack(deviceId?{deviceId:{exact:deviceId}}:undefined);
+}
+
+export async function publishMicrophoneTrack(room,track) {
+  const { Track, ConnectionState } = await livekit();
   if(!room || room.state!==ConnectionState.Connected) throw new Error("Radio connection is not active.");
-  const track=await createLocalAudioTrack(deviceId?{deviceId:{exact:deviceId}}:undefined);
   await room.localParticipant.publishTrack(track,{name:"radio-microphone",source:Track.Source.Microphone,dtx:true,red:true});
   return track;
+}
+
+export async function publishMicrophone(room,deviceId) {
+  const track=await openMicrophone(deviceId);
+  try{return await publishMicrophoneTrack(room,track)}catch(err){track.stop();throw err}
 }
 
 export async function unpublishMicrophone(room,track) {

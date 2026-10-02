@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { directCall, radioPresence } from "../lib/auth";
 import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone } from "../lib/livekit";
 
+const sameData=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);
+
 export function useDirectCalls(userId) {
   const roomRef=useRef(null), micRef=useRef(null), callIdRef=useRef(null);
   const audioElsRef=useRef(new Map());
@@ -23,21 +25,27 @@ export function useDirectCalls(userId) {
     setCall(callRecord);callIdRef.current=callRecord.id;setCallState("connected");
   },[disconnect]);
 
+  // Polls every few seconds; skip overlapping runs and only update state when the
+  // data actually changed, so an idle radio isn't re-rendered on every poll.
+  const pollingRef=useRef(false);
   const refresh=useCallback(async()=>{
-    if(!userId)return;
-    try{const p=await radioPresence();setOnlineUsers(p?.users||[])}catch{}
+    if(!userId||pollingRef.current)return;
+    pollingRef.current=true;
     try{
-      const r=await directCall("list");const calls=r?.calls||[];
-      const inc=calls.find(x=>x.recipient_user_id===userId&&x.status==="ringing");
-      setIncoming(inc||null);
+      const [p,r]=await Promise.all([radioPresence().catch(()=>null),directCall("list").catch(()=>null)]);
+      if(p)setOnlineUsers(prev=>sameData(prev,p.users||[])?prev:(p.users||[]));
+      if(!r)return;
+      const calls=r.calls||[];
+      const inc=calls.find(x=>x.recipient_user_id===userId&&x.status==="ringing")||null;
+      setIncoming(prev=>sameData(prev,inc)?prev:inc);
       const current=callIdRef.current?calls.find(x=>x.id===callIdRef.current):null;
-      if(current?.status==="active")setCall(current);
+      if(current?.status==="active")setCall(prev=>sameData(prev,current)?prev:current);
       if(current?.status==="declined"||current?.status==="ended"){callIdRef.current=null;setCall(null);setCallState("idle");await disconnect()}
       if(callState==="calling"&&callIdRef.current){
         const pending=calls.find(x=>x.id===callIdRef.current);
         if(pending?.status==="active")await join(pending);
       }
-    }catch{}
+    }catch{}finally{pollingRef.current=false}
   },[userId,callState,disconnect,join]);
 
   useEffect(()=>{refresh();const id=setInterval(refresh,3000);return()=>clearInterval(id)},[refresh]);
