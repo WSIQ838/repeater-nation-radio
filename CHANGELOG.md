@@ -8,6 +8,8 @@
 - Touch PTT on the palm mic no longer re-keys from the synthetic mouse click that follows a tap.
 - Choosing "All Zones" keeps the current channel instead of clearing it.
 - Restored the sign-in fixes from 0.1.4 to 0.1.12 that were lost when main was reset to the 0.1.3 backup. The Base44 client again calls `https://repeaternation.com` instead of the WebView's own origin, which made email and Google sign-in fail. Google sign-in opens Base44's Google login in the system browser and returns through the website's `/oauth/callback` page to the `repeaternation://` link (the v0.1.12 `?rn_desktop=1` bridge does not exist on the website). Channels in the "Admin Testing" zone are hidden again.
+- The sign-in screen now shows each step of the Google hand-off. It also shows why sign-in failed: a link with no token, an account lookup error, or an unexpected link.
+- The app now listens for the `repeaternation://` sign-in link before checking the launch link. Before, a failed launch-link check left it unable to receive the sign-in link.
 - `npx tauri dev` no longer crashes on Windows with `EBUSY ... src-tauri\target\debug\deps\*.dll`: Vite's dev server now ignores `src-tauri/` instead of watching Cargo's build output.
 - The in-app update check now reads releases from `WSIQ838/repeater-nation-radio`, where the Windows build publishes them; it was pointed at `jamessterlinglive/repeater-nation-radio`.
 - "Install update" downloads the `.exe` only on Windows; macOS and Linux open the release page instead of a Windows installer.
