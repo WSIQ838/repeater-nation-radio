@@ -1,29 +1,51 @@
-//! Hardware push-to-talk: a learnable PTT button (USB hand mic, foot switch, gamepad)
-//! that keys the radio even when the app window is not focused.
+//! Hardware button mapping: any radio action (PTT, channel/zone, mute, softkeys…) can be
+//! bound to one or more buttons on a USB or Bluetooth hand mic, foot switch, keyboard,
+//! mouse or gamepad. Bindings marked `global` work while the app window isn't focused.
 //!
 //! Inputs come from a Windows low-level keyboard/mouse hook (keyboard keys, media and
-//! volume keys that HID hand mics send, middle and side mouse buttons) and from gilrs
-//! (joystick/gamepad buttons, on every desktop OS). Only the bound button ever reaches
-//! the web view: other keystrokes are compared here and dropped.
+//! volume keys that HID and Bluetooth mics send, middle and side mouse buttons), from
+//! gilrs (joystick/gamepad buttons, every desktop OS) and from Bluetooth LE buttons
+//! (`ble.rs`). Only bound buttons ever reach the web view: other input is dropped here.
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Binding {
+    pub action: String,
     pub kind: String,
     pub code: String,
+    #[serde(default)]
     pub label: String,
+    #[serde(default)]
+    pub global: bool,
+}
+
+#[derive(Clone, Serialize)]
+struct Learned {
+    kind: String,
+    code: String,
+    label: String,
+}
+
+#[derive(Clone, Serialize)]
+struct Action {
+    action: String,
+    pressed: bool,
+    global: bool,
 }
 
 struct State {
-    binding: Option<Binding>,
+    bindings: Vec<Binding>,
     learning: bool,
-    down: bool,
+    /// Inputs currently held, with the actions their press fired, so the release
+    /// reaches the same actions and keyboard auto-repeat is dropped.
+    held: Option<HashMap<String, Vec<(String, bool)>>>,
 }
 
-static STATE: Mutex<State> = Mutex::new(State { binding: None, learning: false, down: false });
+static STATE: Mutex<State> = Mutex::new(State { bindings: Vec::new(), learning: false, held: None });
 
 fn state() -> std::sync::MutexGuard<'static, State> {
     STATE.lock().unwrap_or_else(|e| e.into_inner())
@@ -33,74 +55,91 @@ fn state() -> std::sync::MutexGuard<'static, State> {
 fn input(app: &AppHandle, kind: &str, code: String, label: String, pressed: bool) {
     let mut s = state();
     if s.learning {
-        // Esc cancels learning instead of becoming the PTT button.
-        if kind == "key" && code == "27" {
-            if pressed {
-                s.learning = false;
-                apply_native(&s.binding);
-                drop(s);
-                let _ = app.emit("ptt-learn-cancel", ());
-            }
+        if !pressed {
             return;
         }
-        if pressed {
-            let binding = Binding { kind: kind.into(), code, label };
-            s.learning = false;
-            s.down = false;
-            s.binding = Some(binding.clone());
-            apply_native(&s.binding);
-            drop(s);
-            let _ = app.emit("ptt-learned", binding);
+        s.learning = false;
+        apply_native(&s.bindings);
+        drop(s);
+        // Esc cancels learning instead of being learned.
+        if kind == "key" && code == "27" {
+            let _ = app.emit("hw-learn-cancel", ());
+        } else {
+            let _ = app.emit("hw-learned", Learned { kind: kind.into(), code, label });
         }
         return;
     }
-    let hit = matches!(&s.binding, Some(b) if b.kind == kind && b.code == code);
-    // `down == pressed` also drops keyboard auto-repeat while the button is held.
-    if !hit || s.down == pressed {
-        return;
-    }
-    s.down = pressed;
+    let id = format!("{kind}:{code}");
+    let held = s.held.get_or_insert_with(HashMap::new);
+    let fired = if pressed {
+        if held.contains_key(&id) {
+            return; // auto-repeat
+        }
+        let focused = app_focused();
+        let fired: Vec<(String, bool)> = s
+            .bindings
+            .iter()
+            .filter(|b| b.kind == kind && b.code == code && (b.global || focused))
+            .map(|b| (b.action.clone(), b.global))
+            .collect();
+        if fired.is_empty() {
+            return;
+        }
+        s.held.get_or_insert_with(HashMap::new).insert(id, fired.clone());
+        fired
+    } else {
+        match held.remove(&id) {
+            Some(fired) => fired,
+            None => return,
+        }
+    };
     drop(s);
-    let _ = app.emit("ptt-hw", pressed);
+    for (action, global) in fired {
+        let _ = app.emit("hw-action", Action { action, pressed, global });
+    }
 }
 
-/// A notification from a Bluetooth LE PTT button. The learned press is a characteristic
-/// plus the value it sends on press; any other value on that characteristic is a release.
+/// A notification from a Bluetooth LE button. A learned press is a characteristic plus
+/// the value it sends on press; any other value on that characteristic releases it.
 pub(crate) fn input_ble(app: &AppHandle, device: &str, characteristic: &str, value: &[u8]) {
     let hex: String = value.iter().map(|b| format!("{b:02x}")).collect();
-    let pressed = {
+    let me = format!("{characteristic}={hex}");
+    let codes: Vec<String> = {
         let s = state();
         if s.learning {
             drop(s);
-            let label = format!("{device} button");
-            return input(app, "ble", format!("{characteristic}={hex}"), label, true);
+            return input(app, "ble", me, format!("{device} button"), true);
         }
-        match &s.binding {
-            Some(b) if b.kind == "ble" => match b.code.split_once('=') {
-                Some((c, v)) if c == characteristic => v == hex,
-                _ => return,
-            },
-            _ => return,
-        }
+        let mut codes: Vec<String> = s
+            .bindings
+            .iter()
+            .filter(|b| b.kind == "ble" && b.code.split_once('=').map(|(c, _)| c) == Some(characteristic))
+            .map(|b| b.code.clone())
+            .collect();
+        codes.sort();
+        codes.dedup();
+        codes
     };
-    let code = state().binding.as_ref().map(|b| b.code.clone()).unwrap_or_default();
-    input(app, "ble", code, String::new(), pressed);
+    for code in codes {
+        let pressed = code == me;
+        input(app, "ble", code, String::new(), pressed);
+    }
 }
 
 #[tauri::command]
-pub fn ptt_set_binding(binding: Option<Binding>) {
+pub fn hw_set_bindings(bindings: Vec<Binding>) {
     let mut s = state();
-    s.binding = binding;
-    s.down = false;
-    apply_native(&s.binding);
+    s.bindings = bindings;
+    s.held = None;
+    apply_native(&s.bindings);
 }
 
 #[tauri::command]
-pub fn ptt_learn(on: bool) {
+pub fn hw_learn(on: bool) {
     let mut s = state();
     s.learning = on;
-    // Let the bound key through while learning so it can be learned again.
-    apply_native(if on { &None } else { &s.binding });
+    // Let bound keys through while learning so they can be learned again.
+    apply_native(if on { &[] } else { &s.bindings });
 }
 
 #[derive(Serialize)]
@@ -110,8 +149,20 @@ pub struct Capabilities {
 }
 
 #[tauri::command]
-pub fn ptt_capabilities() -> Capabilities {
+pub fn hw_capabilities() -> Capabilities {
     Capabilities { global_keys: cfg!(windows), gamepads: true }
+}
+
+/// Whether this app's window is in front. Off Windows the web view filters non-global
+/// actions itself, so report focused here.
+#[cfg(not(windows))]
+fn app_focused() -> bool {
+    true
+}
+
+#[cfg(windows)]
+fn app_focused() -> bool {
+    win::app_focused()
 }
 
 pub fn start(app: AppHandle) {
@@ -139,36 +190,49 @@ fn start_gamepads(app: AppHandle) {
 }
 
 #[cfg(not(windows))]
-fn apply_native(_binding: &Option<Binding>) {}
+fn apply_native(_bindings: &[Binding]) {}
 
 #[cfg(windows)]
-fn apply_native(binding: &Option<Binding>) {
-    use std::sync::atomic::Ordering;
-    let vk = match binding {
-        Some(b) if b.kind == "key" => b.code.parse::<u32>().unwrap_or(0),
-        _ => 0,
-    };
+fn apply_native(bindings: &[Binding]) {
     // Swallow only keys nobody types with: F13–F24 and the media/volume keys hand
-    // mics send. Otherwise a hand mic's Play/Pause or Mute PTT would also pause
-    // music or mute the PC. Normal keys (Space, letters) still reach other apps.
-    let swallow = matches!(vk, 0x7C..=0x87 | 0xA6..=0xB7);
-    win::SWALLOW_VK.store(if swallow { vk } else { 0 }, Ordering::Relaxed);
+    // mics send. Otherwise a mic's Play/Pause or Mute button would also pause music
+    // or mute the PC. Normal keys (Space, letters) still reach other apps.
+    let swallow = bindings
+        .iter()
+        .filter(|b| b.kind == "key")
+        .filter_map(|b| b.code.parse::<u32>().ok().map(|vk| (vk, b.global)))
+        .filter(|(vk, _)| matches!(vk, 0x7C..=0x87 | 0xA6..=0xB7))
+        .collect();
+    *win::SWALLOW.lock().unwrap_or_else(|e| e.into_inner()) = swallow;
 }
 
 #[cfg(windows)]
 mod win {
-    use std::sync::atomic::{AtomicU32, Ordering};
-    use std::sync::{mpsc, OnceLock};
+    use std::sync::{mpsc, Mutex, OnceLock};
     use tauri::AppHandle;
     use windows_sys::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
     use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
+    use windows_sys::Win32::System::Threading::GetCurrentProcessId;
     use windows_sys::Win32::UI::WindowsAndMessaging::{
-        CallNextHookEx, GetMessageW, SetWindowsHookExW, HC_ACTION, KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT,
+        CallNextHookEx, GetForegroundWindow, GetMessageW, GetWindowThreadProcessId, SetWindowsHookExW, HC_ACTION, KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT,
         WH_KEYBOARD_LL, WH_MOUSE_LL, WM_KEYDOWN, WM_KEYUP, WM_MBUTTONDOWN, WM_MBUTTONUP, WM_SYSKEYDOWN,
         WM_SYSKEYUP, WM_XBUTTONDOWN, WM_XBUTTONUP,
     };
 
-    pub static SWALLOW_VK: AtomicU32 = AtomicU32::new(0);
+    /// Bound non-typing keys to keep from other apps: (virtual key, binding is global).
+    pub static SWALLOW: Mutex<Vec<(u32, bool)>> = Mutex::new(Vec::new());
+
+    pub fn app_focused() -> bool {
+        unsafe {
+            let window = GetForegroundWindow();
+            if window.is_null() {
+                return false;
+            }
+            let mut pid = 0u32;
+            GetWindowThreadProcessId(window, &mut pid);
+            pid == GetCurrentProcessId()
+        }
+    }
     static TX: OnceLock<mpsc::Sender<(&'static str, u32, bool)>> = OnceLock::new();
 
     fn send(kind: &'static str, code: u32, pressed: bool) {
@@ -185,8 +249,11 @@ mod win {
             let pressed = msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN;
             if pressed || msg == WM_KEYUP || msg == WM_SYSKEYUP {
                 send("key", k.vkCode, pressed);
-                let swallow = SWALLOW_VK.load(Ordering::Relaxed);
-                if swallow != 0 && swallow == k.vkCode {
+                let swallow = SWALLOW
+                    .lock()
+                    .map(|list| list.iter().any(|&(vk, global)| vk == k.vkCode && (global || app_focused())))
+                    .unwrap_or(false);
+                if swallow {
                     return 1;
                 }
             }

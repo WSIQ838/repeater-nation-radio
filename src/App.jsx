@@ -8,7 +8,8 @@ import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 import {prewarmRadio} from "./lib/livekit";
-import {HAND_MIC,bleConnect,bleDisconnect,bleScan,inDesktopApp,listenBle,listenHardware,loadBinding,loadBleDevice,pttCapabilities,saveBinding,saveBleDevice,setHardwareBinding,setLearning} from "./lib/ptt";
+import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
+import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {ControlHead,PalmMic} from "./components/ControlHead";
 import "./apx.css";
 
@@ -128,9 +129,34 @@ const readPref=key=>{try{return localStorage.getItem(key)}catch{return null}};
 const writePref=(key,value)=>{try{localStorage.setItem(key,value)}catch{}};
 const keyLabel=e=>e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,"");
 
-function PttLearn({binding,learning,onLearn,onCancel,onClear}){
+function PttLearn({bindings,learning,onLearn,onCancel,onEdit}){
   if(learning)return <div className="ptt-learn learning"><span>Press your PTT button… (Esc cancels)</span><button onClick={onCancel}>Cancel</button></div>;
-  return <div className="ptt-learn"><span>{binding?"PTT button: "+binding.label:"No PTT button set"}</span><button onClick={onLearn}>{binding?"Change":"Learn PTT button"}</button>{binding&&<button onClick={onClear} aria-label="Clear PTT button">Clear</button>}</div>;
+  return <div className="ptt-learn"><span>{bindings.length?"PTT: "+bindings.map(b=>b.label).join(", "):"No PTT button set"}</span><button onClick={onLearn}>Add PTT button</button><button onClick={onEdit}>Edit</button></div>;
+}
+
+// Whether a binding can be set to work while the app isn't focused.
+const canBeGlobal=(b,caps)=>b.kind==="pad"||b.kind==="ble"||((b.kind==="key"||b.kind==="mouse")&&!!caps?.global_keys);
+const GROUPS=[...new Set(ACTIONS.map(a=>a.group))];
+
+function KeyMap({keymap,caps,learnFor,notice,onLearn,onRemove,onToggleGlobal,onReset}){
+  return <div className="keymap">
+    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused.</p>
+    {notice&&<div className="keymap-notice">{notice}</div>}
+    {GROUPS.map(g=><div key={g} className="keymap-group"><h4>{g}</h4>
+      {ACTIONS.filter(a=>a.group===g).map(a=>{
+        const list=keymap.map((b,i)=>[b,i]).filter(([b])=>b.action===a.id);
+        return <div key={a.id} className={"keymap-row"+(learnFor===a.id?" learning":"")}>
+          <span className="keymap-action">{a.label}</span>
+          <span className="keymap-binds">
+            {list.map(([b,i])=><span key={i} className="keymap-chip"><b>{b.label||b.code}</b>
+              {canBeGlobal(b,caps)&&<button className={b.global?"on":""} onClick={()=>onToggleGlobal(i)} title={b.global?"Works even when the app isn't focused":"Works only while the app is focused"}>{b.global?"Anywhere":"App only"}</button>}
+              <button onClick={()=>onRemove(i)} aria-label={"Remove "+(b.label||b.code)+" from "+a.label}>×</button></span>)}
+            {learnFor===a.id?<span className="keymap-wait">Press a button… <button onClick={()=>onLearn("")}>Cancel</button></span>:<button className="keymap-add" onClick={()=>onLearn(a.id)}>+ Add</button>}
+          </span>
+        </div>})}
+    </div>)}
+    <button className="keymap-reset" onClick={onReset}>Reset to defaults</button>
+  </div>;
 }
 
 const BLE_TEXT={connecting:"Connecting…",connected:"Connected",disconnected:"Reconnecting…",error:"Not connected",off:"Off"};
@@ -141,7 +167,7 @@ function BluetoothPtt({status,setStatus}){
   const use=d=>{const pick={id:d.id,name:d.name};setDevice(pick);saveBleDevice(pick);setFound(null);bleConnect(pick)};
   const forget=()=>{setDevice(null);saveBleDevice(null);setStatus(null);bleDisconnect()};
   return <div className="ble-ptt">
-    <p className="muted">For Bluetooth PTT buttons that don't work with Learn PTT button on their own. Pair the button here, then use Learn PTT button and press it.</p>
+    <p className="muted">For Bluetooth buttons that the button mapping below doesn't pick up on their own. Pair the button here, then map it below.</p>
     {device?<div className="ble-row"><span><strong>{device.name}</strong> · {BLE_TEXT[status?.state]||"Connecting…"}{status?.state==="error"&&status.message?" · "+status.message:""}</span><button onClick={forget}>Forget</button></div>
       :<div className="ble-row"><span>No Bluetooth button paired</span><button onClick={scan} disabled={scanning}>{scanning?"Searching…":"Find Bluetooth button"}</button></div>}
     {device&&<button className="ble-find" onClick={scan} disabled={scanning}>{scanning?"Searching…":"Find a different button"}</button>}
@@ -199,42 +225,85 @@ function RadioApp({session,onSignOut}){
   },[tuneSeq]);
   const chooseZone=e=>selectZone(e.target.value);
   const chooseChannel=e=>selectChannel(e.target.value);
-  // PTT can be keyed from the palm mic, the keyboard and a hardware button at once, so
+  // PTT can be keyed from the palm mic, the keyboard and hardware buttons at once, so
   // track it in a ref too: a second "down" from another source must not re-key.
   const pttRef=useRef(false);
   const setPttState=v=>{pttRef.current=v;setPtt(v)};
-  const down=async()=>{if(!connected||pttRef.current||learning)return;setPttState(true);try{await requestPTT(micDeviceId)}catch{setPttState(false)}};
+  const down=async()=>{if(!connected||pttRef.current||learnFor)return;setPttState(true);try{await requestPTT(micDeviceId)}catch{setPttState(false)}};
   const up=async()=>{if(!pttRef.current)return;setPttState(false);await releasePTT()};
 
-  // Hardware PTT button (hand mic, foot switch, gamepad), learned once and saved.
-  const [pttBinding,setPttBinding]=useState(loadBinding),[learning,setLearningState]=useState(false),[pttCaps,setPttCaps]=useState({global_keys:false,gamepads:false});
-  const downRef=useRef(down),upRef=useRef(up);downRef.current=down;upRef.current=up;
-  const bindPtt=b=>{setPttBinding(b);saveBinding(b);setHardwareBinding(b)};
-  const learnPtt=on=>{setLearningState(on);setLearning(on)};
-  // A paired Bluetooth PTT button reconnects at startup, whichever tab is open.
+  // Button mapping: every radio action can be bound to keys and hardware buttons.
+  const [hwCaps,setHwCaps]=useState(null),[keymap,setKeymap]=useState(null),[learnFor,setLearnFor]=useState(""),[mapNotice,setMapNotice]=useState("");
+  const keymapRef=useRef(keymap),learnForRef=useRef(learnFor);keymapRef.current=keymap;learnForRef.current=learnFor;
+  const updateKeymap=m=>{setKeymap(m);saveKeymap(m);setHardwareBindings(m)};
+  const learn=id=>{setLearnFor(id);setMapNotice("");setLearning(!!id)};
+  const addLearned=input=>{
+    const action=learnForRef.current,map=keymapRef.current||[];
+    if(!action)return;
+    setLearnFor("");
+    if(map.some(b=>sameInput(b,input)&&b.action===action)){setMapNotice(`${input.label} is already mapped to ${actionLabel(action)}.`);return}
+    const moved=map.find(b=>sameInput(b,input));
+    updateKeymap(map.filter(b=>!sameInput(b,input)).concat({action,...input,global:defaultGlobal(input)}));
+    setMapNotice(moved?`${input.label} moved from ${actionLabel(moved.action)} to ${actionLabel(action)}.`:`${input.label} mapped to ${actionLabel(action)}.`);
+  };
+  const stepIn=(list,currentId,dir)=>{if(!list.length)return null;const at=list.findIndex(x=>x.id===currentId);const from=at<0&&dir<0?0:at;return list[(from+dir+list.length)%list.length]};
+  const [faceCommand,setFaceCommand]=useState(null);
+  const runAction=action=>{
+    if(action==="channel_up"||action==="channel_down"){const c=stepIn(visibleChannels,channelId,action==="channel_up"?1:-1);if(c)selectChannel(c.id)}
+    else if(action==="zone_up"||action==="zone_down"){const z=stepIn(zones,zoneId,action==="zone_up"?1:-1);if(z)selectZone(z.id)}
+    else if(/^p[1-5]$/.test(action)){const c=visibleChannels[Number(action[1])-1];if(c)selectChannel(c.id)}
+    else if(action==="power"){if(state!=="connecting")(connected?disconnect():connect()).catch(()=>{})}
+    else if(action==="mute")setMuted(!muted);
+    else if(action==="answer"){if(incoming)accept()}
+    else if(action==="decline"){if(incoming)decline()}
+    else if(action==="end_call"){if(call)endCall()}
+    else{if(action==="home"||tab!=="radio")setTab("radio");setFaceCommand({action})}
+  };
+  const downRef=useRef(down),upRef=useRef(up),runRef=useRef(runAction);downRef.current=down;upRef.current=up;runRef.current=runAction;
+  const handleAction=({action,pressed,global})=>{
+    if(action==="ptt"){pressed?downRef.current():upRef.current();return}
+    if(!pressed||learnForRef.current||(!global&&!document.hasFocus()))return;
+    runRef.current(action);
+  };
+  const handleRef=useRef(handleAction);handleRef.current=handleAction;
+  // A paired Bluetooth button reconnects at startup, whichever tab is open.
   const [bleStatus,setBleStatus]=useState(null);
   useEffect(()=>{const off=listenBle(setBleStatus);const saved=loadBleDevice();if(saved)bleConnect(saved);return off},[]);
   useEffect(()=>{
-    pttCapabilities().then(setPttCaps);
-    setHardwareBinding(loadBinding());
-    return listenHardware({
-      onPtt:pressed=>pressed?downRef.current():upRef.current(),
-      onLearned:b=>{setLearningState(false);setPttBinding(b);saveBinding(b)},
-      onLearnCancel:()=>setLearningState(false),
+    let alive=true;
+    hwCapabilities().then(caps=>{if(!alive)return;const map=loadKeymap(caps.global_keys);setHwCaps(caps);setKeymap(map);setHardwareBindings(map)});
+    const off=listenHardware({
+      onAction:a=>handleRef.current(a),
+      onLearned:input=>addLearnedRef.current(input),
+      onLearnCancel:()=>setLearnFor(""),
     });
+    return()=>{alive=false;off()};
   },[]);
+  const addLearnedRef=useRef(addLearned);addLearnedRef.current=addLearned;
 
   useEffect(()=>{
-    const isPtt=e=>e.code==="Space"||e.code==="Numpad0"||(pttBinding?.kind==="webkey"&&e.code===pttBinding.code);
+    if(!keymap)return;
+    const web=keymap.filter(b=>b.kind==="webkey"),nativeKeys=new Set(keymap.filter(b=>b.kind==="key").map(b=>Number(b.code)));
+    const typing=e=>/^(INPUT|TEXTAREA)$/.test(e.target?.tagName||"");
     const keyDown=e=>{
-      // Without a global hook (macOS, Linux) the PTT button is learned from in-window keys.
-      if(learning){if(pttCaps.global_keys)return;e.preventDefault();if(e.code==="Escape")learnPtt(false);else{learnPtt(false);bindPtt({kind:"webkey",code:e.code,label:keyLabel(e)})}return}
-      if(isPtt(e)&&connected&&!e.repeat){e.preventDefault();down()}
+      // Without the Windows hook, buttons are learned from in-window keys.
+      if(learnFor){if(hwCaps?.global_keys)return;e.preventDefault();if(e.code==="Escape")learn("");else addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return}
+      if(typing(e))return;
+      // Keys mapped through the Windows hook are handled there; just keep them from the page.
+      if(nativeKeys.has(e.keyCode)){e.preventDefault();return}
+      const hits=web.filter(b=>b.code===e.code);if(!hits.length)return;
+      e.preventDefault();if(e.repeat)return;
+      hits.forEach(b=>handleAction({action:b.action,pressed:true,global:true}));
     };
-    const keyUp=e=>{if(isPtt(e)){e.preventDefault();up()}};
+    const keyUp=e=>{
+      if(typing(e))return;
+      if(nativeKeys.has(e.keyCode)){e.preventDefault();return}
+      const hits=web.filter(b=>b.code===e.code);if(!hits.length)return;
+      e.preventDefault();hits.forEach(b=>handleAction({action:b.action,pressed:false,global:true}));
+    };
     window.addEventListener("keydown",keyDown);window.addEventListener("keyup",keyUp);
     return()=>{window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp)}
-  },[connected,ptt,micDeviceId,learning,pttBinding,pttCaps.global_keys]);
+  },[keymap,learnFor,hwCaps]);
 
   // Remember audio devices, and pick a hand mic automatically the first time one shows up.
   const touchedRef=useRef(false);
@@ -246,7 +315,8 @@ function RadioApp({session,onSignOut}){
     if(readPref("rn-mic")===null){const d=pick("audioinput");if(d)setMicDeviceId(d.deviceId)}
     if(readPref("rn-speaker")===null){const d=pick("audiooutput");if(d)setSpeakerId(d.deviceId)}
   },[devices]);
-  const pttName=pttBinding?.label||"";
+  const pttBindings=(keymap||[]).filter(b=>b.action==="ptt"),pttName=pttBindings.map(b=>b.label||b.code).join(" / ");
+  const keymapProps={keymap:keymap||[],caps:hwCaps,learnFor,notice:mapNotice,onLearn:learn,onRemove:i=>updateKeymap(keymap.filter((_,k)=>k!==i)),onToggleGlobal:i=>updateKeymap(keymap.map((b,k)=>k===i?{...b,global:!b.global}:b)),onReset:()=>{updateKeymap(defaultBindings(!!hwCaps?.global_keys));setMapNotice("Button mapping reset to defaults.")}};
 
   const logout=async()=>{await disconnect();await endCall();await clearSession();onSignOut()};
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
@@ -269,7 +339,7 @@ function RadioApp({session,onSignOut}){
               state={state} connected={connected} ptt={ptt} muted={muted} error={error} callsign={radioSession?.callsign||callsign} participants={participants}
               incoming={incoming} call={call} callState={callState}
               onPower={connected?disconnect:connect} onMute={()=>setMuted(!muted)} onChannel={selectChannel} onZone={selectZone} onTab={setTab}
-              onAnswer={accept} onDecline={decline} onEndCall={endCall}
+              onAnswer={accept} onDecline={decline} onEndCall={endCall} command={faceCommand}
             />
             <div className="apx-side">
               <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up} pttName={pttName}/>
@@ -279,7 +349,7 @@ function RadioApp({session,onSignOut}){
                 <label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label>
                 <label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label>
                 <label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label>
-                <PttLearn binding={pttBinding} learning={learning} onLearn={()=>learnPtt(true)} onCancel={()=>learnPtt(false)} onClear={()=>bindPtt(null)}/>
+                <PttLearn bindings={pttBindings} learning={learnFor==="ptt"} onLearn={()=>learn("ptt")} onCancel={()=>learn("")} onEdit={()=>setTab("settings")}/>
                 <div className="apx-program-foot"><span>{participants.length} on channel</span><span>{muted?"Speaker muted":"Speaker on"}</span></div>
               </div>
             </div>
@@ -288,7 +358,7 @@ function RadioApp({session,onSignOut}){
         </>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>PTT</span><strong>Hold Space or Numpad 0{pttName?" or "+pttName:""}</strong></div><div className="setting"><span>PTT button</span><PttLearn binding={pttBinding} learning={learning} onLearn={()=>learnPtt(true)} onCancel={()=>learnPtt(false)} onClear={()=>bindPtt(null)}/></div><div className="setting ble-setting"><span>Bluetooth PTT</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><div className="setting"><span>Channel</span><strong>{channelName}</strong></div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="setting keymap-setting"><span>Button mapping</span><KeyMap {...keymapProps}/></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>

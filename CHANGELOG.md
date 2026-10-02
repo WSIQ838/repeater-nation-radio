@@ -1,5 +1,17 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.17
+
+- Button mapping. Settings › Button mapping lists every radio action: push to talk, channel up/down, zone up/down, P1–P5, power, mute, Home, Who's On, display brighter/dimmer, answer/decline/end call, all ten softkeys and the whole keypad (0–9, *, #). Each action can have several buttons. Click "+ Add" and press any keyboard key, media or volume key, Bluetooth hand mic button, USB hand mic button, mouse middle/side button or gamepad button. Esc cancels. "×" removes a button and "Reset to defaults" goes back to Space and Num 0 for PTT.
+- Each mapped button is either "App only" or "Anywhere". Anywhere buttons work while another window is in front (Windows for keys and mouse buttons; every OS for gamepads and Bluetooth buttons). Typing keys start as App only; hand mic, media, Bluetooth, mouse and gamepad buttons start as Anywhere.
+- Mapping a button that is already used by another action moves it, and says so.
+- Channel, zone, P1–P5, power, mute and call actions work from any tab. Face-only actions (softkeys, keypad, Who's On, brightness) switch to the Radio tab first.
+- On Windows the default Space and Num 0 PTT keys now go through the same hook, still only while the app is focused.
+- The single PTT button learned in 0.1.15/0.1.16 is carried over into the new map.
+- The Programming panel's PTT row lists all PTT buttons, with "Add PTT button" and "Edit".
+- The Bluetooth section only shows in the desktop app.
+- Version set to 0.1.17 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.16
 
 - Bluetooth PTT mics. Settings now has a Bluetooth PTT section: "Find Bluetooth button" lists nearby Bluetooth LE devices, "Use" connects to one, and Learn PTT button then learns its button. This is for buttons that report on their own Bluetooth service instead of as a key. The app reconnects to the button on every launch and after it drops or powers off. "Forget" disconnects it.

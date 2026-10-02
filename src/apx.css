@@ -148,3 +148,19 @@
 .ble-ptt button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer}
 .ble-ptt button:disabled{opacity:.6;cursor:default}
 .ble-find{align-self:flex-start}
+.keymap-setting{align-items:flex-start}
+.keymap{display:flex;flex-direction:column;gap:10px;flex:1;max-width:620px;font-size:13px}
+.keymap p{margin:0;font-size:12px}
+.keymap-notice{font-size:12px;color:#f2c14e}
+.keymap-group h4{margin:6px 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8c97a3}
+.keymap-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #1d242c}
+.keymap-row.learning{background:#1a1f13}
+.keymap-action{flex:0 0 190px;color:#dce3ea}
+.keymap-binds{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1}
+.keymap-chip{display:inline-flex;align-items:center;gap:4px;background:#141a21;border:1px solid #2a3139;border-radius:6px;padding:2px 4px 2px 8px;font-size:12px}
+.keymap-chip b{font-weight:600;color:#dce3ea}
+.keymap button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer}
+.keymap-chip button.on{border-color:#3f7d4a;color:#8fdc9b}
+.keymap-wait{color:#f2c14e;font-size:12px;display:inline-flex;gap:6px;align-items:center}
+.keymap-reset{align-self:flex-start}
+@media (max-width:700px){.keymap-row{flex-direction:column;align-items:flex-start}.keymap-action{flex:none}}
