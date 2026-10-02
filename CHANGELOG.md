@@ -1,5 +1,21 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.1
+
+Radio features, part 2: **Scan**.
+
+- The Scan softkey (top row, where Calls was; Contacts is still on the bottom row) turns scan on and off. The display shows SCAN, and the banner shows "Scan · channel" with the zone and talker while it is stopped on a scanned channel.
+- Scan joins every channel on the scan list as a listener, at the same time as your selected channel, and plays whichever has someone talking. Up to 10 channels. Your selected channel always wins, and scan goes quiet while you transmit.
+- After a scanned transmission ends, scan stays on that channel for 3 seconds (hang time) so you hear the reply.
+- **Priority channel**: activity there interrupts any other scanned channel.
+- **Nuisance delete** (the "Nuis Del" softkey while scan is stopped on a channel, or a mapped button) skips that channel until scan is turned off.
+- Settings › Scan list: tick channels in any zone and pick the priority channel. Until you change it, the list is your current zone's channels. It is saved on your PC.
+- A scanned channel that can't be joined, or drops, is retried every 5 seconds and marked "(can't join)" in the list.
+- PTT always talks on your selected channel, not the scanned one.
+- New mappable actions: Scan on / off and Nuisance delete.
+- Note: while scanning, other members see you in Who's On for each scanned channel. Hiding scanners needs a radio-server change (see the backend list in the PR).
+- Version set to 0.2.1 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.0
 
 Radio features, part 1 (all in the app, no server changes; same on Windows, macOS and Linux):

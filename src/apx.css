@@ -185,3 +185,4 @@
 .features label{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#d8dde3}
 .features select,.features input[type=range]{background:#0b0f14;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:4px 6px}
 .features small{color:#7e8995}
+.scan-zone{display:block;margin:6px 0 2px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8c97a3}

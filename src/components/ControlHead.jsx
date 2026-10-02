@@ -43,6 +43,7 @@ export function ControlHead({
   incoming,call,callState,
   onPower,onMute,onChannel,onZone,onTab,onAnswer,onDecline,onEndCall,command,
   quality="unknown",onAir=null,volume=7,onVolume,lastHeard=[],onReplay,flash,
+  scanning=false,scanActive=null,onScan,onNuisance,
 }){
   const [view,setView]=useState("home");
   const [entry,setEntry]=useState("");
@@ -89,7 +90,7 @@ export function ControlHead({
     {label:connected?"Off":"Connect",act:onPower,disabled:state==="connecting"},
     {label:muted?"Unmute":"Mute",act:onMute},
     {label:view==="who"?"Back":"Who's On",act:()=>setView(v=>v==="who"?"home":"who")},
-    {label:"Calls",act:()=>onTab("calls")},
+    {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
     {label:"Setup",act:()=>onTab("settings")},
   ];
   const replayLast=()=>{if(!onReplay?.())setNotice("Nothing to replay yet")};
@@ -110,7 +111,7 @@ export function ControlHead({
   ]:[
     {label:"Chan −",act:()=>stepChannel(-1)},
     {label:"Chan +",act:()=>stepChannel(1)},
-    {label:"Zone",act:()=>stepZone(1)},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:"Zone",act:()=>stepZone(1)},
     {label:"Recent",act:()=>setView("recent")},
     {label:"Contacts",act:()=>onTab("calls")},
   ];
@@ -133,6 +134,7 @@ export function ControlHead({
   let banner=null;
   if(ptt)banner={tone:"tx",title:"Transmitting",sub:callsign||""};
   else if(onAir)banner={tone:"rx",title:"Receiving",sub:onAir.name};
+  else if(scanActive)banner={tone:"rx",title:"Scan · "+scanActive.name,sub:[scanActive.zoneName,scanActive.talker].filter(Boolean).join(" · ")};
   else if(incoming)banner={tone:"rx",title:"Call Received",sub:incoming.caller_display_name||incoming.caller_callsign||"Member",icon:PhoneIncoming};
   else if(call)banner={tone:"call",title:callState==="calling"?"Calling…":"Call Connected",sub:call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member",icon:Phone};
   else if(error)banner={tone:"warn",title:error};
@@ -143,7 +145,7 @@ export function ControlHead({
 
   const QUALITY_BARS={excellent:4,good:3,poor:1,lost:0};
   const bars=connected?(QUALITY_BARS[quality]??4):state==="connecting"?1:0;
-  const ledTx=ptt,ledRx=!!onAir&&!ptt,ledCall=!!(incoming||call);
+  const ledTx=ptt,ledRx=!!(onAir||scanActive)&&!ptt,ledCall=!!(incoming||call);
 
   return <div className="apx-head" style={{"--apx-bright":0.55+brightness*0.15}}>
     <div className="apx-bezel">
@@ -191,6 +193,7 @@ export function ControlHead({
               {muted?<VolumeX size={12} className="lit-red"/>:<Volume2 size={12}/>}
               {ptt&&<span className="apx-tag tx">TX</span>}
               {connected&&!ptt&&<span className="apx-tag">RX</span>}
+              {scanning&&<span className="apx-tag">SCAN</span>}
               {(incoming||call)&&<Phone size={12} className="lit"/>}
               <span className="apx-icons-right"><Users size={12}/>{participants.length}<Clock/></span>
             </div>

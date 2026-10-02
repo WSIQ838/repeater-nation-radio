@@ -12,6 +12,8 @@ export const ACTIONS=[
   {id:"volume_down",label:"Volume down",group:"Radio"},
   {id:"recent",label:"Recent (last heard)",group:"Radio"},
   {id:"replay",label:"Replay last transmission",group:"Radio"},
+  {id:"scan",label:"Scan on / off",group:"Channel & zone"},
+  {id:"nuisance",label:"Nuisance delete (skip scanned channel)",group:"Channel & zone"},
   {id:"home",label:"Home",group:"Radio"},
   {id:"who",label:"Who's On",group:"Radio"},
   {id:"bright_up",label:"Display brighter",group:"Radio"},
