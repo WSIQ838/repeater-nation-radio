@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.33
+
+**Fixed stale desktop PTT errors and prevented a microphone hang from leaving a floor lease behind.**
+
+- A new PTT attempt immediately clears the previous error banner, so an earlier busy response cannot remain on-screen after a later request succeeds.
+- Desktop microphone startup now has an 8-second readiness limit. If the microphone never becomes ready, the attempt fails explicitly and the floor-release cleanup runs instead of leaving a silent/stale transmit claim.
+- Version set to 0.2.33 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+
 ## 0.2.32
 
 **Fixed duplicate desktop PTT requests that could make the radio report a false busy channel.**
