@@ -215,7 +215,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         try{pub.track.mediaStreamTrack.enabled=true}catch{}
         await pub.track.unmute();
         if(!isPublished(room,pub.track))await publishMicrophoneTrack(room,pub.track);
-        if(requestId!==pttRequestRef.current){try{await pub.track.mute()}catch{}try{await issueRadioPTT(channelId,"release")}catch{}return "stale"}
+        if(requestId!==pttRequestRef.current){try{await pub.track.mute()}catch{}try{await issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch{}return "stale"}
         mic=pub.track;
       }else{
         // First PTT on this room or device: open the mic while the floor request is in
@@ -231,13 +231,13 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         const track=await micPromise;
         // Device names are only visible after the first mic permission, so refresh them now.
         refreshDevices();
-        if(requestId!==pttRequestRef.current){track.stop();try{await issueRadioPTT(channelId,"release")}catch{}return "stale"}
+        if(requestId!==pttRequestRef.current){track.stop();try{await issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch{}return "stale"}
         await dropPublished();
         try{mic=await publishMicrophoneTrack(room,track)}catch(err){track.stop();throw err}
         pubRef.current={track:mic,deviceId,room};
         if(requestId!==pttRequestRef.current){
           try{await mic.mute()}catch{}
-          try{await issueRadioPTT(channelId,"release")}catch{}
+          try{await issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch{}
           return "stale";
         }
       }
@@ -264,7 +264,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       if(requestId!==pttRequestRef.current)return "stale";
       setError(err instanceof Error?err.message:"Microphone access failed.");
       floorRef.current=false;
-      try{await issueRadioPTT(channelId,"release")}catch{}
+      try{await issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch{}
       return "error";
     }
   },[channelId,session,releasePTT,refreshDevices,dropPublished]);
