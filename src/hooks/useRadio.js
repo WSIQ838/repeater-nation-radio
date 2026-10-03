@@ -11,7 +11,7 @@ const LAST_HEARD_MAX=10;
 // events: {onTalkStart(entry), onTalkEnd(entry)} for tones and announcements,
 // onRecorded({...item, blob}) for each recorded transmission heard, onOwnTalkStart(micTrack).
 export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=1, events={}) {
-  const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0);
+  const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0), pttInFlightRef=useRef(false);
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
   // connect() hands attachAudio to LiveKit once, so read mute through a ref to stay current.
   const sessionRef=useRef(null);
@@ -177,9 +177,11 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   const requestPTT=useCallback(async(deviceId="")=>{
     const requestId=++pttRequestRef.current;
     if(floorRef.current)return "granted";
+    if(pttInFlightRef.current)return "pending";
     if(!roomRef.current||!session){setError("Connect to the radio first.");return "error"}
     if(!session.canTransmit){setError("You are not authorized to transmit on this channel.");return "denied"}
     try {
+      pttInFlightRef.current=true;
       floorAskedRef.current=true;
       const room=roomRef.current,pub=pubRef.current;
       const deny=async r=>{
@@ -266,6 +268,8 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       floorRef.current=false;
       try{await issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch{}
       return "error";
+    } finally {
+      pttInFlightRef.current=false;
     }
   },[channelId,session,releasePTT,refreshDevices,dropPublished]);
 
