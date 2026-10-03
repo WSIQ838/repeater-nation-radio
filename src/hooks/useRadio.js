@@ -5,7 +5,7 @@ import { issueRadioSession, issueRadioPTT } from "../lib/auth";
 // Route a member's audio to the chosen speaker (WebView2 supports setSinkId; others keep the default).
 export function setSink(el,deviceId){if(el?.setSinkId)el.setSinkId(deviceId||"").catch(()=>{})}
 
-const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
+const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.radioCallsign||m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
 const LAST_HEARD_MAX=10;
 
 // events: {onTalkStart(entry), onTalkEnd(entry)} for tones and announcements,
@@ -98,7 +98,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     // Start the server release immediately. Do not wait for LiveKit unpublish;
     // the authoritative floor lease must clear first so another radio can key
     // up without waiting on transport cleanup.
-    const releasePromise=asked?issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "").catch(()=>{}):null;
+    const releasePromise=asked?issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "").catch(()=>{}):null;
     // Keep the mic published but muted, so the next PTT only unmutes it instead of
     // renegotiating a new track with the voice server (and, on Bluetooth headsets,
     // switching audio profiles) every time.
@@ -195,7 +195,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         if(pubNow?.room===room){
           try{await pubNow.track.mute()}catch{}
         }
-        try{await issueRadioPTT(channelId,"release")}catch{}
+        try{await issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch{}
         setError(reason==="busy"?"Channel is busy — someone else is transmitting.":reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");
         return reason==="busy"?"busy":"denied";
       };
@@ -208,7 +208,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         // leaking audio while the floor request is being decided.
         try{pub.track.mediaStreamTrack.enabled=false}catch{}
         try{await pub.track.mute()}catch{}
-        const result=await issueRadioPTT(channelId,"request",sessionRef.current?.radioSessionId || "");
+        const result=await issueRadioPTT(channelId,"request",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "");
         if(requestId!==pttRequestRef.current)return "stale";
         if(!result?.ok)throw new Error(result?.error||"Could not reach the radio server.");
         if(!result.granted)return await deny(result);
@@ -223,7 +223,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         const micPromise=openMicrophone(deviceId);
         micPromise.catch(()=>{});
         let result;
-        try{result=await issueRadioPTT(channelId,"request")}catch(err){micPromise.then(t=>t.stop(),()=>{});throw err}
+        try{result=await issueRadioPTT(channelId,"request",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch(err){micPromise.then(t=>t.stop(),()=>{});throw err}
         const dropMic=()=>micPromise.then(t=>t.stop(),()=>{});
         if(requestId!==pttRequestRef.current){dropMic();return "stale"}
         if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
@@ -249,7 +249,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       renewRef.current=setInterval(async()=>{
         if(!floorRef.current){renewFailures=0;return;}
         try{
-          const r=await issueRadioPTT(channelId,"renew",sessionRef.current?.radioSessionId || "");
+          const r=await issueRadioPTT(channelId,"renew",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "");
           if(!r?.ok)throw new Error();
           renewFailures=0;
         }catch{
