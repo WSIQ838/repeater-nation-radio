@@ -511,6 +511,7 @@ function RadioApp({session,onSignOut}){
     let result="error";
     try{result=await requestPTT(micDeviceId)}catch{}
     if(result==="granted"){if(featuresRef.current.permitTone)tone("permit");return}
+    if(result==="pending")return;
     if(result==="stale")return;
     setPttState(false);
     if(featuresRef.current.busyTone)tone(result==="busy"?"busy":"error");
@@ -670,7 +671,7 @@ function RadioApp({session,onSignOut}){
   return <div className="app-shell">
     <header className="topbar">
       <div className="brand"><div className="brand-mark small"><Radio size={20}/></div><div><strong>Repeater Nation</strong><span>RADIO</span></div></div>
-      <div className="topbar-right"><button type="button" className="mini-open" onClick={toggleMini} title="Mini radio (always on top)"><Minimize2 size={15}/> Mini</button><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":state==="reconnecting"?"Reconnecting…":"Ready"}<ChevronDown size={14}/></div></div>
+      <div className="topbar-right"><span aria-label={"Build version "+String(__APP_VERSION__)} style={{fontSize:12,fontWeight:700,letterSpacing:".06em",opacity:.8,padding:"5px 9px",border:"1px solid rgba(255,255,255,.18)",borderRadius:6,background:"rgba(255,255,255,.06)"}}>BUILD v{String(__APP_VERSION__)}</span><button type="button" className="mini-open" onClick={toggleMini} title="Mini radio (always on top)"><Minimize2 size={15}/> Mini</button><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":state==="reconnecting"?"Reconnecting…":"Ready"}<ChevronDown size={14}/></div></div>
     </header>
     <div className="body">
       <aside className="sidebar">{[["radio","Radio",Radio],["console","Console",LayoutGrid],["log","Log",History],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>

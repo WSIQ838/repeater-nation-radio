@@ -1,6 +1,6 @@
 # Repeater Nation Radio — Changelog
 
-## 0.2.23
+## 0.2.36
 
 **Connection fixes from a full check of every part of the radio that connects**, after Sean saw "could not establish signal connection: room connection has timed out (signal)" and "Channel is busy" while holding PTT.
 
@@ -25,6 +25,7 @@ PTT:
 - Pressing PTT while the radio is off or reconnecting plays the error tone and says why.
 - PTT calls now name this radio's own voice connection (the `radio_session_id` and `radio_callsign` the server's radio pass returns). The website's server gives each connection its own voice identity since 2026-10-03, and without this the server unlocked talking for the wrong identity, so a granted PTT sent no audio.
 - Turning the radio off waits at most 3 seconds for the server to take back a held channel.
+- Keeps the PTT fixes from 0.2.24 to 0.2.35, reworked to fit the changes above: a repeated key-down while a request is out is ignored (a press after key-up still goes ahead), a turned-down request hands back any claim the server left, the open mic stays silent until the floor is granted, the mic is unpublished on release so listeners hear the end at once, a microphone that never becomes ready gives up after 8 seconds, and the error banner clears at each new press. The roster and Last heard show the numbered radio callsign (for example 1-WSIQ838) when the server sends one.
 
 Scan and the monitor console:
 - Scan and console channels join with their own listen-only pass. They used the account's own identity before, so a scan join that finished late could knock this radio (or the website) off the channel.
@@ -47,7 +48,44 @@ Sign-in and app:
 - Server error messages keep their meaning ("Can't reach Repeater Nation. Check the internet connection." instead of "Network Error"), and the mini radio shows errors.
 - If the channel list fails to load at start, it is retried until it loads.
 - Quitting from the tray or closing the window leaves the channel and hands back a held PTT first.
-- Version set to 0.2.23 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+- Version set to 0.2.36 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.34
+
+**Added the exact build version to the top of the desktop radio.**
+
+- The top bar now always shows the running build, for example `BUILD v0.2.34`.
+- This makes it easy to confirm which installer/build is actually running during PTT troubleshooting.
+- Version set to 0.2.34 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+
+## 0.2.33
+
+**Fixed stale desktop PTT errors and prevented a microphone hang from leaving a floor lease behind.**
+
+- A new PTT attempt immediately clears the previous error banner, so an earlier busy response cannot remain on-screen after a later request succeeds.
+- Desktop microphone startup now has an 8-second readiness limit. If the microphone never becomes ready, the attempt fails explicitly and the floor-release cleanup runs instead of leaving a silent/stale transmit claim.
+- Version set to 0.2.33 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+
+## 0.2.32
+
+**Fixed duplicate desktop PTT requests that could make the radio report a false busy channel.**
+
+- Added a desktop PTT in-flight guard so repeated hardware/touch events cannot send multiple floor requests before the first one finishes.
+- A second key-down while the first PTT request is still pending is ignored instead of creating another `RadioFloorState` claim.
+- The PTT UI now stays with the original request until that request is granted or denied.
+- Version set to 0.2.32 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+
+## 0.2.31
+
+**Fixed an accidental 3-second PTT timeout in the desktop app.**
+
+- Hardened saved Time-out Timer settings so only the supported values Off, 30 s, 60 s, 2 min, or 3 min can be used.
+- If an older build left an unsupported value such as 3 seconds in local storage, the app now ignores it and restores the normal 60-second default instead of releasing PTT after 3 seconds.
+- Version set to 0.2.31 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 
 ## 0.2.22
 

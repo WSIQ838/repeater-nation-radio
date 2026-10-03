@@ -6,12 +6,12 @@ import { config } from "../lib/config";
 // Route a member's audio to the chosen speaker (WebView2 supports setSinkId; others keep the default).
 export function setSink(el,deviceId){if(el?.setSinkId)el.setSinkId(deviceId||"").catch(()=>{})}
 
-const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
+const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.radioCallsign||m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
 const LAST_HEARD_MAX=10;
 
 // Neither the Base44 SDK nor the PTT calls time out on their own, so a hung server call
 // would leave the radio stuck on "Connecting…" or "Requesting…".
-const SESSION_TIMEOUT_MS=20000, PTT_TIMEOUT_MS=8000;
+const SESSION_TIMEOUT_MS=20000, PTT_TIMEOUT_MS=8000, MIC_TIMEOUT_MS=8000;
 const CONNECT_ATTEMPTS=2, RETRY_DELAY_MS=1500;
 // After LiveKit gives up on its own reconnect (about a minute), keep trying with fresh
 // radio passes for about five minutes before showing an error.
@@ -49,7 +49,7 @@ export function connectMessage(err,url){
 // events: {onTalkStart(entry), onTalkEnd(entry)} for tones and announcements,
 // onRecorded({...item, blob}) for each recorded transmission heard, onOwnTalkStart(micTrack).
 export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=1, events={}) {
-  const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0);
+  const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0), pttInFlightRef=useRef(false);
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
   // connect() hands attachAudio to LiveKit once, so read mute through a ref to stay current.
   const mutedRef=useRef(muted);mutedRef.current=muted;
@@ -172,12 +172,17 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       const gen=pttRequestRef.current;
       setTimeout(()=>{if(gen===pttRequestRef.current&&!floorAskedRef.current)callPTT("release").catch(()=>{})},2000);
     }):null;
-    // Keep the mic published but muted, so the next PTT only unmutes it instead of
-    // renegotiating a new track with the voice server (and, on Bluetooth headsets,
-    // switching audio profiles) every time.
+    // Keep the mic open, so the next PTT only republishes it instead of reopening the
+    // device (and, on Bluetooth headsets, switching audio profiles) every time.
     micRef.current=null;
     const pub=pubRef.current;
-    if(pub){try{await pub.track.mute()}catch{}}
+    if(pub){
+      try{pub.track.mediaStreamTrack.enabled=false}catch{}
+      try{await pub.track.mute()}catch{}
+      // Unpublish too, so every listener gets the end of the transmission at once
+      // (the next PTT republishes the open mic).
+      try{await unpublishMicrophone(pub.room,pub.track)}catch{}
+    }
     await released;
     if(roomRef.current)setState(s=>s==="reconnecting"?s:"listening");
   },[callPTT]);
@@ -335,8 +340,13 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     }
   },[]);
   const requestPTT=useCallback(async(deviceId="")=>{
-    const requestId=++pttRequestRef.current;
     if(floorRef.current)return "granted";
+    // A repeated key-down (hardware buttons, touch) while the first request is out must
+    // not start a second claim or make the first one stale. A press after key-up still
+    // goes ahead: releasePTT has already queued the release behind the old request.
+    if(pttInFlightRef.current&&floorAskedRef.current)return "pending";
+    const requestId=++pttRequestRef.current;
+    setError("");
     if(!roomRef.current||!session){setPttError("Connect to the radio first.");return "error"}
     if(roomRef.current.state!=="connected"){setPttError("Reconnecting to the voice server. Try again in a moment.");return "error"}
     if(!session.canTransmit){setPttError("You are not authorized to transmit on this channel.");return "denied"}
@@ -344,9 +354,12 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     // A floor granted after key-up needs no release here: releasePTT already queued one
     // behind this request (see callPTT). Sending another could end the next PTT's floor.
     try {
+      pttInFlightRef.current=true;
       floorAskedRef.current=true;
       const room=roomRef.current,pub=pubRef.current;
-      const deny=r=>{setPttError(r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return r.reason==="busy"?"busy":"denied"};
+      // The server can leave this radio's turned-down claim behind; releasing it is safe
+      // (the server only removes this connection's own claims).
+      const deny=r=>{floorAskedRef.current=false;callPTT("release").catch(()=>{});setPttError(r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return r.reason==="busy"?"busy":"denied"};
       const ask=()=>withTimeout(callPTT("request"),PTT_TIMEOUT_MS,"The radio server didn't answer the PTT request.");
       // The server can answer "busy" for a claim it just wrote but can't read back yet.
       // If nobody is on air here and PTT is still held, ask once more before giving up:
@@ -360,10 +373,13 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       if(pub&&pub.room===room&&pub.deviceId===deviceId&&pub.track.mediaStreamTrack?.readyState==="live"){
         // Fast path: the mic is already open. Once the floor is granted, unmute it, and
         // republish it if the server unpublished it when the floor was last released.
+        // Keep it silent until the floor is granted.
+        try{pub.track.mediaStreamTrack.enabled=false}catch{}
         const result=await askFloor();
         if(stale())return "stale";
         if(!result?.ok)throw new Error(result?.error||"Could not reach the radio server.");
-        if(!result.granted){floorAskedRef.current=false;return deny(result)}
+        if(!result.granted)return deny(result);
+        try{pub.track.mediaStreamTrack.enabled=true}catch{}
         await pub.track.unmute();
         if(!isPublished(room,pub.track))await publishWhenAllowed(room,pub.track,stale);
         if(stale()){try{await pub.track.mute()}catch{}return "stale"}
@@ -378,8 +394,10 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         try{result=await askFloor()}catch(err){dropMic();throw err}
         if(stale()){dropMic();return "stale"}
         if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
-        if(!result.granted){dropMic();floorAskedRef.current=false;return deny(result)}
-        const track=await micPromise;
+        if(!result.granted){dropMic();return deny(result)}
+        // A microphone that never becomes ready must not leave the floor held.
+        let track;
+        try{track=await withTimeout(micPromise,MIC_TIMEOUT_MS,"The microphone did not become ready within 8 seconds.")}catch(err){dropMic();throw err}
         // Device names are only visible after the first mic permission, so refresh them now.
         refreshDevices();
         if(stale()){track.stop();return "stale"}
@@ -420,6 +438,8 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       // Still held, so nothing has released the floor yet: hand it back now.
       if(floorAskedRef.current){floorAskedRef.current=false;callPTT("release").catch(()=>{})}
       return "error";
+    } finally {
+      if(requestId===pttRequestRef.current)pttInFlightRef.current=false;
     }
   },[session,callPTT,releasePTT,refreshDevices,dropPublished,setPttError,floorLost,publishWhenAllowed]);
 

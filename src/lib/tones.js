@@ -51,7 +51,20 @@ export const canAnnounce=()=>typeof window!=="undefined"&&!!window.speechSynthes
 // Saved radio feature settings.
 const KEY="rn-features";
 export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,tot:60,announce:false,toneVolume:0.6,notifyCalls:true,notifyTalk:false,closeToTray:false};
-export function loadFeatures(){try{return {...FEATURE_DEFAULTS,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return {...FEATURE_DEFAULTS}}}
+const VALID_TOT=new Set([0,30,60,120,180]);
+export function loadFeatures(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(KEY)||"{}")||{};
+    const merged={...FEATURE_DEFAULTS,...saved};
+    const parsedTot=Number(merged.tot);
+    // Older test builds could leave an unsupported value such as 3 seconds
+    // in localStorage. Never let an invalid saved value become a hidden
+    // auto-release timer; fall back to the normal 60-second default.
+    merged.tot=VALID_TOT.has(parsedTot)?parsedTot:FEATURE_DEFAULTS.tot;
+    if(merged.tot!==saved.tot)try{localStorage.setItem(KEY,JSON.stringify(merged))}catch{}
+    return merged;
+  }catch{return {...FEATURE_DEFAULTS}}
+}
 export function saveFeatures(f){try{localStorage.setItem(KEY,JSON.stringify(f))}catch{}}
 
 // Per-channel volume (0–10), remembered like a real radio's channel memory.
