@@ -139,7 +139,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         onDisconnected:()=>{
           if(roomRef.current!==room)return;
           // Free any server-side floor lease if LiveKit drops unexpectedly.
-          if(floorAskedRef.current||floorRef.current)issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "").catch(()=>{});
+          if(floorAskedRef.current||floorRef.current)issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "").catch(()=>{});
           floorAskedRef.current=false;
           floorRef.current=false;
           clearOnAir();
