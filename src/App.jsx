@@ -485,6 +485,7 @@ function RadioApp({session,onSignOut}){
     let result="error";
     try{result=await requestPTT(micDeviceId)}catch{}
     if(result==="granted"){if(featuresRef.current.permitTone)tone("permit");return}
+    if(result==="pending")return;
     if(result==="stale")return;
     setPttState(false);
     if(featuresRef.current.busyTone)tone(result==="busy"?"busy":"error");
