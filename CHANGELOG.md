@@ -1,3 +1,12 @@
+## 0.2.36 — Unified radio connection rebuild
+
+- Rebuilt the desktop LiveKit connection lifecycle to use the same Repeater Nation radio-session and PTT backend as the website.
+- Added automatic reconnect with backoff after a full voice-transport disconnect, while preserving the active radio session identity across reconnects.
+- Added LiveKit reconnect/reconnected state handling so temporary transport recovery does not look like a manual radio shutdown.
+- Added pre-expiry radio-session refresh and LiveKit token update when supported, with a reconnect fallback when token refresh is unavailable.
+- Active PTT floor leases are released only when the transport is genuinely lost or the user deliberately disconnects.
+- Bumped the desktop app version to 0.2.36.
+
 # Repeater Nation Radio — Changelog
 
 ## 0.2.34
