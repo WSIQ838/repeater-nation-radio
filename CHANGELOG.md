@@ -1,5 +1,21 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.21
+
+**Programming moved into Settings**, as Sean asked. The Programming panel beside the radio is gone, and everything in it now lives once in Settings.
+
+- Settings opens with a **Programming** group, in this order:
+  - **Radio**: the radio picker, now two columns. It replaces the Radio dropdown that was in the panel.
+  - **Zone and channel**: the Zone and Channel dropdowns, with how many are on the channel. They replace the read-only Channel line Settings used to show.
+  - **Microphone and speaker**: both dropdowns, with whether the speaker is on or muted.
+  - **Status**: the six status buttons.
+  - **Scan list**, **Radio features**, **Buttons and PTT** (the old Button mapping, with Push to talk first) and, in the desktop app, **Bluetooth button**.
+- The panel's separate "Add PTT button" line is dropped because it repeated the Push to talk row in Buttons and PTT, so adding a PTT button happens there.
+- Account, LiveKit server, updates and sign out sit under **Account and app** at the bottom.
+- The radio page keeps the palm mic beside the radio, with a **Programming** button under it that opens Settings. The Setup entries in the radios' menus already opened Settings and still do.
+- Settings rows now line their controls up in one column next to the row names.
+- Version set to 0.2.21 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.20
 
 **Stubby antennas on every handheld**, as Sean asked.
