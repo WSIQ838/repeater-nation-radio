@@ -123,7 +123,27 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         onParticipantDisconnected:participant=>txEnd(participant),
         onQuality:q=>{if(roomRef.current===room)setQuality(q)},
         onAttributes:()=>{if(roomRef.current===room)refresh()},
-        onDisconnected:()=>{if(roomRef.current!==room)return;clearOnAir();setQuality("unknown");if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;micRef.current=null;if(pubRef.current?.room===room){try{pubRef.current.track.stop()}catch{}pubRef.current=null}cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready")}});
+        onDisconnected:()=>{
+          if(roomRef.current!==room)return;
+          // Free any server-side floor lease if LiveKit drops unexpectedly.
+          if(floorAskedRef.current||floorRef.current)issueRadioPTT(channelId,"release").catch(()=>{});
+          floorAskedRef.current=false;
+          floorRef.current=false;
+          clearOnAir();
+          setQuality("unknown");
+          if(renewRef.current)clearInterval(renewRef.current);
+          renewRef.current=null;
+          micRef.current=null;
+          if(pubRef.current?.room===room){
+            try{pubRef.current.track.stop()}catch{}
+            pubRef.current=null;
+          }
+          cleanupAudio();
+          roomRef.current=null;
+          setSession(null);
+          setParticipants([]);
+          setState("ready");
+        }});
       if(gen!==connGenRef.current){await disconnectRadio(room);return null}
       roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
     } catch(err){if(gen!==connGenRef.current)return null;setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
@@ -149,7 +169,23 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     try {
       floorAskedRef.current=true;
       const room=roomRef.current,pub=pubRef.current;
-      const deny=r=>{setError(r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return r.reason==="busy"?"busy":"denied"};
+      const deny=async r=>{
+        const reason=r?.reason;
+        // A second/duplicate floor request can be rejected while an older
+        // microphone publication is still live. Never leave that track
+        // transmitting after the UI has been told that PTT was denied.
+        floorRef.current=false;
+        floorAskedRef.current=false;
+        if(renewRef.current)clearInterval(renewRef.current);
+        renewRef.current=null;
+        const pubNow=pubRef.current;
+        if(pubNow?.room===room){
+          try{await pubNow.track.mute()}catch{}
+        }
+        try{await issueRadioPTT(channelId,"release")}catch{}
+        setError(reason==="busy"?"Channel is busy — someone else is transmitting.":reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");
+        return reason==="busy"?"busy":"denied";
+      };
       let mic;
       if(pub&&pub.room===room&&pub.deviceId===deviceId&&pub.track.mediaStreamTrack?.readyState==="live"){
         // Fast path: the mic is already open. Once the floor is granted, unmute it, and
@@ -157,7 +193,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         const result=await issueRadioPTT(channelId,"request");
         if(requestId!==pttRequestRef.current)return "stale";
         if(!result?.ok)throw new Error(result?.error||"Could not reach the radio server.");
-        if(!result.granted)return deny(result);
+        if(!result.granted)return await deny(result);
         await pub.track.unmute();
         if(!isPublished(room,pub.track))await publishMicrophoneTrack(room,pub.track);
         if(requestId!==pttRequestRef.current){try{await pub.track.mute()}catch{}try{await issueRadioPTT(channelId,"release")}catch{}return "stale"}
@@ -172,7 +208,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         const dropMic=()=>micPromise.then(t=>t.stop(),()=>{});
         if(requestId!==pttRequestRef.current){dropMic();return "stale"}
         if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
-        if(!result.granted){dropMic();return deny(result)}
+        if(!result.granted){dropMic();return await deny(result)}
         const track=await micPromise;
         // Device names are only visible after the first mic permission, so refresh them now.
         refreshDevices();
