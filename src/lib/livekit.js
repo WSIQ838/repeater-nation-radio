@@ -9,7 +9,9 @@ export async function prewarmRadio(livekitUrl=config.livekitUrl){
   try{const {Room}=await livekit();await new Room().prepareConnection(livekitUrl)}catch{}
 }
 
-export async function connectRadio(token, livekitUrl=config.livekitUrl, callbacks={}) {
+// opts.onRoom(room) gets the Room before it starts connecting, so the caller can cancel
+// an attempt that is still in progress with room.disconnect().
+export async function connectRadio(token, livekitUrl=config.livekitUrl, callbacks={}, opts={}) {
   const { Room, RoomEvent } = await livekit();
   if(!token) throw new Error("A LiveKit token is required.");
   // The radio server revokes publish permission on every PTT release, which makes
@@ -26,6 +28,11 @@ export async function connectRadio(token, livekitUrl=config.livekitUrl, callback
   room.on(RoomEvent.ParticipantAttributesChanged,(changed,participant)=>{if(participant!==room.localParticipant)callbacks.onAttributes?.(changed,participant)});
   room.on(RoomEvent.ConnectionQualityChanged,(quality,participant)=>{if(participant===room.localParticipant)callbacks.onQuality?.(quality)});
   room.on(RoomEvent.Disconnected,reason=>callbacks.onDisconnected?.(reason));
+  // Only a full reconnect stops audio; a signal-only reconnect keeps media flowing.
+  room.on(RoomEvent.Reconnecting,()=>callbacks.onReconnecting?.());
+  room.on(RoomEvent.Reconnected,()=>callbacks.onReconnected?.());
+  room.on(RoomEvent.ParticipantPermissionsChanged,(_prev,participant)=>{if(participant===room.localParticipant)callbacks.onPermissions?.(participant.permissions)});
+  opts.onRoom?.(room);
   await room.connect(livekitUrl,token);
   return room;
 }
@@ -38,7 +45,21 @@ export async function listAudioDevices(){
 // Opening the mic is split from publishing so PTT can open it while the floor request is in flight.
 export async function openMicrophone(deviceId) {
   const { createLocalAudioTrack } = await livekit();
-  return createLocalAudioTrack(deviceId?{deviceId:{exact:deviceId}}:undefined);
+  // A plain string id makes LiveKit try that exact mic first and fall back to the closest
+  // one if it was unplugged or renamed, instead of failing every PTT.
+  return createLocalAudioTrack(deviceId?{deviceId}:undefined);
+}
+
+// The radio server grants publish permission when it grants the floor, and that update
+// can reach LiveKit a moment after the server's answer. Wait briefly for it.
+export function waitForPublishPermission(room,ms=2000){
+  if(!room||room.localParticipant?.permissions?.canPublish!==false)return Promise.resolve(true);
+  return new Promise(resolve=>{
+    const done=ok=>{clearTimeout(t);room.off("participantPermissionsChanged",check);resolve(ok)};
+    const check=(_prev,participant)=>{if(participant===room.localParticipant&&participant.permissions?.canPublish)done(true)};
+    const t=setTimeout(()=>done(false),ms);
+    room.on("participantPermissionsChanged",check);
+  });
 }
 
 export async function publishMicrophoneTrack(room,track) {

@@ -889,3 +889,4 @@ button.fx-key:active,button.fx-round:active:not(:disabled),.fx-soft:active:not(:
 .grid.radio-calls{grid-template-columns:1fr}
 .console-extras{align-items:start}
 .console-status .status-panel{max-width:none;padding-top:14px}
+.setting-error{white-space:normal;word-break:break-word;text-align:right;color:#f2c14e!important;max-width:60%}

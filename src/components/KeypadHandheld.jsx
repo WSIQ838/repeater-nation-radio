@@ -149,7 +149,7 @@ function Screen({p,f,ui}){
           <span className="kh-mname" style={MC.at(480,649,632,666)}>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span>
           <span className="kh-mtime" style={MC.at(560,667,634,683)}>OK answers</span>
         </>:call?<>
-          <span className="kh-mtitle call" style={MC.at(480,630,615,648)}>{callState==="calling"?"Calling…":"Call connected"}</span>
+          <span className="kh-mtitle call" style={MC.at(480,630,615,648)}>{callState==="calling"?"Calling…":callState==="reconnecting"?"Reconnecting…":"Call connected"}</span>
           <span className="kh-mname" style={MC.at(480,649,632,666)}>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span>
         </>:<>
           <span className="kh-mtitle" style={MC.at(480,630,605,648)}>Last heard</span>
@@ -194,7 +194,7 @@ export function useKeypadMenu(p,f,homeSoft,slots=2){
       {label:"Recent",act:()=>go("recent","menu")},
       {label:"My Status",sub:myStatus||"None",act:()=>go("status","menu",Math.max(0,STATUSES.indexOf(myStatus)))},
       {label:"Brightness",sub:String(f.brightness+1),act:()=>f.setBrightness(x=>x>0?x-1:3)},
-      {label:connected?"Radio Off":"Radio On",act:()=>{onPower?.();home()},disabled:state==="connecting"},
+      {label:connected||state==="connecting"||state==="reconnecting"?"Radio Off":"Radio On",act:()=>{onPower?.();home()}},
       {label:"Setup",act:()=>onTab("settings")},
     ]},
     zones:{title:"Zones",empty:"No zones",items:zones.map(z=>({label:z.name,on:z.id===zoneId,act:()=>{onZone?.(z.id);home()}}))},

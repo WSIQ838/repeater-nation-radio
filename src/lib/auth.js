@@ -99,28 +99,78 @@ export async function loginWithPassword(email, password) {
   return { member };
 }
 
-async function invoke(name, payload) {
+// Neither the Base44 SDK nor axios time out on their own, so a request sent on a dead
+// connection (after sleep or a Wi-Fi change) could otherwise wait for minutes.
+const INVOKE_TIMEOUT_MS = 20000;
+
+// A 401 from a radio function can be a lapsed sign-in or a passing hiccup on the server's
+// side. Check once with the account call; only a refused sign-in there sends the app back
+// to the login screen (RadioApp listens for "rn-auth-expired").
+let authCheck = null;
+function checkSignIn() {
+  if (authCheck || !base44Client) return;
+  authCheck = (async () => {
+    let timer;
+    try {
+      await Promise.race([
+        client().auth.me(),
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("timeout")), 10000); }),
+      ]);
+    } catch (err) {
+      const status = err?.status ?? err?.response?.status;
+      if (status === 401 || status === 403) window.dispatchEvent(new CustomEvent("rn-auth-expired"));
+    } finally {
+      clearTimeout(timer);
+      setTimeout(() => { authCheck = null; }, 30000);
+    }
+  })();
+}
+
+async function invoke(name, payload, timeoutMs = INVOKE_TIMEOUT_MS) {
+  let timer;
   try {
-    const result = await client().functions.invoke(name, payload);
+    const result = await Promise.race([
+      client().functions.invoke(name, payload),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(Object.assign(new Error("Repeater Nation is not responding. Try again in a moment."), { timedOut: true })), timeoutMs);
+      }),
+    ]);
     return result?.data || result;
   } catch (err) {
+    if (err?.timedOut) throw err;
+    // Keep the HTTP status so callers can tell "not allowed" (401/403/404) from a hiccup.
+    const status = err?.response?.status ?? err?.status;
+    if (status === 401) checkSignIn();
     const data = err?.response?.data || err?.data;
-    const detail = data?.detail || data?.error || data?.message;
-    if (detail) throw new Error(String(detail));
+    // "error" carries the server's own wording (and which step failed); "detail" is the raw cause.
+    const detail = data?.error || data?.message || data?.detail;
+    if (detail) throw Object.assign(new Error(String(detail)), { status });
+    if (!err?.response && /network error/i.test(err?.message || "")) {
+      throw Object.assign(new Error("Can't reach Repeater Nation. Check the internet connection."), { network: true });
+    }
+    if (status != null && err && typeof err === "object" && err.status == null) err.status = status;
     throw err;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-export const issueRadioSession = (channelId, zoneId="", channelNumber=null) =>
+// sessionType "monitor" is a receive-only pass with its own LiveKit identity (scan and
+// the console); "radio" is the main radio. The server gives each radio connection its own
+// identity (radioSessionId), which PTT calls then name.
+export const issueRadioSession = (channelId, zoneId="", channelNumber=null, sessionType="radio") =>
   invoke("issue-radio-session", {
     channel_id: channelId,
     zone_id: zoneId || "",
     channel_number: channelNumber ?? null,
-    session_type: "radio",
+    session_type: sessionType,
   });
 
-export const issueRadioPTT = (channelId, action) =>
-  invoke("radio-ptt", { action, channel_id: channelId });
+// Sends the zone and channel number too, as the website does, so the server resolves the
+// same channel the radio pass was issued for. radioSessionId and radioCallsign come from
+// the radio pass; the server unlocks talking for that connection, not just the account.
+export const issueRadioPTT = (channelId, action, zoneId="", channelNumber=null, radioSessionId="", radioCallsign="") =>
+  invoke("radio-ptt", { action, channel_id: channelId, zone_id: zoneId || "", channel_number: channelNumber ?? null, radio_session_id: radioSessionId || "", radio_callsign: radioCallsign || "" });
 
 export const radioPresence = () => invoke("radio-presence", {});
 
@@ -155,10 +205,18 @@ export async function listRadioChannels() {
 }
 
 export async function clearSession() {
+  // The SDK's auth.logout() also sends the window to the website's logout page, which
+  // would replace this app's own screen. Forget the saved token here instead.
   try {
-    await client().auth.logout();
+    localStorage.removeItem("base44_access_token");
+    localStorage.removeItem("token");
   } catch {
-    // Local logout should still complete if the server session is already gone.
+    // Storage can be unavailable; the client below is dropped either way.
+  }
+  try {
+    base44Client?.cleanup?.();
+  } catch {
+    // Nothing to stop.
   }
   base44Client = null;
 }

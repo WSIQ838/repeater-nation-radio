@@ -36,7 +36,8 @@ export async function setTray(tooltip,closeToTray){
   try{const {invoke}=await import("@tauri-apps/api/core");return await invoke("tray_set",{tooltip,closeToTray})}catch{return false}
 }
 
-// handler(action) for "mini" and "mute" picked from the tray menu. Returns an unlisten function.
+// handler(action) for "mini" and "mute" picked from the tray menu, and "quit" just before the
+// app exits (tray Quit or closing the window). Returns an unlisten function.
 export function listenTray(handler){
   if(!inTauri())return()=>{};
   let off=null,disposed=false;

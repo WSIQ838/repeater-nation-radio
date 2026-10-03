@@ -45,7 +45,7 @@ export function useFace(p,{layout}={}){
   incoming,call,callState,
   onPower,onMute,onChannel,onZone,onTab,onAnswer,onDecline,onEndCall,command,
   quality="unknown",onAir=null,volume=7,onVolume,lastHeard=[],onReplay,flash,
-  scanning=false,scanActive=null,onScan,onNuisance,myStatus="",onStatus}=p;
+  scanning=false,scanActive=null,onScan,onNuisance,myStatus="",onStatus,connectNote=""}=p;
   const o7=layout==="o7";
   const [view,setView]=useState("home");
   const [page,setPage]=useState(0);// softkey page on radios with a Next key
@@ -92,7 +92,7 @@ export function useFace(p,{layout}={}){
   // The O7 head's top row holds status keys, as on the photo ("At Scene"…); pressing
   // the lit one again clears it.
   const top=o7?O7_STATUS_KEYS.map(s=>({label:s,on:myStatus===s,act:onStatus?()=>onStatus(myStatus===s?"":s):null})):[
-    {label:connected?"Off":"Connect",act:onPower,disabled:state==="connecting"},
+    {label:connected||state==="connecting"||state==="reconnecting"?"Off":"Connect",act:onPower},
     {label:muted?"Unmute":"Mute",act:onMute},
     {label:view==="who"?"Back":"Who's On",act:()=>setView(v=>v==="who"?"home":"who")},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
@@ -159,19 +159,22 @@ export function useFace(p,{layout}={}){
   },[command]);
 
   let banner=null;
-  if(ptt)banner={tone:"tx",title:"Transmitting",sub:callsign||""};
+  // PTT is keyed from key-down, but the radio only transmits once the server grants the
+  // channel, so show the wait instead of "Transmitting" while the request is out.
+  if(ptt)banner=state==="transmitting"?{tone:"tx",title:"Transmitting",sub:callsign||""}:{tone:"idle",title:"Requesting channel…",sub:callsign||""};
   else if(onAir)banner={tone:"rx",title:"Receiving",sub:onAir.name};
   else if(scanActive)banner={tone:"rx",title:"Scan · "+scanActive.name,sub:[scanActive.zoneName,scanActive.talker].filter(Boolean).join(" · ")};
   else if(incoming)banner={tone:"rx",title:"Call Received",sub:incoming.caller_display_name||incoming.caller_callsign||"Member",icon:PhoneIncoming};
-  else if(call)banner={tone:"call",title:callState==="calling"?"Calling…":"Call Connected",sub:call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member",icon:Phone};
+  else if(call)banner={tone:"call",title:callState==="calling"?"Calling…":callState==="reconnecting"?"Call Reconnecting…":"Call Connected",sub:call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member",icon:Phone};
   else if(error)banner={tone:"warn",title:error};
   else if(notice)banner={tone:"warn",title:notice};
-  else if(state==="connecting")banner={tone:"idle",title:"Connecting…"};
+  else if(state==="connecting")banner={tone:"idle",title:"Connecting…",sub:connectNote};
+  else if(state==="reconnecting")banner={tone:"idle",title:"Reconnecting…",sub:"Connection dropped, getting it back"};
   else if(connected)banner={tone:"listen",title:"Listening",sub:participants.length+" on channel"};
-  else banner={tone:"idle",title:"Radio Off",sub:"Press Connect or power"};
+  else banner={tone:"idle",title:"Radio Off",sub:"Press power to connect"};
 
   const QUALITY_BARS={excellent:4,good:3,poor:1,lost:0};
-  const bars=connected?(QUALITY_BARS[quality]??4):state==="connecting"?1:0;
+  const bars=connected?(QUALITY_BARS[quality]??4):state==="connecting"||state==="reconnecting"?1:0;
   const ledTx=ptt,ledRx=!!(onAir||scanActive)&&!ptt,ledCall=!!(incoming||call);
 
   return {view,setView,entry,setEntry,brightness,setBrightness,notice,setNotice,channelIndex,zoneIndex,stepChannel,stepZone,pressKey,goHome,oneTouch,top,bottom,replayLast,banner,bars,ledTx,ledRx,ledCall};
@@ -281,7 +284,7 @@ export function ControlHead(p){
     {inert(at(352,80,380,105),"PA","text pa")}
 
     {/* Left column: power, status LEDs, brightness rocker, day/night, backlight */}
-    <button type="button" className={"o7-round o7-power"+(connected?" on":"")} style={dot(64,134,20)} onClick={onPower} disabled={state==="connecting"} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power size={15} strokeWidth={2.6}/></button>
+    <button type="button" className={"o7-round o7-power"+(connected?" on":"")} style={dot(64,134,20)} onClick={onPower} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power size={15} strokeWidth={2.6}/></button>
     <i className={"o7-led"+(ledTx?" tx":"")} style={at(59,155.5,71,158.5)} title="Transmit"/>
     <i className={"o7-led"+(ledRx?" rx":"")} style={at(59,165.5,71,168.5)} title="Receive"/>
     <i className={"o7-led"+(ledCall?" call":"")} style={at(59,175.5,71,178.5)} title="Call"/>

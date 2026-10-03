@@ -73,7 +73,7 @@ function DashHead(p){
     <div className="fx-engrave" style={at(110,54,200,62)}>REPEATER NATION</div>
     <Inert className="am-module" style={at(37,53,85,156)}/>
     <Inert className="am-module" style={at(363,53,391,156)}/>
-    <button type="button" className={"fx-round fx-power"+(connected?" on":"")} style={dot(48.3,76,15)} onClick={onPower} disabled={state==="connecting"} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power strokeWidth={2.6}/></button>
+    <button type="button" className={"fx-round fx-power"+(connected?" on":"")} style={dot(48.3,76,15)} onClick={onPower} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power strokeWidth={2.6}/></button>
     <Leds f={f} boxes={[at(63,67.3,74,69.5),at(63,74.5,74,76.7),at(63,81.7,74,83.9)]}/>
     <button type="button" className="fx-round" style={dot(69,97.7,14)} onClick={brightnessStep(f)} title="Display brightness">{O7Icon.sun}</button>
     <Inert className="fx-round" style={dot(45,108.3,11)}/>
@@ -110,7 +110,7 @@ function SlimHead(p){
     <Inert className="e5-seam" style={at(445,190,446,312)}/>
     <div className="fx-engrave" style={at(190,182.3,310,187.5)}>REPEATER NATION</div>
     <Inert className="e5-power-well" style={dot(34,206,28)}/>
-    <button type="button" className={"fx-round fx-power"+(connected?" on":"")} style={dot(34,206,22)} onClick={onPower} disabled={state==="connecting"} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power strokeWidth={2.6}/></button>
+    <button type="button" className={"fx-round fx-power"+(connected?" on":"")} style={dot(34,206,22)} onClick={onPower} title={connected?"Power off (disconnect)":"Power on (connect)"}><Power strokeWidth={2.6}/></button>
     <Leds f={f} boxes={[at(47,219.5,63,222),at(47,228,63,230.5),at(47,236.8,63,239.3)]}/>
     <Screw style={dot(31.7,250,15)}/>
     <Jack style={dot(50,284.5,52)}/>
