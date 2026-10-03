@@ -1,5 +1,35 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.17
+
+**All-band handheld**, built from Sean's APX 8000 photo. It's the sixth radio in the one-at-a-time redo, and it replaces the old classic portable. A saved choice of the old portable opens this one.
+
+- Every part is placed from the photo's own measurements:
+  - the long whip antenna with its ball tip, its flare toward the base, the band label (it reads UHF GMRS) and the round badge
+  - the small ridged channel knob with its white index ridge and silver collar, and the knurled volume knob at the right
+  - the head with the knob deck and guard posts, the curved top cover and the front cover seams
+  - the ridged left PTT and the button under it, and the right-side buttons
+  - the small screen, the three dot buttons, Home, the four-way nav pad, the menu key and the 12-key keypad with its letters
+  - the battery with its four gold contacts
+- The antenna badge and the front badge read RN in place of the maker's logo.
+- The screen is laid out like the photo, with live information:
+  - signal bars, zone and connection icons, and the battery
+  - the current time, written like the photo's (03:15AM), with SCAN, TX and RX tags
+  - the zone, the channel in bold and what's happening (Listening, Receiving · callsign, Transmitting, Call Received)
+  - three softkey labels over the dot buttons: Zone, Scan and Call
+- What the controls do:
+  - The dot buttons press the softkey above them: Zone opens the zone list, Scan turns scan on and off, and Call opens Calls.
+  - On the home screen the nav pad changes channel (up and down) and zone (left and right).
+  - The menu key opens the menu: Zones, Channels, Scan, Who's On, Recent, My Status, Brightness, Radio on/off and Setup. In lists the nav pad moves and the menu key selects.
+  - Home goes straight back to the home screen.
+  - Type a channel number on the keypad and press # or the menu key to go to it; * or Home clears it.
+  - The small knob changes channel and the big knob is volume (scroll, click to mute).
+  - Hold the left side PTT to talk.
+  - An incoming call shows on the screen with Answer and Decline. The menu key answers and Home declines.
+  - The light on the top deck and the screen show RX and TX.
+- The keypad radios now share their menu, nav pad and keypad handling, so they behave the same.
+- Version set to 0.2.17 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.16
 
 **Keypad handheld**, built from Sean's APX R7 photo. It's the fifth radio in the one-at-a-time redo, and it replaces the old keypad portable. A saved choice of the old portable opens this one.

@@ -115,7 +115,7 @@ const KEY_COLS=[[431,500],[504,581],[585,654]],KEY_ROWS=[[859,891.5],[909,941.5]
 // two on-screen softkeys. Menu lists are worked with the nav pad, OK and Back.
 function Screen({p,f,ui}){
   const {channelName,zoneName,connected,muted,participants=[],lastHeard=[],scanning,incoming,call,callState}=p;
-  const {screen,list,sel,soft}=ui;
+  const {screen,soft}=ui;
   const b=f.banner,last=lastHeard[0];
   const [now,setNow]=useState(()=>Date.now());
   useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),15000);return()=>clearInterval(id)},[]);
@@ -158,28 +158,36 @@ function Screen({p,f,ui}){
           {last&&<span className="kh-mtime" style={MC.at(540,667,634,683)} title={secs(last.ms)}>{clock(last.at)}</span>}
         </>}
       </button>
-    </>:<div className="kh-list" style={D.at(444,507,639,692)}>
-      <strong>{list.title}</strong>
-      <div className="kh-items">{list.items.length?list.items.map((x,i)=><button type="button" key={i} className={"kh-item"+(i===sel?" sel":"")+(x.on?" on":"")+(x.cls?" "+x.cls:"")} onClick={()=>ui.pick(i)} disabled={x.disabled}>
-        <span>{x.label}</span>{x.sub&&<small>{x.sub}</small>}</button>):<div className="kh-dim">{list.empty}</div>}</div>
-    </div>}
+    </>:<KeyList ui={ui} prefix="kh" style={D.at(444,507,639,692)}/>}
     <div className="kh-soft" style={D.at(440,695,643,721)}>
       {soft.map((k,i)=><button type="button" key={i} className={k.tone||""} onClick={k.act||undefined} disabled={!k.act}>{k.label}</button>)}
     </div>
   </div>;
 }
 
-export function KeypadHandheld(p){
-  const f=useFace(p);
-  const {connected,muted,volume=7,ptt,onMute,onVolume,onPttDown,onPttUp,onScan,scanning,onReplay,zones=[],zoneId,visibleChannels=[],channelId,onZone,onChannel,
+// A menu list worked with the nav pad: title, items with the highlight, or an empty note.
+export function KeyList({ui,prefix,style}){
+  const {list,sel}=ui;
+  return <div className={prefix+"-list"} style={style}>
+    <strong>{list.title}</strong>
+    <div className={prefix+"-items"}>{list.items.length?list.items.map((x,i)=><button type="button" key={i} className={prefix+"-item"+(i===sel?" sel":"")+(x.on?" on":"")+(x.cls?" "+x.cls:"")} onClick={()=>ui.pick(i)} disabled={x.disabled}>
+      <span>{x.label}</span>{x.sub&&<small>{x.sub}</small>}</button>):<div className={prefix+"-dim"}>{list.empty}</div>}</div>
+  </div>;
+}
+
+// Screens, menu lists, nav pad, OK/Back and keypad entry shared by the keypad radios.
+// homeSoft(ui) gives the face's own home-screen softkeys; slots is how many it has.
+export function useKeypadMenu(p,f,homeSoft,slots=2){
+  const {connected,scanning,onScan,onReplay,zones=[],zoneId,visibleChannels=[],channelId,onZone,onChannel,
     participants=[],lastHeard=[],myStatus="",onStatus,onPower,state,onTab,incoming,call,onAnswer,onDecline,onEndCall}=p;
   const [screen,setScreen]=useState("home"),[sel,setSel]=useState(0),[parent,setParent]=useState("home");
   const go=(s,from="home",start=0)=>{setScreen(s);setParent(from);setSel(start)};
   const home=()=>{setScreen("home");setSel(0)};
+  const zoneAt=()=>Math.max(0,zones.findIndex(z=>z.id===zoneId));
   const who=x=>{let info={};try{info=x.metadata?JSON.parse(x.metadata):{}}catch{}return info.callsign||info.displayName||x.name||x.identity};
   const lists={
     menu:{title:"Menu",items:[
-      {label:"Zones",act:()=>go("zones","menu",Math.max(0,zones.findIndex(z=>z.id===zoneId)))},
+      {label:"Zones",act:()=>go("zones","menu",zoneAt())},
       {label:"Channels",act:()=>go("channels","menu",f.channelIndex)},
       {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
       {label:"Who's On",sub:String(participants.length),act:()=>go("who","menu")},
@@ -210,14 +218,25 @@ export function KeypadHandheld(p){
     if(dir==="up")f.stepChannel(1);else if(dir==="down")f.stepChannel(-1);else f.stepZone(dir==="right"?1:-1);
   };
   const digit=d=>{if(screen!=="home")home();f.pressKey(d)};
-  const soft=incoming?[{label:"Answer",act:onAnswer,tone:"go"},{label:"Decline",act:onDecline,tone:"stop"}]
-    :call?[{label:"End Call",act:onEndCall,tone:"stop"},{label:"",act:null}]
-    :f.entry?[{label:"Clear",act:()=>f.pressKey("*")},{label:"Enter",act:()=>f.pressKey("#")}]
-    :screen!=="home"?[{label:"Back",act:back},{label:"Select",act:n?()=>pick(sel):null}]
-    :[{label:"Zones",act:()=>go("zones","home",Math.max(0,zones.findIndex(z=>z.id===zoneId)))},{label:"Contacts",act:()=>onTab("calls")}];
-  const ui={screen,list,sel,soft,pick,openChannels:()=>go("channels","home",f.channelIndex),openRecent:()=>go("recent")};
+  const ui={screen,list,sel,n,go,home,back,pick,okKey,backKey,nav,digit,
+    openZones:()=>go("zones","home",zoneAt()),openChannels:()=>go("channels","home",f.channelIndex),openRecent:()=>go("recent")};
+  // Two softkeys put the pair at each end; three leave the middle one blank.
+  const fit=a=>slots===3?[a[0],{label:"",act:null},a[1]]:a;
+  ui.soft=incoming?fit([{label:"Answer",act:onAnswer,tone:"go"},{label:"Decline",act:onDecline,tone:"stop"}])
+    :call?fit([{label:"End Call",act:onEndCall,tone:"stop"},{label:"",act:null}])
+    :f.entry?fit([{label:"Clear",act:()=>f.pressKey("*")},{label:"Enter",act:()=>f.pressKey("#")}])
+    :screen!=="home"?fit([{label:"Back",act:back},{label:"Select",act:n?()=>pick(sel):null}])
+    :homeSoft(ui);
   // Mapped "who" and "recent" buttons open the matching list; "home" returns home.
   useEffect(()=>{if(f.view==="who"||f.view==="recent")go(f.view);else if(f.view==="home"&&screen!=="home"&&screen!=="menu")home()},[f.view]);
+  return ui;
+}
+
+export function KeypadHandheld(p){
+  const f=useFace(p);
+  const {connected,muted,volume=7,ptt,onMute,onVolume,onPttDown,onPttUp,onScan,scanning,onReplay,onTab}=p;
+  const ui=useKeypadMenu(p,f,ui=>[{label:"Zones",act:ui.openZones},{label:"Contacts",act:()=>onTab("calls")}]);
+  const {screen,okKey,backKey,nav,digit}=ui;
   const led=f.ledTx?" tx":f.ledRx?" rx":f.ledCall?" call":"";
   return <div className="kh" style={{"--apx-bright":0.55+f.brightness*0.15,width:W*K,height:H*K}}>
     <Body/>

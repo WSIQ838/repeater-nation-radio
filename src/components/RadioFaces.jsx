@@ -3,6 +3,7 @@ import {Power} from "lucide-react";
 import {ControlHead,FaceDisplay,Knob,O7Icon,O7_KEYS,photoBoxes,useFace} from "./ControlHead";
 import {TouchHandheld} from "./TouchHandheld";
 import {KeypadHandheld} from "./KeypadHandheld";
+import {AllBandHandheld} from "./AllBandHandheld";
 
 // Radios the user can pick from. They are being redone one at a time from Sean's
 // photos; each draws the same radio through useFace/FaceDisplay (ControlHead.jsx),
@@ -13,12 +14,13 @@ export const FACES=[
   {id:"slim-head",label:"Slim mobile head",note:"Two knobs, five softkeys, P key"},
   {id:"touch-handheld",label:"Touchscreen handheld",note:"Touch screen, two top knobs, P1–P6"},
   {id:"keypad-handheld",label:"Keypad handheld",note:"Colour screen, full keypad, nav pad, P1/P2"},
+  {id:"allband-handheld",label:"All-band handheld",note:"Small screen, three softkeys, Home and menu keys, keypad"},
 ];
 export const DEFAULT_FACE="control-head";
 const FACE_KEY="rn-face";
 // A radio that has been removed from the list falls back to the default; the earlier
 // touchscreen and keypad portables map to the handhelds redone from the N70 and R7 photos.
-const RENAMED={"smart-portable-p":"touch-handheld","keypad-portable":"keypad-handheld"};
+const RENAMED={"smart-portable-p":"touch-handheld","keypad-portable":"keypad-handheld","classic-portable":"allband-handheld"};
 export const loadFace=()=>{try{let v=localStorage.getItem(FACE_KEY);v=RENAMED[v]||v;return FACES.some(f=>f.id===v)?v:DEFAULT_FACE}catch{return DEFAULT_FACE}};
 export const saveFace=v=>{try{localStorage.setItem(FACE_KEY,v)}catch{}};
 
@@ -131,5 +133,6 @@ export function RadioFace({face=DEFAULT_FACE,...p}){
   if(face==="slim-head")return <SlimHead {...p}/>;
   if(face==="touch-handheld")return <TouchHandheld {...p}/>;
   if(face==="keypad-handheld")return <KeypadHandheld {...p}/>;
+  if(face==="allband-handheld")return <AllBandHandheld {...p}/>;
   return <ControlHead {...p}/>;
 }
