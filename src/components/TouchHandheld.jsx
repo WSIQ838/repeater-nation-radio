@@ -10,18 +10,18 @@ const K=1.8;
 const {at,dot}=photoBoxes(0,0,K);
 // Boxes inside the display (it starts at photo x 49, y 474) and inside each of its cards.
 const S=photoBoxes(49,474,K),H=photoBoxes(51,493,K),Z=photoBoxes(51,515,K),M=photoBoxes(51,589,K),L=photoBoxes(51,634,K);
-const hhmm=t=>new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-const clock=t=>{const d=new Date(t);return (d.getHours()%12||12)+":"+String(d.getMinutes()).padStart(2,"0")};
-const secs=ms=>Math.max(1,Math.round(ms/1000))+"s";
+export const hhmm=t=>new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+export const clock=t=>{const d=new Date(t);return (d.getHours()%12||12)+":"+String(d.getMinutes()).padStart(2,"0")};
+export const secs=ms=>Math.max(1,Math.round(ms/1000))+"s";
 
-const pttHandlers=(onDown,onUp)=>({
+export const pttHandlers=(onDown,onUp)=>({
   onPointerDown:e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture?.(e.pointerId);onDown?.()},
   onPointerUp:()=>onUp?.(),onPointerCancel:()=>onUp?.(),onLostPointerCapture:()=>onUp?.(),onContextMenu:e=>e.preventDefault(),
 });
 
 // A fluted knob seen from the front. The flutes are drawn around a cylinder, so turning
 // the knob (turn, in radians) slides them across its face like the real one.
-function Flutes({cx,top,bottom,rTop,rBottom,n,turn,width,slant=0,end="round"}){
+export function Flutes({cx,top,bottom,rTop,rBottom,n,turn,width,slant=0,end="round"}){
   const out=[];
   for(let i=0;i<n;i++){
     const a=turn+i*2*Math.PI/n,c=Math.cos(a),s=Math.sin(a);

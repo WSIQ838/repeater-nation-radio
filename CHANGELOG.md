@@ -1,5 +1,33 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.16
+
+**Keypad handheld**, built from Sean's APX R7 photo. It's the fifth radio in the one-at-a-time redo, and it replaces the old keypad portable. A saved choice of the old portable opens this one.
+
+- Every part is placed from the photo's own measurements:
+  - the thick stubby antenna with its two rings, darker lower section and base ring
+  - the fluted volume knob with its white index line, and the taller fluted channel knob with its index strip and dotted collar
+  - the textured housing, the long ridged PTT on the left and the side buttons
+  - the brushed name plate, the colour screen, P1 and P2, OK and Back, the four-way nav pad and the 12-key keypad with its letters
+  - the speaker grille slots between the key rows
+- The antenna's round badge reads RN and the name plate reads REPEATER NATION, in place of the maker's logo and lettering.
+- The screen is laid out like the photo's home screen, with live information:
+  - signal bars, zone, connection and mute icons, SCAN/TX/RX tags and the battery
+  - today's date and the current time
+  - the zone and channel in the card, with what's happening under them (Listening, Receiving · callsign, Transmitting)
+  - the last station heard with its time, where the photo shows a message (text messages need the server change listed in PR #5)
+  - Zones and Contacts softkeys
+- What the controls do:
+  - On the home screen the nav pad changes channel (up and down) and zone (left and right).
+  - OK opens the menu: Zones, Channels, Scan, Who's On, Recent, My Status, Brightness, Radio on/off and Setup. In lists the nav pad moves and OK selects; Back goes back.
+  - Type a channel number on the keypad and press # or OK to go to it; * or Back clears it.
+  - P1 turns scan on and off. P2 replays the last transmission.
+  - The tall knob changes channel and the short knob is volume (scroll, click to mute).
+  - Hold the left side PTT to talk.
+  - An incoming call shows on the screen with Answer (OK) and Decline (Back), and End Call while it's live.
+  - The LED and status bar show RX and TX.
+- Version set to 0.2.16 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.15
 
 **Touchscreen handheld**, built from Sean's APX N70 photo. It's the fourth radio in the one-at-a-time redo, and it replaces the old touchscreen portable. A saved choice of the old portable opens this one.
