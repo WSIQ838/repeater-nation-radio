@@ -5,9 +5,10 @@ import {STATUSES,statusClass} from "../lib/status";
 
 // Touchscreen handheld, laid out from Sean's APX N70 photo (205×768). The body is one
 // SVG drawn in the photo's own pixels; the knobs, keys and screen sit on top at the
-// same photo boxes, scaled by K.
-const K=1.8;
-const {at,dot}=photoBoxes(0,0,K);
+// same photo boxes, scaled by K. The photo's long whip is swapped for a stubby antenna,
+// so the face starts at photo y 208.
+const K=1.8,TOP=208;
+const {at,dot}=photoBoxes(0,TOP,K);
 // Boxes inside the display (it starts at photo x 49, y 474) and inside each of its cards.
 const S=photoBoxes(49,474,K),H=photoBoxes(51,493,K),Z=photoBoxes(51,515,K),M=photoBoxes(51,589,K),L=photoBoxes(51,634,K);
 export const hhmm=t=>new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
@@ -18,6 +19,28 @@ export const pttHandlers=(onDown,onUp)=>({
   onPointerDown:e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture?.(e.pointerId);onDown?.()},
   onPointerUp:()=>onUp?.(),onPointerCancel:()=>onUp?.(),onLostPointerCapture:()=>onUp?.(),onContextMenu:e=>e.preventDefault(),
 });
+
+// A stubby antenna, which Sean wants on every handheld (in the style of the R7 and
+// XPR 7550 faces): rounded cap, band label, RN badge, white band and a darker lower
+// section, drawn in the face's own photo pixels from its base box.
+export function StubbyAntenna({id,x1,x2,top,bottom,label="GMRS"}){
+  const w=x2-x1,h=bottom-top,cx=(x1+x2)/2,t=w*0.05,r=w*0.3,y=f=>top+h*f;
+  return <g>
+    <defs>
+      <linearGradient id={id} x1={x1} x2={x2} gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#262728"/><stop offset=".2" stopColor="#3e3f40"/><stop offset=".48" stopColor="#5a5b5c"/><stop offset=".78" stopColor="#3a3b3c"/><stop offset="1" stopColor="#232425"/></linearGradient>
+      <linearGradient id={id+"B"} x1={x1} x2={x2} gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#8e8d8c"/><stop offset=".3" stopColor="#d4d3d2"/><stop offset=".55" stopColor="#e6e5e4"/><stop offset=".85" stopColor="#b5b4b3"/><stop offset="1" stopColor="#868584"/></linearGradient>
+    </defs>
+    <path d={`M${x1+t},${top+r} Q${x1+t},${top} ${x1+t+r},${top} L${x2-t-r},${top} Q${x2-t},${top} ${x2-t},${top+r} L${x2},${bottom} L${x1},${bottom} Z`} fill={`url(#${id})`}/>
+    <path d={`M${x1+t+r*.45},${top+r*.32} Q${cx},${top+w*.02} ${x2-t-r*.45},${top+r*.32}`} fill="none" stroke="#a5a4a3" strokeOpacity=".5" strokeWidth={w*.045}/>
+    <rect x={x1+t*.3} y={y(.66)} width={w-t*.6} height={bottom-y(.66)} fill="#000" opacity=".14"/>
+    <text transform={`translate(${cx+w*.11} ${y(.4)}) rotate(-90)`} fontSize={w*.3} fontWeight="700" fontStyle="italic" fill="#1a1a1b" stroke="#78787b" strokeWidth={w*.01} fontFamily="Arial,Helvetica,sans-serif" letterSpacing={w*.02}>{label}</text>
+    <circle cx={cx} cy={y(.48)} r={w*.25} fill="#1c1c1d" stroke="#8a8a8b" strokeWidth={w*.035}/>
+    <text x={cx} y={y(.48)+w*.085} textAnchor="middle" fontSize={w*.23} fontWeight="900" fill="#a9a9aa" fontFamily="Arial,Helvetica,sans-serif">RN</text>
+    <rect x={x1-w*.05} y={y(.58)} width={w*1.1} height={h*.08} rx={w*.04} fill={`url(#${id}B)`}/>
+    <path d={`M${x1-w*.05},${y(.58)+.5} L${x2+w*.05},${y(.58)+.5} M${x1-w*.05},${y(.66)-.5} L${x2+w*.05},${y(.66)-.5}`} stroke="#6a6968" strokeWidth={w*.025}/>
+    <rect x={x1-w*.03} y={bottom-h*.06} width={w*1.06} height={h*.06} fill="#191a1b"/>
+  </g>;
+}
 
 // A fluted knob seen from the front. The flutes are drawn around a cylinder, so turning
 // the knob (turn, in radians) slides them across its face like the real one.
@@ -59,15 +82,11 @@ function VolumeKnob({volume,muted}){
   </svg>;
 }
 
-// The handheld's static body in photo pixels: antenna, housing, side grips (lighter
+// The handheld's static body in photo pixels: stubby antenna, housing, side grips (lighter
 // toward the bottom, as in the photo), front cover, glass, chin and key trough.
 function Body(){
-  return <svg className="hh-body" viewBox="0 0 205 768" aria-hidden="true">
+  return <svg className="hh-body" viewBox={`0 ${TOP} 205 ${768-TOP}`} aria-hidden="true">
     <defs>
-      <linearGradient id="hhAnt" x1="19" x2="43" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#1e2022"/><stop offset=".17" stopColor="#2c2e30"/><stop offset=".3" stopColor="#4e5052"/><stop offset=".46" stopColor="#8f9193"/><stop offset=".56" stopColor="#76787a"/><stop offset=".72" stopColor="#45474a"/><stop offset=".8" stopColor="#2c2e30"/><stop offset="1" stopColor="#1e2022"/></linearGradient>
-      <linearGradient id="hhAntRamp" x1="0" y1="250" x2="0" y2="322" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#fff" stopOpacity="0"/><stop offset="1" stopColor="#fff"/></linearGradient>
-      <mask id="hhAntFade" maskUnits="userSpaceOnUse" x="0" y="240" width="60" height="170"><rect x="0" y="240" width="60" height="170" fill="url(#hhAntRamp)"/></mask>
-      <linearGradient id="hhAntBase" x1="0" x2="1"><stop offset="0" stopColor="#1e2022"/><stop offset=".12" stopColor="#2c2e30"/><stop offset=".3" stopColor="#4e5052"/><stop offset=".47" stopColor="#8f9193"/><stop offset=".58" stopColor="#76787a"/><stop offset=".78" stopColor="#3a3c3e"/><stop offset="1" stopColor="#1e2022"/></linearGradient>
             <linearGradient id="hhBody" x1="0" x2="1"><stop offset="0" stopColor="#222425"/><stop offset=".05" stopColor="#36383a"/><stop offset=".95" stopColor="#36383a"/><stop offset="1" stopColor="#1f2122"/></linearGradient>
       <linearGradient id="hhCover" x1="0" y1="401" x2="0" y2="751" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#656769"/><stop offset=".1" stopColor="#5d5f61"/><stop offset=".2" stopColor="#4c4e50"/><stop offset=".7" stopColor="#45474a"/><stop offset="1" stopColor="#3d3f41"/></linearGradient>
       <linearGradient id="hhGripL" x1="0" y1="476" x2="0" y2="742" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#45474a"/><stop offset=".5" stopColor="#434547"/><stop offset=".6" stopColor="#6c6e70"/><stop offset=".85" stopColor="#7b7d7f"/><stop offset="1" stopColor="#5c5e60"/></linearGradient>
@@ -76,13 +95,8 @@ function Body(){
       <linearGradient id="hhFoot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a2c2e"/><stop offset="1" stopColor="#111315"/></linearGradient>
       <pattern id="hhGrip" width="2.2" height="2.2" patternUnits="userSpaceOnUse"><circle cx="1.1" cy="1.1" r=".5" fill="#000" opacity=".22"/></pattern>
     </defs>
-    {/* antenna */}
-    <path d="M19.8,8 Q19.8,1 31,1 Q42.2,1 42.2,8 L42.2,12.4 Q42,17 38.6,23 L38,32 L39,255 C40,276 47,318 47,338 L47,404 L15,404 L15,338 C15,318 22,276 22,255 L23,32 L22.4,23 Q20,17 19.8,12.4 Z" fill="url(#hhAnt)"/>
-    <path d="M22,250 L39,250 C40,276 47,318 47,338 L47,404 L15,404 L15,338 C15,318 22,276 22,250 Z" fill="url(#hhAntBase)" mask="url(#hhAntFade)"/>
-    <path d="M20.6,5.4 Q22,1.6 31,1.6 Q40,1.6 41.4,5.4 Z" fill="#141517" opacity=".7"/>
-    <rect x="19.9" y="8.6" width="22.2" height="2.6" rx="1.2" fill="#9a9c9e" opacity=".3"/>
-    <rect x="21.5" y="334" width="19" height="33" rx="9.5" fill="none" stroke="#1d1f21" strokeWidth="1.1"/>
-    <text transform="translate(34.4 350.5) rotate(90)" textAnchor="middle" fontSize="7.2" fontWeight="800" fill="#1d1f21" fontFamily="Arial,sans-serif">GMRS</text>
+    {/* stubby antenna */}
+    <StubbyAntenna id="hhStub" x1={15.5} x2={46.5} top={215} bottom={404}/>
     {/* small top button between the knobs */}
     <rect x="141.6" y="392" width="11.6" height="11" rx="2.6" fill="#3e4042" stroke="#1a1c1e" strokeWidth=".6"/>
     <rect x="142.8" y="393" width="9.2" height="2.2" rx="1" fill="#6d6f71"/>
@@ -209,7 +223,7 @@ export function TouchHandheld(p){
   const home=()=>{setScreen("home");f.goHome()};
   // Mapped "home", "who" and "recent" buttons also drive the touch screen.
   useEffect(()=>{if(f.view==="who"||f.view==="recent")setScreen(f.view)},[f.view]);
-  return <div className="hh" style={{"--apx-bright":0.55+f.brightness*0.15,width:205*K,height:768*K}}>
+  return <div className="hh" style={{"--apx-bright":0.55+f.brightness*0.15,width:205*K,height:(768-TOP)*K}}>
     <Body/>
     <div className="hh-hold" style={at(80,340,126,402)}><Knob className="hh-knob" title="Channel (click or scroll to change)" onClick={()=>f.stepChannel(1)} onStep={f.stepChannel}><ChannelKnob f={f} channels={visibleChannels}/></Knob></div>
     <div className="hh-hold" style={at(157,372,199,404)}><Knob className="hh-knob" title={muted?"Volume (muted, click to unmute)":`Volume ${volume} (scroll to change, click to mute)`} onClick={onMute} onStep={dir=>onVolume?.(-dir)}><VolumeKnob volume={volume} muted={muted}/></Knob></div>

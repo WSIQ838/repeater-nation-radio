@@ -1,12 +1,13 @@
 import {useEffect,useState} from "react";
 import {Knob,photoBoxes,useFace} from "./ControlHead";
-import {Flutes,pttHandlers} from "./TouchHandheld";
+import {Flutes,StubbyAntenna,pttHandlers} from "./TouchHandheld";
 import {KeyList,useKeypadMenu} from "./KeypadHandheld";
 
 // All-band handheld, laid out from Sean's APX 8000 photo (800×800, radio at x 320–489,
 // y 46–754). The body is one SVG in the photo's own pixels; knobs, keys and the screen
-// sit on top at the same photo boxes, scaled by K.
-const K=1.8,OX=318,OY=44,W=174,H=712;
+// sit on top at the same photo boxes, scaled by K. The photo's long whip is swapped for
+// a stubby antenna, so the face starts at photo y 274.
+const K=1.8,OX=318,OY=274,W=174,H=482;
 const {at}=photoBoxes(OX,OY,K);
 const S=photoBoxes(367,477,K),M=photoBoxes(367,496,K);
 // The screen's clock reads like the photo's "04:15AM".
@@ -46,14 +47,12 @@ function VolumeKnob({volume,muted}){
   </svg>;
 }
 
-// The handheld's static body in photo pixels: whip antenna with its band label and badge,
-// head with the knob deck, front cover seams, display well, key troughs and the battery
+// The handheld's static body in photo pixels: stubby antenna, head with the knob deck, front cover seams, display well, key troughs and the battery
 // with its gold contacts.
 function Body(){
   const housing="M330,421 Q336,417 350,416.5 L452,416.5 L484,417.6 Q487.4,418.6 487,424 L485,432 L485,446 L487,454 L487,472 Q486.4,478 481,481.4 Q474.6,485.6 471.6,491 L468,500 L468,508 L470.4,514 L470.6,745 Q469.6,751.4 457,752 L353,752 Q340.6,751.4 339,745 L339,494 Q336,490.4 331,486.6 Q322,479.6 320.4,470 L320.4,460 Q321,446 324,436 Q326,427.6 330,421 Z";
   return <svg className="ab-body" viewBox={`${OX} ${OY} ${W} ${H}`} aria-hidden="true">
     <defs>
-      <linearGradient id="abAnt" x1="327" x2="360" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#2a2b2c"/><stop offset=".3" stopColor="#3f4041"/><stop offset=".55" stopColor="#5a5b5c"/><stop offset=".8" stopColor="#3e3f40"/><stop offset="1" stopColor="#2b2c2d"/></linearGradient>
       <linearGradient id="abBody" x1="320" x2="488" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#454647"/><stop offset=".12" stopColor="#3a3b3c"/><stop offset=".3" stopColor="#323333"/><stop offset=".7" stopColor="#313232"/><stop offset=".88" stopColor="#373838"/><stop offset="1" stopColor="#434444"/></linearGradient>
       <linearGradient id="abCover" x1="0" y1="416" x2="0" y2="470" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#fff" stopOpacity=".16"/><stop offset=".45" stopColor="#fff" stopOpacity=".07"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></linearGradient>
       <radialGradient id="abEar" cx="331" cy="448" r="22" gradientUnits="userSpaceOnUse"><stop offset="0" stopColor="#fff" stopOpacity=".13"/><stop offset="1" stopColor="#fff" stopOpacity="0"/></radialGradient>
@@ -64,13 +63,8 @@ function Body(){
       <filter id="abGrain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="7"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -3 1.75"/><feComposite in2="SourceAlpha" operator="in"/></filter>
       <filter id="abSpeck" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="2" seed="21"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 3.4 -2.05"/><feComposite in2="SourceAlpha" operator="in"/></filter>
     </defs>
-    {/* whip antenna: ball tip, long shaft flaring toward the base, band label and badge */}
-    <path d="M340.4,62 Q338,58.6 338.2,53.4 Q339,47 348.6,47 Q358.2,47 359,53.4 Q359.2,58.6 356.8,62 L356.2,228 Q357,262 359.2,292 L359.4,430 L327.8,430 L328.2,372 Q329.2,330 333.4,296 Q337.6,262 338.6,230 Z" fill="url(#abAnt)"/>
-    <path d="M339.6,60.4 Q348.6,63.4 357.6,60.4" fill="none" stroke="#1d1e1f" strokeWidth=".9"/>
-    <path d="M342,49.6 Q348.6,47.8 355.2,49.6" fill="none" stroke="#7a7b7c" strokeOpacity=".6" strokeWidth=".8"/>
-    <text transform="translate(347.8 366.4) rotate(-90)" fontSize="9.6" fontWeight="700" fill="#1c1d1e" stroke="#555657" strokeWidth=".25" fontFamily="Arial,Helvetica,sans-serif" letterSpacing="1">UHF  GMRS</text>
-    <circle cx="342.6" cy="377.4" r="8.4" fill="#232425" stroke="#151617" strokeWidth=".8"/>
-    <text x="342.6" y="380.2" textAnchor="middle" fontSize="7.4" fontWeight="900" fill="#6a6b6c" fontFamily="Arial,Helvetica,sans-serif">RN</text>
+    {/* stubby antenna */}
+    <StubbyAntenna id="abStub" x1={328} x2={359} top={282} bottom={430}/>
     {/* housing */}
     <path d={housing} fill="url(#abBody)" stroke="#0f1010" strokeWidth=".8"/>
     <path d={housing} fill="#000" filter="url(#abGrain)" opacity=".75"/>

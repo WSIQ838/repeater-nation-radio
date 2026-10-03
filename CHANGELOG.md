@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.20
+
+**Stubby antennas on every handheld**, as Sean asked.
+
+- The touchscreen handheld (N70) and the all-band handheld (APX 8000) swap their long whips for a stubby antenna in the style of the keypad and compact handhelds: rounded cap, GMRS band label, RN badge, white band and a darker lower section.
+- Both radios are shorter on the page now that the whip is gone. Everything else on them is unchanged.
+- The stubby antenna is one shared drawing (`StubbyAntenna` in `TouchHandheld.jsx`), so any handheld added later uses it.
+- Version set to 0.2.20 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.19
 
 **Handheld control head**, built from Sean's photo of a corded hand-mic head for a mobile radio. It's the eighth radio in the one-at-a-time redo.
