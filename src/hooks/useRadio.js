@@ -7,6 +7,10 @@ export function setSink(el,deviceId){if(el?.setSinkId)el.setSinkId(deviceId||"")
 
 const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.radioCallsign||m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
 const LAST_HEARD_MAX=10;
+const SESSION_REFRESH_MS=4*60*1000;
+const RECONNECT_BASE_MS=1500;
+const RECONNECT_MAX_MS=30000;
+const RECONNECT_STABLE_MS=30000;
 
 // events: {onTalkStart(entry), onTalkEnd(entry)} for tones and announcements,
 // onRecorded({...item, blob}) for each recorded transmission heard, onOwnTalkStart(micTrack).
@@ -119,12 +123,24 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   // Each connect/disconnect bumps the generation, so a connect that finishes after the
   // user has already switched channels drops its room instead of taking over.
   const connGenRef=useRef(0);
+  const reconnectTimerRef=useRef(null),reconnectBusyRef=useRef(false),manualDisconnectRef=useRef(false),sessionRefreshRef=useRef(null),lastConnectedAtRef=useRef(0),retryCountRef=useRef(0);
+  const scheduleReconnect=useCallback((reason="Radio connection lost. Reconnecting…")=>{
+    if(manualDisconnectRef.current||!channelId)return;
+    setError(reason);setState("disconnected");
+    if(Date.now()-lastConnectedAtRef.current>RECONNECT_STABLE_MS)retryCountRef.current=0;
+    const delay=Math.min(RECONNECT_MAX_MS,RECONNECT_BASE_MS*2**retryCountRef.current);retryCountRef.current+=1;
+    if(reconnectTimerRef.current)clearTimeout(reconnectTimerRef.current);
+    reconnectTimerRef.current=setTimeout(()=>{reconnectTimerRef.current=null;if(!manualDisconnectRef.current&&!reconnectBusyRef.current)connect().catch(()=>{})},delay);
+  },[channelId]);
   const connect=useCallback(async()=>{
     const gen=++connGenRef.current;
+    manualDisconnectRef.current=false;
+    if(reconnectTimerRef.current){clearTimeout(reconnectTimerRef.current);reconnectTimerRef.current=null;}
+    if(reconnectBusyRef.current)return roomRef.current;
+    reconnectBusyRef.current=true;
     setError("");setState("connecting");
     try {
-      sessionRef.current=null;
-      const sessionData=await issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number, "");
+      const sessionData=await issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number, sessionRef.current?.radioSessionId || "");
       if(gen!==connGenRef.current)return null;
       if(!sessionData?.ok) throw new Error(sessionData?.error||"Could not start radio session.");
       let room=null;
@@ -136,10 +152,12 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         onParticipantDisconnected:participant=>txEnd(participant),
         onQuality:q=>{if(roomRef.current===room)setQuality(q)},
         onAttributes:()=>{if(roomRef.current===room)refresh()},
+        onReconnecting:()=>{if(roomRef.current===room&&!manualDisconnectRef.current)setState("connecting")},
+        onReconnected:()=>{if(roomRef.current!==room||manualDisconnectRef.current)return;retryCountRef.current=0;lastConnectedAtRef.current=Date.now();refresh();setError("");setState(floorRef.current?"transmitting":"listening")},
         onDisconnected:()=>{
-          if(roomRef.current!==room)return;
+          if(roomRef.current!==room||manualDisconnectRef.current)return;
           // Free any server-side floor lease if LiveKit drops unexpectedly.
-          if(floorAskedRef.current||floorRef.current)issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "").catch(()=>{});
+          if(floorAskedRef.current||floorRef.current)releasePTT().catch(()=>{});
           floorAskedRef.current=false;
           floorRef.current=false;
           clearOnAir();
@@ -153,14 +171,31 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
           }
           cleanupAudio();
           roomRef.current=null;
-          setSession(null);
           setParticipants([]);
-          setState("ready");
+          scheduleReconnect();
         }});
       if(gen!==connGenRef.current){await disconnectRadio(room);return null}
-      roomRef.current=room;sessionRef.current=sessionData;setSession(sessionData);refresh();setState("listening");return room;
-    } catch(err){if(gen!==connGenRef.current)return null;setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
-  },[channelId,channelInfo?.zoneId,channelInfo?.number,refresh,attachAudio,cleanupAudio,txStart,txEnd,clearOnAir]);
+      roomRef.current=room;sessionRef.current=sessionData;setSession(sessionData);refresh();lastConnectedAtRef.current=Date.now();retryCountRef.current=0;
+      if(sessionRefreshRef.current)clearInterval(sessionRefreshRef.current);
+      sessionRefreshRef.current=setInterval(async()=>{
+        if(manualDisconnectRef.current||roomRef.current!==room)return;
+        try{
+          const fresh=await issueRadioSession(channelId,channelInfo?.zoneId,channelInfo?.number,sessionRef.current?.radioSessionId||"");
+          if(!fresh?.ok)return;
+          sessionRef.current=fresh;setSession(fresh);
+          if(typeof room.updateToken==="function")await room.updateToken(fresh.liveKitToken);
+          else if(!floorRef.current){await disconnectRadio(room);}
+        }catch{}
+      },SESSION_REFRESH_MS);
+      setState("listening");return room;
+    } catch(err){
+      if(gen!==connGenRef.current)return null;
+      const message=err instanceof Error?err.message:"Unable to connect to radio.";
+      setError(message);setState("error");
+      if(!manualDisconnectRef.current)scheduleReconnect("Radio connection failed. Retrying…");
+      throw err;
+    } finally { reconnectBusyRef.current=false; }
+  },[channelId,channelInfo?.zoneId,channelInfo?.number,refresh,attachAudio,cleanupAudio,txStart,txEnd,clearOnAir,releasePTT,scheduleReconnect]);
 
   useEffect(()=>{for(const el of audioElsRef.current.values())el.volume=muted?0:volume},[muted,volume]);
 
@@ -281,7 +316,10 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   },[channelId,session,releasePTT,refreshDevices,dropPublished]);
 
   const disconnect=useCallback(async()=>{
+    manualDisconnectRef.current=true;
     connGenRef.current++;
+    if(reconnectTimerRef.current){clearTimeout(reconnectTimerRef.current);reconnectTimerRef.current=null;}
+    if(sessionRefreshRef.current){clearInterval(sessionRefreshRef.current);sessionRefreshRef.current=null;}
     await releasePTT();
     await dropPublished();
     clearOnAir();setQuality("unknown");
