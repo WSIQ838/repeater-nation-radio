@@ -175,12 +175,15 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   },[refresh,state]);
 
   const requestPTT=useCallback(async(deviceId="")=>{
-    const requestId=++pttRequestRef.current;
+    // Check these guards before incrementing the request generation. A duplicate
+    // event arriving while the first request is waiting must never invalidate
+    // the original request and leave its server floor lease orphaned.
     if(floorRef.current)return "granted";
+    if(pttInFlightRef.current)return "pending";
+    const requestId=++pttRequestRef.current;
     // Clear any previous busy/error banner immediately. A previous denied
     // request must never remain visible while a new PTT attempt is underway.
     setError("");
-    if(pttInFlightRef.current)return "pending";
     if(!roomRef.current||!session){setError("Connect to the radio first.");return "error"}
     if(!session.canTransmit){setError("You are not authorized to transmit on this channel.");return "denied"}
     try {
