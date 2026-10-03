@@ -99,7 +99,10 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     // switching audio profiles) every time.
     micRef.current=null;
     const pub=pubRef.current;
-    if(pub){try{await pub.track.mute()}catch{}}
+    if(pub){
+      try{pub.track.mediaStreamTrack.enabled=false}catch{}
+      try{await pub.track.mute()}catch{}
+    }
     if(asked){try{await issueRadioPTT(channelId,"release")}catch{}}
     if(roomRef.current)setState("listening");
   },[channelId]);
@@ -190,10 +193,16 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       if(pub&&pub.room===room&&pub.deviceId===deviceId&&pub.track.mediaStreamTrack?.readyState==="live"){
         // Fast path: the mic is already open. Once the floor is granted, unmute it, and
         // republish it if the server unpublished it when the floor was last released.
+        // Keep an existing published track silent until the server grants
+        // this new PTT press. This prevents a previous lease/publication from
+        // leaking audio while the floor request is being decided.
+        try{pub.track.mediaStreamTrack.enabled=false}catch{}
+        try{await pub.track.mute()}catch{}
         const result=await issueRadioPTT(channelId,"request");
         if(requestId!==pttRequestRef.current)return "stale";
         if(!result?.ok)throw new Error(result?.error||"Could not reach the radio server.");
         if(!result.granted)return await deny(result);
+        try{pub.track.mediaStreamTrack.enabled=true}catch{}
         await pub.track.unmute();
         if(!isPublished(room,pub.track))await publishMicrophoneTrack(room,pub.track);
         if(requestId!==pttRequestRef.current){try{await pub.track.mute()}catch{}try{await issueRadioPTT(channelId,"release")}catch{}return "stale"}
@@ -223,6 +232,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         }
       }
       micRef.current=mic;
+      try{mic.mediaStreamTrack.enabled=true}catch{}
       floorRef.current=true;setError("");setState("transmitting");
       eventsRef.current.onOwnTalkStart?.(mic);
       renewRef.current=setInterval(async()=>{
