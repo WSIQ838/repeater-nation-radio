@@ -646,7 +646,7 @@ function RadioApp({session,onSignOut}){
             <RadioFace face={face} onPttDown={down} onPttUp={up} myStatus={myStatus} onStatus={chooseStatus}
               channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
               zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId}
-              state={state} connected={connected} ptt={ptt} muted={muted} error={error} callsign={radioSession?.callsign||callsign} participants={participants}
+              state={state} connected={connected} ptt={ptt} muted={muted} error={error} callsign={radioSession?.callsign||callsign} displayName={displayName} participants={participants}
               incoming={incoming} call={call} callState={callState}
               onPower={connected?disconnect:connect} onMute={()=>setMuted(!muted)} onChannel={selectChannel} onZone={selectZone} onTab={setTab}
               onAnswer={accept} onDecline={decline} onEndCall={endCall} command={faceCommand}

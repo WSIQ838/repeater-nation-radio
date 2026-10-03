@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {Power} from "lucide-react";
 import {ControlHead,FaceDisplay,Knob,O7Icon,O7_KEYS,photoBoxes,useFace} from "./ControlHead";
+import {TouchHandheld} from "./TouchHandheld";
 
 // Radios the user can pick from. They are being redone one at a time from Sean's
 // photos; each draws the same radio through useFace/FaceDisplay (ControlHead.jsx),
@@ -9,11 +10,14 @@ export const FACES=[
   {id:"control-head",label:"Dispatch control head",note:"Full keypad, ten softkeys, P1–P5"},
   {id:"dash-head",label:"Dash mount head",note:"Keypad, four softkeys, knob and nav diamond"},
   {id:"slim-head",label:"Slim mobile head",note:"Two knobs, five softkeys, P key"},
+  {id:"touch-handheld",label:"Touchscreen handheld",note:"Touch screen, two top knobs, P1–P6"},
 ];
 export const DEFAULT_FACE="control-head";
 const FACE_KEY="rn-face";
-// A radio that has been removed from the list falls back to the default.
-export const loadFace=()=>{try{const v=localStorage.getItem(FACE_KEY);return FACES.some(f=>f.id===v)?v:DEFAULT_FACE}catch{return DEFAULT_FACE}};
+// A radio that has been removed from the list falls back to the default; the earlier
+// touchscreen portable maps to the handheld redone from the N70 photo.
+const RENAMED={"smart-portable-p":"touch-handheld"};
+export const loadFace=()=>{try{let v=localStorage.getItem(FACE_KEY);v=RENAMED[v]||v;return FACES.some(f=>f.id===v)?v:DEFAULT_FACE}catch{return DEFAULT_FACE}};
 export const saveFace=v=>{try{localStorage.setItem(FACE_KEY,v)}catch{}};
 
 // Parts shared by the photo-matched mobile heads.
@@ -123,5 +127,6 @@ function SlimHead(p){
 export function RadioFace({face=DEFAULT_FACE,...p}){
   if(face==="dash-head")return <DashHead {...p}/>;
   if(face==="slim-head")return <SlimHead {...p}/>;
+  if(face==="touch-handheld")return <TouchHandheld {...p}/>;
   return <ControlHead {...p}/>;
 }

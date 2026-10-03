@@ -1,5 +1,37 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.15
+
+**Touchscreen handheld**, built from Sean's APX N70 photo. It's the fourth radio in the one-at-a-time redo, and it replaces the old touchscreen portable. A saved choice of the old portable opens this one.
+
+- Every part is placed from the photo's own measurements:
+  - the long whip antenna with its band label, which reads GMRS
+  - the tall fluted channel knob on its numbered collar, the small top button and the short knurled volume knob
+  - the wide head with a round badge and the status LED
+  - textured side grips that turn lighter toward the bottom
+  - the touch screen, the pill Home key and P1–P6 in two rows
+- The top knobs are drawn the way they look in the photo. The flutes slide across the knob as it turns. The collar shows the channel positions on either side of the current one.
+- The screen is laid out like the photo's home screen, with live information:
+  - the signed-in name in the header
+  - the zone and channel in the card, with what's happening under them (Listening, Receiving · callsign, Transmitting)
+  - Zone, Contacts and More tabs
+  - the last station heard, with Replay and All Recent
+  - your status and callsign in the bottom bar
+- What the controls do:
+  - Tap the zone or Zone to pick a zone. Tap the channel name to pick a channel.
+  - The profile icon or the bottom bar sets your status.
+  - The toggle icon turns scan on and off, and the icon under it replays the last transmission.
+  - Contacts opens Calls.
+  - More lists Who's On, Recent, My Status, Brightness, Radio on/off and Setup.
+  - The tall knob changes channel (click or scroll). The short knob is volume (scroll, click to mute).
+  - P1–P5 go to channels 1–5 and P6 mutes.
+  - Home returns to the home screen.
+  - Hold the left side grip to talk.
+  - The LED and status bar show RX and TX, and an incoming call shows on the card with Answer and Decline.
+- The badge reads RN in place of the maker's logo.
+- The radio's page now passes the signed-in name to the radio faces.
+- Version set to 0.2.15 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.14
 
 **Slim mobile head**, built from Sean's APX 8500 E5 photo. It's the third radio in the one-at-a-time redo, and it replaces the old wide mobile head.
