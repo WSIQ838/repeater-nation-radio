@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.31
+
+**Fixed an accidental 3-second PTT timeout in the desktop app.**
+
+- Hardened saved Time-out Timer settings so only the supported values Off, 30 s, 60 s, 2 min, or 3 min can be used.
+- If an older build left an unsupported value such as 3 seconds in local storage, the app now ignores it and restores the normal 60-second default instead of releasing PTT after 3 seconds.
+- Version set to 0.2.31 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+
 ## 0.2.22
 
 **Cleaner radio page, with Who's On and status on the Console**, as Sean asked.
