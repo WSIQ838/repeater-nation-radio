@@ -102,6 +102,10 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     if(pub){
       try{pub.track.mediaStreamTrack.enabled=false}catch{}
       try{await pub.track.mute()}catch{}
+      // Unpublish immediately on release so every listener receives
+      // LiveKit's TrackUnsubscribed event instead of waiting for the
+      // floor lease/realtime polling window to notice the release.
+      try{await unpublishMicrophone(pub.room,pub.track)}catch{}
     }
     if(asked){try{await issueRadioPTT(channelId,"release")}catch{}}
     if(roomRef.current)setState("listening");
