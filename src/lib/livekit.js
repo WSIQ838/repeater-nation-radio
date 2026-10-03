@@ -25,6 +25,8 @@ export async function connectRadio(token, livekitUrl=config.livekitUrl, callback
   room.on(RoomEvent.TrackUnmuted,(pub,participant)=>{if(participant!==room.localParticipant)callbacks.onTrackUnmuted?.(pub,participant)});
   room.on(RoomEvent.ParticipantAttributesChanged,(changed,participant)=>{if(participant!==room.localParticipant)callbacks.onAttributes?.(changed,participant)});
   room.on(RoomEvent.ConnectionQualityChanged,(quality,participant)=>{if(participant===room.localParticipant)callbacks.onQuality?.(quality)});
+  room.on(RoomEvent.Reconnecting,()=>callbacks.onReconnecting?.());
+  room.on(RoomEvent.Reconnected,()=>callbacks.onReconnected?.());
   room.on(RoomEvent.Disconnected,reason=>callbacks.onDisconnected?.(reason));
   await room.connect(livekitUrl,token);
   return room;
