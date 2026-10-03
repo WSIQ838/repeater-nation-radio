@@ -1,5 +1,36 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.19
+
+**Handheld control head**, built from Sean's photo of a corded hand-mic head for a mobile radio. It's the eighth radio in the one-at-a-time redo.
+
+- Every part is placed from the photo's own measurements:
+  - the top edge with the green power button, three small lights and the − CH + rocker
+  - the top cover with the name lettering
+  - the textured body with the ridged PTT grip on the left, the side button and the microphone slot
+  - the screen in its bezel, P1 and P2, the four-way nav pad, OK and Back/Home
+  - the volume row (speaker-low key, centre bar, speaker-high key)
+  - the 12-key keypad with its letters, P3 and the orange P4
+  - the cord boot at the bottom
+- The top cover reads REPEATER NATION in place of the maker's lettering.
+- The screen is laid out like the photo, with live information:
+  - signal and connection icons in the small icon box, SCAN, TX and RX tags, and the current time
+  - a grey line with the channel number and zone ("Ch 1 · ALL"), which shows what's happening instead (Receiving · callsign, Transmitting, Call Received, Connecting, Radio Off)
+  - the channel name
+  - P Mon and Scan softkeys on the dark blue bar
+- What the controls do:
+  - The power button turns the radio on and off. CH − and CH + change channel.
+  - On the home screen the nav pad changes channel (up and down) and zone (left and right).
+  - OK opens the menu: Zones, Channels, Scan, Who's On, Recent, My Status, Brightness, Radio on/off and Setup. In lists the nav pad moves and OK selects; Back goes back.
+  - Type a channel number on the keypad and press # or OK to go to it; * or Back clears it.
+  - P Mon opens the monitor Console. Scan turns scan on and off.
+  - P1 turns scan on and off, P2 replays the last transmission, P3 opens Who's On and P4 opens My Status.
+  - The speaker keys turn the volume down and up, and the centre bar mutes.
+  - Hold the left side PTT grip to talk.
+  - An incoming call shows on the screen with Answer (OK) and Decline (Back).
+  - The three lights show transmit (red), receive (green) and a call or scan (amber).
+- Version set to 0.2.19 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.18
 
 **Compact handheld**, built from Sean's XPR 7550-style photo. It's the seventh radio in the one-at-a-time redo, and it replaces the old rugged portable. A saved choice of the old portable opens this one.

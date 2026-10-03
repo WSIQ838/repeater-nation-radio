@@ -5,6 +5,7 @@ import {TouchHandheld} from "./TouchHandheld";
 import {KeypadHandheld} from "./KeypadHandheld";
 import {AllBandHandheld} from "./AllBandHandheld";
 import {CompactHandheld} from "./CompactHandheld";
+import {CordHead} from "./CordHead";
 
 // Radios the user can pick from. They are being redone one at a time from Sean's
 // photos; each draws the same radio through useFace/FaceDisplay (ControlHead.jsx),
@@ -17,6 +18,7 @@ export const FACES=[
   {id:"keypad-handheld",label:"Keypad handheld",note:"Colour screen, full keypad, nav pad, P1/P2"},
   {id:"allband-handheld",label:"All-band handheld",note:"Small screen, three softkeys, Home and menu keys, keypad"},
   {id:"compact-handheld",label:"Compact handheld",note:"Speaker grille, colour screen, P1/P2, nav pad, keypad"},
+  {id:"hand-head",label:"Handheld control head",note:"Corded head, P1–P4, volume keys, keypad"},
 ];
 export const DEFAULT_FACE="control-head";
 const FACE_KEY="rn-face";
@@ -137,5 +139,6 @@ export function RadioFace({face=DEFAULT_FACE,...p}){
   if(face==="keypad-handheld")return <KeypadHandheld {...p}/>;
   if(face==="allband-handheld")return <AllBandHandheld {...p}/>;
   if(face==="compact-handheld")return <CompactHandheld {...p}/>;
+  if(face==="hand-head")return <CordHead {...p}/>;
   return <ControlHead {...p}/>;
 }
