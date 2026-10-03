@@ -4,6 +4,17 @@
     "core:default",
     "opener:default",
     "deep-link:default",
+    "notification:default",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-set-size",
+    "core:window:allow-set-min-size",
+    "core:window:allow-inner-size",
+    "core:window:allow-scale-factor",
+    "core:window:allow-is-maximized",
+    "core:window:allow-unmaximize",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-unminimize",
     {
       "identifier": "http:default",
       "allow": [
@@ -15,5 +26,7 @@
   ],
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"]
+  "windows": [
+    "main"
+  ]
 }

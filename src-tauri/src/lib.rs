@@ -1,7 +1,6 @@
-use tauri::Manager;
-
 mod ble;
 mod ptt;
+mod tray;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -14,10 +13,7 @@ pub fn run() {
     #[cfg(desktop)]
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.unminimize();
-                let _ = window.set_focus();
-            }
+            tray::show_main(app);
         }));
     }
 
@@ -25,9 +21,14 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_http::init())
-        .invoke_handler(tauri::generate_handler![ptt::hw_set_bindings, ptt::hw_learn, ptt::hw_capabilities, ble::ble_scan, ble::ble_connect, ble::ble_disconnect])
+        .plugin(tauri_plugin_notification::init())
+        .on_window_event(tray::on_window_event)
+        .invoke_handler(tauri::generate_handler![ptt::hw_set_bindings, ptt::hw_learn, ptt::hw_capabilities, ble::ble_scan, ble::ble_connect, ble::ble_disconnect, tray::tray_set])
         .setup(|_app| {
             ptt::start(_app.handle().clone());
+            if let Err(e) = tray::start(_app.handle()) {
+                eprintln!("tray icon unavailable: {e}");
+            }
             // AppImage and dev builds have no installer to register the
             // repeaternation:// scheme, so register it at runtime there.
             #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
