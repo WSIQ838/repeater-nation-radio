@@ -1,6 +1,6 @@
 [package]
 name = "repeater-nation-radio"
-version = "0.1.13"
+version = "0.1.20"
 description = "Repeater Nation desktop radio"
 authors = ["Repeater Nation"]
 edition = "2021"
@@ -19,6 +19,13 @@ tauri-plugin-http = "2"
 tauri-plugin-opener = "2.5"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+gilrs = "0.11"
+btleplug = "0.11"
+futures = "0.3"
+tokio = { version = "1", features = ["macros", "time"] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
@@ -26,3 +33,11 @@ tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 [features]
 custom-protocol = ["tauri/custom-protocol"]
 default = ["custom-protocol"]
+
+# Smaller, faster release binary (Tauri's recommended release profile).
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

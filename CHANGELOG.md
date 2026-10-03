@@ -1,5 +1,75 @@
 # Repeater Nation Radio — Changelog
 
+## 0.1.20
+
+- Fixed a 0.1.19 bug that would have made every PTT after the first one silent. The radio server (`radio-ptt`) takes away publish permission on every release, which makes LiveKit unpublish the mic and, by default, stop it. 0.1.19 then only unmuted that stopped track. Now the room keeps the mic track open when it is unpublished (`stopLocalTrackOnUnpublish: false`), and the next PTT unmutes it and publishes it again if the server removed it. Later PTTs still skip opening the microphone and the Bluetooth profile switch. The track is only stopped on disconnect, on channel change or when you pick another microphone.
+- Version set to 0.1.20 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.1.19
+
+- The radio now starts in the ALL zone on its first channel. The zone list is just the real zones (ALL, GMRS, HAM, in the order set on the website); the extra "All Zones" entry, which showed every zone's channels mixed together and didn't auto-connect, is gone.
+- Zones are ordered by their website display order instead of by whichever zone's channel came first.
+- Less PTT lag: after the first transmit, the microphone stays published but muted while you listen, so the next PTT only unmutes it. Before, every PTT opened the mic and set up a new audio track with the voice server, and on Bluetooth headsets switched audio profiles each time. Keying up now takes only the floor request to the radio server. The mic is closed when you disconnect, change channel or pick another microphone. (While connected, Windows shows the microphone as in use after your first transmit.)
+- Profiled the interface at 6× CPU slowdown: the production build answers a knob, PTT or keypad press in about 56 ms (about 10 ms on a normal PC), with no background work while idle. `npx tauri dev` runs React's development mode, which measured about 6× slower (360 ms), so judge speed on a built app.
+- Version set to 0.1.19 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.1.18
+
+- Fixed the update check saying "OFFLINE / Could not check GitHub" while online. The cause is that `WSIQ838/repeater-nation-radio` is a private repository, and GitHub answers 404 to apps that aren't signed in to it. Every failure used to be shown as offline.
+- The update check now says what actually went wrong: offline (no response), "Updates can't be checked" (release page not public, 404), "Too many update checks" with the time GitHub's hourly limit resets (403/429), or the error code.
+- The update panel in Settings is styled again (its CSS was missing, so the text ran together) and shows the installed version.
+- Version set to 0.1.18 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.1.17
+
+- Button mapping. Settings › Button mapping lists every radio action: push to talk, channel up/down, zone up/down, P1–P5, power, mute, Home, Who's On, display brighter/dimmer, answer/decline/end call, all ten softkeys and the whole keypad (0–9, *, #). Each action can have several buttons. Click "+ Add" and press any keyboard key, media or volume key, Bluetooth hand mic button, USB hand mic button, mouse middle/side button or gamepad button. Esc cancels. "×" removes a button and "Reset to defaults" goes back to Space and Num 0 for PTT.
+- Each mapped button is either "App only" or "Anywhere". Anywhere buttons work while another window is in front (Windows for keys and mouse buttons; every OS for gamepads and Bluetooth buttons). Typing keys start as App only; hand mic, media, Bluetooth, mouse and gamepad buttons start as Anywhere.
+- Mapping a button that is already used by another action moves it, and says so.
+- Channel, zone, P1–P5, power, mute and call actions work from any tab. Face-only actions (softkeys, keypad, Who's On, brightness) switch to the Radio tab first.
+- On Windows the default Space and Num 0 PTT keys now go through the same hook, still only while the app is focused.
+- The single PTT button learned in 0.1.15/0.1.16 is carried over into the new map.
+- The Programming panel's PTT row lists all PTT buttons, with "Add PTT button" and "Edit".
+- The Bluetooth section only shows in the desktop app.
+- Version set to 0.1.17 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.1.16
+
+- Bluetooth PTT mics. Settings now has a Bluetooth PTT section: "Find Bluetooth button" lists nearby Bluetooth LE devices, "Use" connects to one, and Learn PTT button then learns its button. This is for buttons that report on their own Bluetooth service instead of as a key. The app reconnects to the button on every launch and after it drops or powers off. "Forget" disconnects it.
+- Bluetooth mics that send their button as a media key (Play/Pause, the usual headset button) or as a Bluetooth keyboard key already work with Learn PTT button from 0.1.15, including with the window unfocused on Windows.
+- A Bluetooth headset mic and speaker ("Hands-Free" in Windows) is now also picked automatically the first time it appears, like a USB hand mic.
+- macOS: added the Bluetooth and microphone permission descriptions (`src-tauri/Info.plist`) that macOS requires.
+- `linux.yml` now also installs `libdbus-1-dev` (needed for Bluetooth on Linux).
+- Version set to 0.1.16 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.1.15
+
+- Hand mic and hardware PTT support. "Learn PTT button" (in Programming and in Settings) waits for you to press the PTT button on a USB hand mic, foot switch or gamepad, then that button keys the radio. It is saved and restored on the next launch. Clear or Change it from the same place. Esc cancels learning.
+- On Windows the learned button works even when the app is not the focused window. It can be a keyboard key, a media or volume key (what many USB hand mics send), the middle or side mouse buttons, or a joystick/gamepad button. Only the learned button is passed to the app; other keystrokes are not.
+- If the learned button is a media or volume key (Play/Pause, Mute, Volume) or F13–F24, the app keeps it from also reaching Windows, so keying up doesn't pause music or change the PC volume. Normal typing keys still reach other apps.
+- On macOS and Linux the learned button works while the app is focused (keyboard keys) and from any joystick/gamepad button.
+- New Speaker picker next to Microphone. Radio and direct-call audio play on the chosen speaker (Windows).
+- The microphone and speaker choices are remembered. The first time a device named like a hand mic (for example "KST vHMIC010") appears, it is picked for both automatically. Choosing "System default" yourself is kept.
+- The device list refreshes when a device is plugged in or unplugged, and after the first transmit (Windows only shows device names after mic permission).
+- PTT presses from the palm mic, Space / Num 0 and the hardware button at the same time key the radio once and release once.
+- The palm mic hint shows the learned button.
+- Linux build dependencies in `linux.yml` now include `libudev-dev` (needed for gamepad input).
+- Version set to 0.1.15 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.1.14
+
+- Selecting a zone or channel now tunes the radio and connects to it automatically. This covers the zone and channel knobs, the nav pad, keypad entry, P1–P5, the softkeys and the Programming dropdowns. The radio waits 350 ms after the last change, so spinning a knob joins only the channel it stops on. Mute stays as it was. Choosing "All Zones" keeps the current channel and does not reconnect.
+- A connect that finishes after you have already switched channels is dropped instead of taking over. A stale room's disconnect event no longer clears the active room.
+- Faster startup: the voice library (`livekit-client`) loads after sign-in instead of at launch. Startup JavaScript went from 965 KB to 406 KB. The login screen appeared in 405 ms instead of 505 ms at 4× CPU throttling (median of 6 runs).
+- The connection to the voice server (DNS and TLS) is set up while the radio screen opens, so the first connect is quicker.
+- Channel switches no longer make a "release PTT" server call unless you actually asked for the floor. That removes one round trip from every zone or channel change.
+- Channels and zones now load in parallel instead of one after the other.
+- Removed the unused `@livekit/components-react` and `@livekit/components-styles` packages. The app's CSS went from 39 KB to 19.5 KB, and the radio face looks the same.
+- Release builds now use Tauri's size-optimized profile: LTO, a single codegen unit, `opt-level = "s"`, stripped symbols and abort on panic. On Linux the app binary went from 25.2 MB to 9.2 MB and the `.deb` from 7.2 MB to 3.7 MB.
+- Pressing PTT now opens the microphone while the floor request is still going to the server, instead of after the floor is granted. Keying up takes about as long as the slower of the two instead of both added together (300 ms instead of 500 ms in a test with a 300 ms server and a 200 ms microphone). If the floor is denied, the request fails, or PTT is released first, the microphone is closed again and nothing is sent.
+- The online-member and direct-call check that runs every 3 seconds now asks for both lists at once, never starts a new check while one is still running, and only updates the screen when something changed. Before, it re-drew the whole radio every 3 seconds even when nothing had changed.
+- Production JavaScript now targets the WebView engines Tauri 2 supports (ES2022) instead of older browsers.
+- Version set to 0.1.14 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.1.13
 
 - Version set to 0.1.13 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`, past the existing `radio-v0.1.12` tag (main had been reset to a 0.1.3 backup).

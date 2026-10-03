@@ -41,7 +41,7 @@ export function ControlHead({
   channelName,channelNumber,zoneName,zones,zoneId,visibleChannels,channelId,
   state,connected,ptt,muted,error,callsign,participants,
   incoming,call,callState,
-  onPower,onMute,onChannel,onZone,onTab,onAnswer,onDecline,onEndCall,
+  onPower,onMute,onChannel,onZone,onTab,onAnswer,onDecline,onEndCall,command,
 }){
   const [view,setView]=useState("home");
   const [entry,setEntry]=useState("");
@@ -105,6 +105,19 @@ export function ControlHead({
     {label:"Contacts",act:()=>onTab("calls")},
     {label:"Home",act:goHome},
   ];
+
+  // Mapped hardware buttons for face-only controls arrive as one-shot commands.
+  useEffect(()=>{
+    if(!command||command.done)return;
+    command.done=true;
+    const a=command.action;
+    if(a==="home")goHome();
+    else if(a==="who")setView(v=>v==="who"?"home":"who");
+    else if(a==="bright_up")setBrightness(b=>Math.min(3,b+1));
+    else if(a==="bright_down")setBrightness(b=>Math.max(0,b-1));
+    else if(/^soft_[tb][1-5]$/.test(a)){const k=(a[5]==="t"?top:bottom)[Number(a[6])-1];if(k?.act&&!k.disabled)k.act()}
+    else if(a.startsWith("key_"))pressKey(a.slice(4));
+  },[command]);
 
   let banner=null;
   if(ptt)banner={tone:"tx",title:"Transmitting",sub:callsign||""};
@@ -217,7 +230,7 @@ export function ControlHead({
   </div>
 }
 
-export function PalmMic({ptt,connected,onDown,onUp}){
+export function PalmMic({ptt,connected,onDown,onUp,pttName="Space / Num 0"}){
   return <div className="apx-mic">
     <div className="apx-cord"/>
     <div className={"apx-mic-body"+(ptt?" keyed":"")}>
@@ -226,7 +239,7 @@ export function PalmMic({ptt,connected,onDown,onUp}){
       <button type="button" className={ptt?"apx-ptt pressed":"apx-ptt"} disabled={!connected} onPointerDown={e=>{if(e.button!==0)return;e.currentTarget.setPointerCapture?.(e.pointerId);onDown()}} onPointerUp={onUp} onPointerCancel={onUp} onLostPointerCapture={onUp} onContextMenu={e=>e.preventDefault()}>
         <Mic size={18}/><span>PTT</span>
       </button>
-      <small>{connected?"Hold to talk · Space / Num 0":"Connect to transmit"}</small>
+      <small>{connected?`Hold to talk${pttName?" · "+pttName:""}`:"Connect to transmit"}</small>
     </div>
   </div>
 }

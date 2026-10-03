@@ -129,18 +129,13 @@ export const directCall = (action, payload = {}) =>
 
 export async function listRadioChannels() {
   const base44 = client();
-  const channels = await base44.entities.RadioChannel.filter(
-    { enabled: true },
-    "number",
-    100
-  );
-  const zones = await base44.entities.RadioZone.filter(
-    { enabled: true },
-    "display_order",
-    20
-  );
+  const [channels, zones] = await Promise.all([
+    base44.entities.RadioChannel.filter({ enabled: true }, "number", 100),
+    base44.entities.RadioZone.filter({ enabled: true }, "display_order", 20),
+  ]);
 
   const zoneMap = new Map((zones || []).map((z) => [z.id, z.name]));
+  const zoneOrder = new Map((zones || []).map((z, i) => [z.id, z.display_order ?? i]));
 
   const allowedChannels = (channels || []).filter((c) => {
     const zoneName = zoneMap.get(c.zone_id) || "Radio";
@@ -154,6 +149,7 @@ export async function listRadioChannels() {
     number: c.number,
     zoneId: c.zone_id,
     zoneName: zoneMap.get(c.zone_id) || "Radio",
+    zoneOrder: zoneOrder.get(c.zone_id) ?? 999,
     label: (zoneMap.get(c.zone_id) || "Radio") + " · " + c.name,
   }));
 }

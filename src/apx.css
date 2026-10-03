@@ -134,3 +134,44 @@
 /* Shell tweaks to sit with the radio */
 .apx-hero{margin-bottom:18px}
 @media(max-width:1020px){.apx-stage{grid-template-columns:1fr}.apx-head{max-width:600px}.apx-mic-body{max-width:none}}
+.ptt-learn{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:#dce3ea}
+.ptt-learn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ptt-learn button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 9px;font-size:11px;cursor:pointer}
+.ptt-learn button:hover{border-color:#4a5562}
+.ptt-learn.learning span{color:#f2c14e;animation:ptt-learn-blink 1s steps(2) infinite}
+@keyframes ptt-learn-blink{50%{opacity:.45}}
+.ble-setting{align-items:flex-start}
+.ble-ptt{display:flex;flex-direction:column;gap:8px;flex:1;max-width:440px;font-size:13px}
+.ble-ptt p{margin:0;font-size:12px}
+.ble-row,.ble-list li{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ble-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ble-ptt button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer}
+.ble-ptt button:disabled{opacity:.6;cursor:default}
+.ble-find{align-self:flex-start}
+.keymap-setting{align-items:flex-start}
+.keymap{display:flex;flex-direction:column;gap:10px;flex:1;max-width:620px;font-size:13px}
+.keymap p{margin:0;font-size:12px}
+.keymap-notice{font-size:12px;color:#f2c14e}
+.keymap-group h4{margin:6px 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8c97a3}
+.keymap-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #1d242c}
+.keymap-row.learning{background:#1a1f13}
+.keymap-action{flex:0 0 190px;color:#dce3ea}
+.keymap-binds{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1}
+.keymap-chip{display:inline-flex;align-items:center;gap:4px;background:#141a21;border:1px solid #2a3139;border-radius:6px;padding:2px 4px 2px 8px;font-size:12px}
+.keymap-chip b{font-weight:600;color:#dce3ea}
+.keymap button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer}
+.keymap-chip button.on{border-color:#3f7d4a;color:#8fdc9b}
+.keymap-wait{color:#f2c14e;font-size:12px;display:inline-flex;gap:6px;align-items:center}
+.keymap-reset{align-self:flex-start}
+@media (max-width:700px){.keymap-row{flex-direction:column;align-items:flex-start}.keymap-action{flex:none}}
+/* Update widget (Settings) */
+.update-widget{margin:18px 0;padding:16px;border:1px solid #252d36;border-radius:10px;background:#0c1116;display:flex;flex-direction:column;gap:12px}
+.update-title{display:flex;align-items:center;gap:10px;color:#8d98a5}
+.update-title h3{margin:3px 0 0;font-size:15px;color:#e9edf2}
+.update-display{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:8px;background:#090c10;border:1px solid #1d232a}
+.update-display>div{display:flex;flex-direction:column;gap:4px}
+.update-display strong{font-size:13px}
+.update-display small{color:#8d98a5;font-size:12px;line-height:1.4}
+.update-actions{display:flex;gap:8px}
+.update-actions button:not(.primary){background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:7px;padding:8px 12px;font-size:12px;cursor:pointer}
+.status-pill.warn{background:#2a2414;color:#f2c14e}
