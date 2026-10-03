@@ -14,6 +14,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   const roomRef=useRef(null), micRef=useRef(null), floorRef=useRef(false), renewRef=useRef(null), audioElsRef=useRef(new Map()), pttRequestRef=useRef(0);
   const [state,setState]=useState("ready"),[error,setError]=useState(""),[session,setSession]=useState(null),[participants,setParticipants]=useState([]),[muted,setMuted]=useState(false),[devices,setDevices]=useState([]);
   // connect() hands attachAudio to LiveKit once, so read mute through a ref to stay current.
+  const sessionRef=useRef(null);
   const mutedRef=useRef(muted);mutedRef.current=muted;
   const outputRef=useRef(outputDeviceId);outputRef.current=outputDeviceId;
   const volumeRef=useRef(volume);volumeRef.current=volume;
@@ -97,7 +98,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     // Start the server release immediately. Do not wait for LiveKit unpublish;
     // the authoritative floor lease must clear first so another radio can key
     // up without waiting on transport cleanup.
-    const releasePromise=asked?issueRadioPTT(channelId,"release").catch(()=>{}):null;
+    const releasePromise=asked?issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "").catch(()=>{}):null;
     // Keep the mic published but muted, so the next PTT only unmutes it instead of
     // renegotiating a new track with the voice server (and, on Bluetooth headsets,
     // switching audio profiles) every time.
@@ -122,7 +123,8 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     const gen=++connGenRef.current;
     setError("");setState("connecting");
     try {
-      const sessionData=await issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number);
+      sessionRef.current=null;
+      const sessionData=await issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number, "");
       if(gen!==connGenRef.current)return null;
       if(!sessionData?.ok) throw new Error(sessionData?.error||"Could not start radio session.");
       let room=null;
@@ -137,7 +139,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         onDisconnected:()=>{
           if(roomRef.current!==room)return;
           // Free any server-side floor lease if LiveKit drops unexpectedly.
-          if(floorAskedRef.current||floorRef.current)issueRadioPTT(channelId,"release").catch(()=>{});
+          if(floorAskedRef.current||floorRef.current)issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "").catch(()=>{});
           floorAskedRef.current=false;
           floorRef.current=false;
           clearOnAir();
@@ -156,7 +158,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
           setState("ready");
         }});
       if(gen!==connGenRef.current){await disconnectRadio(room);return null}
-      roomRef.current=room;setSession(sessionData);refresh();setState("listening");return room;
+      roomRef.current=room;sessionRef.current=sessionData;setSession(sessionData);refresh();setState("listening");return room;
     } catch(err){if(gen!==connGenRef.current)return null;setError(err instanceof Error?err.message:"Unable to connect to radio.");setState("error");throw err}
   },[channelId,channelInfo?.zoneId,channelInfo?.number,refresh,attachAudio,cleanupAudio,txStart,txEnd,clearOnAir]);
 
@@ -206,7 +208,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         // leaking audio while the floor request is being decided.
         try{pub.track.mediaStreamTrack.enabled=false}catch{}
         try{await pub.track.mute()}catch{}
-        const result=await issueRadioPTT(channelId,"request");
+        const result=await issueRadioPTT(channelId,"request",sessionRef.current?.radioSessionId || "");
         if(requestId!==pttRequestRef.current)return "stale";
         if(!result?.ok)throw new Error(result?.error||"Could not reach the radio server.");
         if(!result.granted)return await deny(result);
@@ -247,7 +249,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       renewRef.current=setInterval(async()=>{
         if(!floorRef.current){renewFailures=0;return;}
         try{
-          const r=await issueRadioPTT(channelId,"renew");
+          const r=await issueRadioPTT(channelId,"renew",sessionRef.current?.radioSessionId || "");
           if(!r?.ok)throw new Error();
           renewFailures=0;
         }catch{
