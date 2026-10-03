@@ -235,10 +235,20 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       try{mic.mediaStreamTrack.enabled=true}catch{}
       floorRef.current=true;setError("");setState("transmitting");
       eventsRef.current.onOwnTalkStart?.(mic);
+      let renewFailures=0;
       renewRef.current=setInterval(async()=>{
-        if(!floorRef.current)return;
-        try{const r=await issueRadioPTT(channelId,"renew");if(!r?.ok)throw new Error()}catch{releasePTT()}
-      },10000);
+        if(!floorRef.current){renewFailures=0;return;}
+        try{
+          const r=await issueRadioPTT(channelId,"renew");
+          if(!r?.ok)throw new Error();
+          renewFailures=0;
+        }catch{
+          // A transient renew failure must not cut off a healthy transmission.
+          // Give the server a few chances before treating the floor as lost.
+          renewFailures++;
+          if(renewFailures>=3)releasePTT();
+        }
+      },5000);
       return "granted";
     } catch(err){
       if(requestId!==pttRequestRef.current)return "stale";
