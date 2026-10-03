@@ -46,7 +46,7 @@
 .apx-banner.idle{background:#8a9097}
 @keyframes apx-blink{50%{opacity:0}}
 
-/* palm mic, with a shortcut to the programming in Settings */
+/* palm mic */
 .apx-side{display:flex;flex-direction:column;gap:16px}
 .apx-mic{display:flex;flex-direction:column;align-items:center}
 .apx-cord{width:14px;height:34px;background:repeating-linear-gradient(180deg,#26282c 0 4px,#0d0e10 4px 7px);border-radius:5px}
@@ -59,16 +59,10 @@
 .apx-ptt.pressed{transform:translateY(3px);background:linear-gradient(180deg,#e23b2f,#b8241b);color:#fff;box-shadow:0 1px 0 #6d140f,inset 0 2px 6px rgba(0,0,0,.4)}
 .apx-ptt:disabled{opacity:.4;cursor:not-allowed}
 .apx-mic-body small{color:#8d96a1;font-size:10px;text-align:center}
-.apx-program-link{display:flex;align-items:center;gap:10px;width:100%;max-width:250px;align-self:center;padding:11px 13px;border:1px solid #252a31;border-radius:12px;background:#11151a;color:#dce3ea;cursor:pointer;text-align:left}
-.apx-program-link:hover{border-color:#f28a25}
-.apx-program-link svg{flex:none;color:#f28a25}
-.apx-program-link span{display:flex;flex-direction:column;gap:3px;min-width:0}
-.apx-program-link strong{font-size:12px;letter-spacing:1.4px;text-transform:uppercase}
-.apx-program-link small{font-size:10.5px;color:#7e8995;line-height:1.35}
 
 /* Shell tweaks to sit with the radio */
 .apx-hero{margin-bottom:18px}
-@media(max-width:1020px){.apx-stage{grid-template-columns:1fr}.apx-mic-body,.apx-program-link{max-width:none}}
+@media(max-width:1020px){.apx-stage{grid-template-columns:1fr}.apx-mic-body{max-width:none}}
 .ble-setting{align-items:flex-start}
 .ble-ptt{display:flex;flex-direction:column;gap:8px;flex:1;max-width:440px;font-size:13px}
 .ble-ptt p{margin:0;font-size:12px}
@@ -890,3 +884,8 @@ button.fx-key:active,button.fx-round:active:not(:disabled),.fx-soft:active:not(:
 .prog-fields small{flex-basis:100%;font-size:11px;color:#6f7a86}
 .setting.keymap-setting,.setting.ble-setting{display:grid;grid-template-columns:170px minmax(0,1fr);column-gap:24px;align-items:start}
 .setting.keymap-setting>:nth-child(2),.setting.ble-setting>:nth-child(2){width:100%;max-width:680px;min-width:0}
+
+/* Console page: Who's On and status under the console; radio page keeps Calls */
+.grid.radio-calls{grid-template-columns:1fr}
+.console-extras{align-items:start}
+.console-status .status-panel{max-width:none;padding-top:14px}

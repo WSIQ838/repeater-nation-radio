@@ -1,5 +1,16 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.22
+
+**Cleaner radio page, with Who's On and status on the Console**, as Sean asked.
+
+- The Programming button under the palm mic is gone. Programming stays in Settings.
+- The Connect / Disconnect button at the top right of the radio page is gone. Every radio's own power control still connects and disconnects: the power button on the control heads and the corded head, or Radio Off / Radio On in the handhelds' menus. Auto-connect is unchanged.
+- **Who's On** moved from the radio page to the Console page, under the monitor console, with each member's status and who is talking. The Who's On page in the sidebar is unchanged.
+- **My status** (the six status buttons) moved from Settings to the Console page, next to Who's On, so status lives in one place.
+- The radio page keeps the Calls panel, now full width, and Last heard.
+- Version set to 0.2.22 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.21
 
 **Programming moved into Settings**, as Sean asked. The Programming panel beside the radio is gone, and everything in it now lives once in Settings.
