@@ -712,3 +712,85 @@ button.fx-key:active,button.fx-round:active:not(:disabled),.fx-soft:active:not(:
 .ab-item.sel small{color:#b8ccc2}
 .ab-item:disabled{opacity:.5;cursor:default}
 .ab-dim{font-size:11px;color:#3c4a44;padding:3px 2px}
+
+/* Compact handheld (XPR 7550-style photo). Body is an SVG in photo pixels; parts sit on top. */
+.apx-stage.face-compact-handheld{grid-template-columns:400px minmax(220px,1fr)}
+.xp{position:relative;flex:none;user-select:none;-webkit-user-select:none}
+.xp-body{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.xp>*:not(.xp-body){position:absolute}
+:where(.xp button){border:0;padding:0;margin:0;background:none;color:inherit;font:inherit;cursor:pointer}
+.xp-hold .apx-knob{width:100%;height:100%;border-radius:0;background:transparent;display:block}
+.xp-knob .apx-knob-cap{display:none}
+.xp-knob-svg{width:100%;height:100%;display:block}
+.xp-led{border-radius:3px 3px 0 0;background:linear-gradient(#5f8c78,#3c6a56);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+.xp-led.tx{background:#ff3b30;box-shadow:0 0 8px 1px #ff3b30}
+.xp-led.rx{background:#34d058;box-shadow:0 0 8px 1px #34d058}
+.xp-led.call{background:#ffb020;box-shadow:0 0 8px 1px #ffb020}
+.xp-ptt{border-radius:8px}
+.xp-ptt:not(:disabled):hover{background:rgba(255,255,255,.05)}
+.xp-ptt.pressed{background:rgba(242,138,37,.3)}
+.xp-ptt:disabled{cursor:default}
+.xp-key{border-radius:13px;background:linear-gradient(#4a4b4b,#363737 30%,#2e2f2f 75%,#272828);box-shadow:0 0 0 1.6px #050606,inset 0 1.4px 0 rgba(255,255,255,.22);color:#f6f6f6;display:flex;align-items:center;justify-content:center;font-family:Arial,Helvetica,sans-serif;font-weight:800}
+.xp-key:active{filter:brightness(1.4)}
+.xp-key:disabled{cursor:default}
+.xp-p{font-size:17px;letter-spacing:-.3px}
+.xp-ok{flex-direction:column;gap:2px;border-radius:12px}
+.xp-ok svg{width:13px;height:13px;fill:currentColor}
+.xp-ok b{font-size:16px;line-height:1}
+.xp-back{flex-direction:column;gap:3px;border-radius:12px}
+.xp-back svg{width:15px;height:12px}
+.xp-digit{gap:6px;justify-content:flex-start;padding-left:9px}
+.xp-digit b{font-size:22px;line-height:1}
+.xp-digit small{font-size:8.5px;line-height:1;font-weight:800;letter-spacing:.1px;display:flex;align-items:center}
+.xp-digit small svg{height:10px;width:auto}
+.xp-nav{border-radius:18px;background:linear-gradient(#444545,#353636 50%,#2c2d2d);box-shadow:0 0 0 1.6px #050606,inset 0 1.4px 0 rgba(255,255,255,.2);overflow:hidden}
+.xp-nav button{position:absolute;inset:0}
+.xp-nav .up{clip-path:polygon(0 0,100% 0,50% 50%)}
+.xp-nav .right{clip-path:polygon(100% 0,100% 100%,50% 50%)}
+.xp-nav .down{clip-path:polygon(0 100%,100% 100%,50% 50%)}
+.xp-nav .left{clip-path:polygon(0 0,0 100%,50% 50%)}
+.xp-nav button:active{background:rgba(255,255,255,.12)}
+.xp-nav i{position:absolute;width:0;height:0;border:solid transparent}
+.xp-nav .up i{left:50%;top:12%;margin-left:-12px;border-width:0 12px 8px;border-bottom-color:#f6f6f6}
+.xp-nav .down i{left:50%;bottom:12%;margin-left:-12px;border-width:8px 12px 0;border-top-color:#f6f6f6}
+.xp-nav .left i{left:8%;top:50%;margin-top:-11px;border-width:11px 8px 11px 0;border-right-color:#f6f6f6}
+.xp-nav .right i{right:8%;top:50%;margin-top:-11px;border-width:11px 0 11px 8px;border-left-color:#f6f6f6}
+.xp-screen{overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fdfdfd}
+.xp-screen>*{position:absolute}
+.xp-status{display:flex;align-items:center;gap:4px;padding-left:5px}
+.xp-bars{display:flex;align-items:flex-end;gap:1.5px;height:17px;padding:1px 2px;background:#e8f2e4;border:1px solid #b9d0b2}
+.xp-bars i{width:3px;background:#b8d4b0}
+.xp-bars i:nth-child(1){height:4px}.xp-bars i:nth-child(2){height:8px}.xp-bars i:nth-child(3){height:11px}.xp-bars i:nth-child(4){height:15px}
+.xp-bars i.on{background:#2c9a3c}
+.xp-batt{position:relative;width:12px;height:17px;border:1.6px solid #222;border-radius:2px;padding:1.5px}
+.xp-batt:before{content:"";position:absolute;left:28%;right:28%;top:-4px;height:2px;background:#222}
+.xp-batt i{display:block;width:100%;height:100%;background:linear-gradient(#45b052,#2c8c3a)}
+.xp-si{width:15px;height:17px}
+.xp-si.off{opacity:.3}
+.xp-status em{font:800 10px/1 Arial,sans-serif;font-style:normal;padding:2px 3px;border-radius:2px;background:#03005a;color:#fff}
+.xp-status em.tx{background:#c9342a}.xp-status em.rx{background:#1e8e4a}
+.xp-clock{margin-left:auto;padding-right:6px;font-size:13px;font-weight:700;color:#333}
+.xp-main{display:flex;flex-direction:column;justify-content:flex-end;padding:0 6px 4px;text-align:left;color:inherit;gap:1px}
+.xp-sub,.xp-cname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xp-sub{font-size:16px;color:#4a4a4a}
+.xp-sub.rx{color:#1e8e4a}.xp-sub.tx{color:#c9342a}.xp-sub.call,.xp-sub.warn{color:#b8730c}
+.xp-cname{font-size:27px;font-weight:800;color:#0a0a0a;letter-spacing:-.4px;line-height:1.08}
+.xp-cname u{text-decoration:none;animation:khBlink 1s steps(1) infinite}
+.xp-soft{display:flex;background:linear-gradient(#0d0a78,#03005a 55%,#02004a)}
+.xp-soft button{flex:1;color:#fff;font-size:20px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden}
+.xp-soft button+button{border-left:1.5px solid #8a88c8}
+.xp-soft button.go{color:#bff5cc}.xp-soft button.stop{color:#ffd2cc}
+.xp-soft button:disabled{cursor:default}
+.xp-list{display:flex;flex-direction:column;gap:2px;overflow:hidden;padding-top:1px}
+.xp-list>*{position:static}
+.xp-list strong{font-size:13px;color:#03005a;padding:0 2px}
+.xp-items{display:flex;flex-direction:column;overflow-y:auto;flex:1}
+.xp-item{display:flex;align-items:center;gap:5px;padding:2px 5px;font-size:14px;color:#111;text-align:left}
+.xp-item span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xp-item small{font-size:11px;color:#555}
+.xp-item.on span{font-weight:800}
+.xp-item.on span:after{content:" ✓";color:#03005a}
+.xp-item.sel{background:#03005a;color:#fff}
+.xp-item.sel small,.xp-item.sel.on span:after{color:#cfd0f4}
+.xp-item:disabled{opacity:.5;cursor:default}
+.xp-dim{font-size:12px;color:#555;padding:4px 3px}

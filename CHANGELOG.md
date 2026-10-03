@@ -1,5 +1,34 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.18
+
+**Compact handheld**, built from Sean's XPR 7550-style photo. It's the seventh radio in the one-at-a-time redo, and it replaces the old rugged portable. A saved choice of the old portable opens this one.
+
+- Every part is placed from the photo's own measurements:
+  - the stubby antenna with its rounded cap, the UHF label, the round badge and the white band
+  - the ridged volume knob on the left, and the taller ridged channel knob in the middle with its white index groove and marked collar
+  - the green light between the knobs and the orange top button by the antenna
+  - the name plate, the three-slot speaker grille and the belt clip on the right
+  - the ridged left PTT and the button under it
+  - the colour screen, P1 and P2, the four-way nav pad, OK and Back/Home, and the 12-key keypad with its letters
+- The badge reads RN and the name plate reads REPEATER NATION, in place of the maker's logo and lettering.
+- The screen is laid out like the photo, with live information:
+  - signal bars, battery, connection and mute icons, SCAN, TX and RX tags, and the current time
+  - a grey line with the channel number and zone ("Ch 1 · ALL"), which shows what's happening instead (Receiving · callsign, Transmitting, Call Received, Connecting, Radio Off)
+  - the channel name in bold
+  - Contact and Zone softkeys on the dark blue bar
+- What the controls do:
+  - On the home screen the nav pad changes channel (up and down) and zone (left and right).
+  - OK opens the menu: Zones, Channels, Scan, Who's On, Recent, My Status, Brightness, Radio on/off and Setup. In lists the nav pad moves and OK selects; Back goes back.
+  - Type a channel number on the keypad and press # or OK to go to it; * or Back clears it.
+  - P1 turns scan on and off. P2 replays the last transmission.
+  - Contact opens Calls and Zone opens the zone list.
+  - The middle knob changes channel and the left knob is volume (scroll, click to mute).
+  - Hold the left side PTT to talk.
+  - An incoming call shows on the screen with Answer (OK) and Decline (Back).
+  - The green light on top and the status row show RX and TX.
+- Version set to 0.2.18 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.17
 
 **All-band handheld**, built from Sean's APX 8000 photo. It's the sixth radio in the one-at-a-time redo, and it replaces the old classic portable. A saved choice of the old portable opens this one.
