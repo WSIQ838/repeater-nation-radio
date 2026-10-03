@@ -94,6 +94,10 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     floorRef.current=false;
     if(renewRef.current)clearInterval(renewRef.current);
     renewRef.current=null;
+    // Start the server release immediately. Do not wait for LiveKit unpublish;
+    // the authoritative floor lease must clear first so another radio can key
+    // up without waiting on transport cleanup.
+    const releasePromise=asked?issueRadioPTT(channelId,"release").catch(()=>{}):null;
     // Keep the mic published but muted, so the next PTT only unmutes it instead of
     // renegotiating a new track with the voice server (and, on Bluetooth headsets,
     // switching audio profiles) every time.
@@ -107,7 +111,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       // floor lease/realtime polling window to notice the release.
       try{await unpublishMicrophone(pub.room,pub.track)}catch{}
     }
-    if(asked){try{await issueRadioPTT(channelId,"release")}catch{}}
+    if(releasePromise)await releasePromise;
     if(roomRef.current)setState("listening");
   },[channelId]);
 
