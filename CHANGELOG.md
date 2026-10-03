@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.34
+
+**Added the exact build version to the top of the desktop radio.**
+
+- The top bar now always shows the running build, for example `BUILD v0.2.34`.
+- This makes it easy to confirm which installer/build is actually running during PTT troubleshooting.
+- Version set to 0.2.34 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+
 ## 0.2.33
 
 **Fixed stale desktop PTT errors and prevented a microphone hang from leaving a floor lease behind.**
