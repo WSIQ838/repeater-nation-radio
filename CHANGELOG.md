@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.32
+
+**Fixed duplicate desktop PTT requests that could make the radio report a false busy channel.**
+
+- Added a desktop PTT in-flight guard so repeated hardware/touch events cannot send multiple floor requests before the first one finishes.
+- A second key-down while the first PTT request is still pending is ignored instead of creating another `RadioFloorState` claim.
+- The PTT UI now stays with the original request until that request is granted or denied.
+- Version set to 0.2.32 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+
 ## 0.2.31
 
 **Fixed an accidental 3-second PTT timeout in the desktop app.**
