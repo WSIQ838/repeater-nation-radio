@@ -177,6 +177,9 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   const requestPTT=useCallback(async(deviceId="")=>{
     const requestId=++pttRequestRef.current;
     if(floorRef.current)return "granted";
+    // Clear any previous busy/error banner immediately. A previous denied
+    // request must never remain visible while a new PTT attempt is underway.
+    setError("");
     if(pttInFlightRef.current)return "pending";
     if(!roomRef.current||!session){setError("Connect to the radio first.");return "error"}
     if(!session.canTransmit){setError("You are not authorized to transmit on this channel.");return "denied"}
@@ -230,7 +233,8 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         if(requestId!==pttRequestRef.current){dropMic();return "stale"}
         if(!result?.ok){dropMic();throw new Error(result?.error||"Could not reach the radio server.")}
         if(!result.granted){dropMic();return await deny(result)}
-        const track=await micPromise;
+        const micTimeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error("Microphone did not become ready within 8 seconds.")),8000));
+        const track=await Promise.race([micPromise,micTimeout]);
         // Device names are only visible after the first mic permission, so refresh them now.
         refreshDevices();
         if(requestId!==pttRequestRef.current){track.stop();try{await issueRadioPTT(channelId,"release",sessionRef.current?.radioSessionId || "",sessionRef.current?.radioCallsign || "")}catch{}return "stale"}
