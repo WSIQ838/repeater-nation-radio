@@ -111,16 +111,17 @@ async function invoke(name, payload) {
   }
 }
 
-export const issueRadioSession = (channelId, zoneId="", channelNumber=null) =>
+export const issueRadioSession = (channelId, zoneId="", channelNumber=null, radioSessionId="") =>
   invoke("issue-radio-session", {
     channel_id: channelId,
     zone_id: zoneId || "",
     channel_number: channelNumber ?? null,
+    radio_session_id: radioSessionId || "",
     session_type: "radio",
   });
 
-export const issueRadioPTT = (channelId, action) =>
-  invoke("radio-ptt", { action, channel_id: channelId });
+export const issueRadioPTT = (channelId, action, radioSessionId="") =>
+  invoke("radio-ptt", { action, channel_id: channelId, radio_session_id: radioSessionId || "" });
 
 export const radioPresence = () => invoke("radio-presence", {});
 
