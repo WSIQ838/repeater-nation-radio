@@ -120,8 +120,8 @@ export const issueRadioSession = (channelId, zoneId="", channelNumber=null, radi
     session_type: "radio",
   });
 
-export const issueRadioPTT = (channelId, action, radioSessionId="") =>
-  invoke("radio-ptt", { action, channel_id: channelId, radio_session_id: radioSessionId || "" });
+export const issueRadioPTT = (channelId, action, radioSessionId="", radioCallsign="") =>
+  invoke("radio-ptt", { action, channel_id: channelId, radio_session_id: radioSessionId || "", radio_callsign: radioCallsign || "" });
 
 export const radioPresence = () => invoke("radio-presence", {});
 
