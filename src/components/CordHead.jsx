@@ -1,4 +1,6 @@
 import {useEffect,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {photoBoxes,useFace} from "./ControlHead";
 import {hhmm,pttHandlers} from "./TouchHandheld";
 import {KeyList,useKeypadMenu} from "./KeypadHandheld";
@@ -110,8 +112,8 @@ function Screen({p,f,ui}){
         <span className="cd-sub">Channel number · # Enter</span>
         <span className="cd-cname">Ch {f.entry}<u>_</u></span>
       </>:<>
-        <span className={"cd-sub"+(busy?" "+b.tone:"")}>{busy?b.title+(b.sub?" · "+b.sub:""):`Ch ${num} · ${zoneName||"All Zones"}`}</span>
-        <span className="cd-cname">{channelName}</span>
+        <span className={"cd-sub"+(busy?" "+b.tone:"")}>{busy?b.title+(b.sub?" · "+b.sub:""):zoneLabel(zoneName)}</span>
+        <span className="cd-cname"><ChanLine number={num} name={channelName}/></span>
       </>}
     </button>:<KeyList ui={ui} prefix="cd" style={S.at(252,324,638,494)}/>}
     <div className="cd-soft" style={S.at(249,496,641,548)}>

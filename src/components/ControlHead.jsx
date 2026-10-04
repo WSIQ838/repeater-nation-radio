@@ -1,4 +1,6 @@
 import {useEffect,useRef,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {Power,Volume2,VolumeX,Mic,Signal,PhoneIncoming,Phone,Users} from "lucide-react";
 
 // Shared radio face logic, and the O7-style dispatch control head drawn from its reference photo.
@@ -269,9 +271,8 @@ export function FaceDisplay({p,f,className="apx-display",menus=true,softRow=null
                 {participants.length?participants.slice(0,4).map(p=>{let info={};try{info=p.metadata?JSON.parse(p.metadata):{}}catch{}return <span key={p.identity}>{info.callsign||info.displayName||p.name||p.identity}</span>}):<span className="dim">{connected?"Nobody else on channel":"Not connected"}</span>}
                 {participants.length>4&&<span className="dim">+{participants.length-4} more</span>}
               </div>:entry||view==="chan"?<div className="apx-entry"><small>Channel number</small><strong>CH {entry}<i>_</i></strong><small># Enter · * Clear</small></div>:<>
-                <div className="apx-zone">{zoneName||"All Zones"}</div>
-                <div className="apx-channel">{channelName}</div>
-                <div className="apx-chnum">CH {channelNumber??"--"}</div>
+                <div className="apx-zone">{zoneLabel(zoneName)}</div>
+                <div className="apx-channel"><ChanLine number={channelNumber} name={channelName}/></div>
               </>}
             </div>
             <div className={"apx-banner "+banner.tone}>

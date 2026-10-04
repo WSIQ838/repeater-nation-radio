@@ -1,4 +1,6 @@
 import {useEffect,useRef,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {ChevronLeft,ChevronRight,Phone,PhoneOff,Power,Radio,RefreshCw,ScanLine,Settings,Users,Volume2,VolumeX,Wifi,History,List} from "lucide-react";
 import {photoBoxes,useFace} from "./ControlHead";
 import {clock,hhmm,pttHandlers,secs} from "./TouchHandheld";
@@ -72,12 +74,12 @@ export function PhoneApp({p,f,variant="iphone"}){
       </div>
       <div className="ph-zone">
         <button type="button" onClick={()=>f.stepZone(-1)} aria-label="Previous zone"><ChevronLeft size={16}/></button>
-        <span>{zoneName||"All Zones"}</span>
+        <span>{zoneLabel(zoneName)}</span>
         <button type="button" onClick={()=>f.stepZone(1)} aria-label="Next zone"><ChevronRight size={16}/></button>
       </div>
       <div className="ph-chan">
         <button type="button" className="ph-step" onClick={()=>f.stepChannel(-1)} aria-label="Previous channel"><ChevronLeft size={22}/></button>
-        <button type="button" className="ph-channame" onClick={()=>setScreen("channels")} title="Choose channel"><strong>{channelName||"No channel"}</strong><small>CH {channelNumber??"--"}</small></button>
+        <button type="button" className="ph-channame" onClick={()=>setScreen("channels")} title="Choose channel"><strong>{channelName?<ChanLine number={channelNumber} name={channelName}/>:"No channel"}</strong></button>
         <button type="button" className="ph-step" onClick={()=>f.stepChannel(1)} aria-label="Next channel"><ChevronRight size={22}/></button>
       </div>
       <div className={"ph-activity "+b.tone}><i/>{b.title}{b.sub?<span> · {b.sub}</span>:null}</div>

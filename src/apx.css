@@ -1092,3 +1092,10 @@ button.fal-key:active{transform:translateY(1px);box-shadow:0 0 0 1.4px #131410,i
 .feature-sub{display:flex;flex-direction:column;gap:8px;padding:8px 0 2px 14px;border-left:2px solid #232c36}
 .feature-val{min-width:40px;text-align:right;font-variant-numeric:tabular-nums}
 .setting-error{white-space:normal;word-break:break-word;text-align:right;color:#f2c14e!important;max-width:60%}
+
+/* Zone and channel lines on the radio screens: a long name is cut short with "…" while
+   "Zone" and "Ch n" at the front stay readable. */
+.lbl{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chan-line{display:block;width:100%}
+.chan-line .chn{font-size:.82em;letter-spacing:0}
+.apx-main .apx-channel{align-self:stretch}

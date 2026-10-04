@@ -16,7 +16,28 @@ const PATTERNS={
   tot:[[880,90],[0,60],[880,90],[0,60],[880,90]], // time-out timer about to key you off
   timeout:[[660,350]],                          // time-out timer keyed you off
   error:[[330,250]],
+  key:[[1850,38]],                              // key press on a radio face
 };
+
+// Motorola MDC-1200 data burst: 1200 baud FSK, 1200 Hz / 1800 Hz, sent as a "post" PTT ID at
+// the end of a transmission. Built like a real packet: bit-sync leader, the MDC sync word,
+// then opcode, argument, unit ID and CRC, convolutionally encoded and interleaved.
+function mdcCrc(bytes){
+  const flip=(v,n)=>{let r=0;for(let i=0;i<n;i++)if(v&(1<<i))r|=1<<(n-1-i);return r};
+  let crc=0;
+  for(const b0 of bytes){const c=flip(b0,8);for(let j=0x80;j;j>>=1){let bit=crc&0x8000;crc=(crc<<1)&0xffff;if(c&j)bit^=0x8000;if(bit)crc^=0x1021}}
+  return (flip(crc,16)^0xffff)&0xffff;
+}
+function mdcBits(op=0x01,arg=0x80,unit=0x1234){
+  const d=[op,arg,(unit>>8)&0xff,unit&0xff];const crc=mdcCrc(d);d.push(crc&0xff,(crc>>8)&0xff,0);
+  const csr=[0,0,0,0,0,0,0],lbits=[];
+  for(const byte of d)for(let j=0;j<8;j++){const b=(byte>>j)&1;csr.unshift(b);csr.pop();lbits.push(b,(csr[0]+csr[2]+csr[5]+csr[6])&1)}
+  const coded=[];let k=0;
+  for(let i=0;i<112;i++){coded.push(lbits[k]);k+=16;if(k>111)k-=111}
+  const bytesToBits=bs=>bs.flatMap(b=>Array.from({length:8},(_,i)=>(b>>(7-i))&1));
+  return [...bytesToBits([0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x07,0x09,0x2a,0x44,0x6f]),...coded];
+}
+const MDC={fsk:mdcBits(),baud:1200,mark:1200,space:1800};
 
 // Roger beep choices for the end of each received transmission ("off" plays nothing).
 export const ROGER_TONES=[
@@ -29,11 +50,26 @@ export const ROGER_TONES=[
   {id:"morse-k",label:"Morse K (– · –)",steps:[[800,180],[0,60],[800,60],[0,60],[800,180]]},
   {id:"data",label:"Data burst",steps:Array.from({length:14},(_,i)=>[i%3===1?1200:1800,16])},
   {id:"low",label:"Low bloop",steps:[[620,70],[0,20],[470,140]]},
+  {id:"mdc",label:"Motorola MDC-1200",steps:MDC},
 ];
 export const rogerSteps=id=>ROGER_TONES.find(t=>t.id===id)?.steps||PATTERNS.roger;
 
+// One phase-continuous oscillator switching between mark and space each bit (NRZI, like MDC).
+function playFsk(ac,{fsk,baud,mark,space},volume){
+  const t0=ac.currentTime+0.01,bit=1/baud,end=t0+fsk.length*bit;
+  const osc=ac.createOscillator(),gain=ac.createGain();
+  osc.type="sine";
+  let prev=0;
+  fsk.forEach((b,i)=>{osc.frequency.setValueAtTime(b!==prev?space:mark,t0+i*bit);prev=b});
+  gain.gain.setValueAtTime(0,t0);gain.gain.linearRampToValueAtTime(0.22*volume,t0+0.004);
+  gain.gain.setValueAtTime(0.22*volume,end-0.004);gain.gain.linearRampToValueAtTime(0,end);
+  osc.connect(gain).connect(ac.destination);
+  osc.start(t0);osc.stop(end+0.02);
+}
+
 export function playTone(name,volume=0.6,steps0=null){
   const ac=audio(),steps=steps0||PATTERNS[name];if(!ac||!steps||volume<=0)return;
+  if(steps.fsk){playFsk(ac,steps,volume);return}
   let t=ac.currentTime+0.01;
   for(const [freq,ms] of steps){
     const d=ms/1000;
@@ -51,18 +87,78 @@ export function playTone(name,volume=0.6,steps0=null){
   }
 }
 
-// Spoken channel announcements where the WebView has speech synthesis. opts picks
-// the voice (by voiceURI, from the voices installed on the computer), speed and pitch.
-export function announce(text,{voice="",rate=1.05,pitch=1}={}){
+// Google voices: the Google Translate voice, fetched as audio over the internet, so it works
+// in the desktop app (whose WebView only lists the computer's own voices) with no account.
+export const GOOGLE_VOICES=[
+  {id:"google:en-US",name:"Google US English",lang:"en-US"},
+  {id:"google:en-GB",name:"Google UK English",lang:"en-GB"},
+  {id:"google:en-AU",name:"Google Australian English",lang:"en-AU"},
+  {id:"google:en-IN",name:"Google Indian English",lang:"en-IN"},
+];
+export const isGoogleVoice=id=>String(id||"").startsWith("google:");
+const GOOGLE_TIMEOUT_MS=4000;
+let speaking=null;
+function stopSpeaking(){
+  if(speaking){try{speaking.pause?.();speaking.removeAttribute?.("src");speaking.load?.()}catch{}speaking=null}
+  try{window.speechSynthesis?.cancel()}catch{}
+}
+function speakComputer(text,{voice="",rate=1.05,pitch=1}={}){
+  const s=window.speechSynthesis;if(!s)return false;
+  const u=new SpeechSynthesisUtterance(text);u.rate=rate;u.pitch=pitch;
+  const v=voice&&s.getVoices().find(x=>x.voiceURI===voice);
+  if(v){u.voice=v;u.lang=v.lang}
+  s.speak(u);
+  return true;
+}
+const googleUrl=(text,lang)=>`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(lang)}&q=${encodeURIComponent(text.slice(0,200))}`;
+// In the desktop app the audio is fetched through the app itself (like the update check), so
+// Google sees a plain request rather than one from the app's own page; the browser plays it
+// straight from Google.
+async function googleSource(url){
+  if(typeof window!=="undefined"&&window.__TAURI_INTERNALS__){
+    try{
+      const {fetch}=await import("@tauri-apps/plugin-http");
+      const r=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}});
+      if(r.ok){const b=await r.blob();if(b.size)return URL.createObjectURL(new Blob([b],{type:"audio/mpeg"}))}
+    }catch{}
+  }
+  return url;
+}
+// Resolves true once the Google voice starts playing, false when it can't (no internet, or
+// Google refused), so the caller can fall back to the computer's voice.
+function speakGoogle(text,lang,rate){
+  return new Promise(resolve=>{
+    let done=false,a=null;
+    const token={};speaking=token;
+    const finish=ok=>{if(done)return;done=true;clearTimeout(t);resolve(ok)};
+    const t=setTimeout(()=>{if(speaking===a||speaking===token)stopSpeaking();finish(false)},GOOGLE_TIMEOUT_MS);
+    googleSource(googleUrl(text,lang)).then(src=>{
+      const free=()=>{if(src.startsWith("blob:"))URL.revokeObjectURL(src)};
+      // Another announcement started while this one was loading.
+      if(done||speaking!==token){free();return}
+      a=new Audio(src);a.preservesPitch=true;a.playbackRate=rate;speaking=a;
+      a.addEventListener("playing",()=>finish(true),{once:true});
+      a.addEventListener("error",()=>{if(speaking===a)speaking=null;free();finish(false)},{once:true});
+      a.addEventListener("ended",()=>{if(speaking===a)speaking=null;free()},{once:true});
+      a.play().catch(()=>{if(speaking===a)speaking=null;free();finish(false)});
+    });
+  });
+}
+// Spoken channel announcements. opts picks the voice (a voiceURI from the computer's voices,
+// or a Google voice id), speed and pitch (pitch only applies to the computer's voices).
+// Returns a promise of how it was spoken: "computer", "google", "fallback" or "" (couldn't).
+export async function announce(text,{voice="",rate=1.05,pitch=1}={}){
   try{
-    const s=window.speechSynthesis;if(!s||!text)return false;
-    s.cancel();
-    const u=new SpeechSynthesisUtterance(text);u.rate=rate;u.pitch=pitch;
-    const v=voice&&s.getVoices().find(x=>x.voiceURI===voice);
-    if(v){u.voice=v;u.lang=v.lang}
-    s.speak(u);
-    return true;
-  }catch{return false}
+    if(!text)return "";
+    stopSpeaking();
+    if(isGoogleVoice(voice)){
+      const lang=voice.slice(7);
+      if(await speakGoogle(text,lang,rate))return "google";
+      // Google didn't answer: say it with the computer's voice rather than nothing.
+      return speakComputer(text,{rate,pitch})?"fallback":"";
+    }
+    return speakComputer(text,{voice,rate,pitch})?"computer":"";
+  }catch{return ""}
 }
 // The computer's voices; they load late in some browsers, so watch voiceschanged too.
 export function listVoices(onChange){
@@ -71,11 +167,11 @@ export function listVoices(onChange){
   send();s.addEventListener?.("voiceschanged",send);
   return()=>s.removeEventListener?.("voiceschanged",send);
 }
-export const canAnnounce=()=>typeof window!=="undefined"&&!!window.speechSynthesis;
+export const canAnnounce=()=>typeof window!=="undefined"&&(!!window.speechSynthesis||typeof Audio!=="undefined");
 
 // Saved radio feature settings.
 const KEY="rn-features";
-export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,rogerTone:"classic",tot:60,announce:false,announceVoice:"",announceRate:1.05,announcePitch:1,voiceFx:"clean",toneVolume:0.6,notifyCalls:true,notifyTalk:false,closeToTray:false};
+export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,rogerTone:"classic",tot:60,announce:false,announceVoice:"",announceRate:1.05,announcePitch:1,voiceFx:"clean",toneVolume:0.6,keyTones:true,keyToneVolume:0.5,notifyCalls:true,notifyTalk:false,closeToTray:false};
 const VALID_TOT=new Set([0,30,60,120,180]);
 export function loadFeatures(){
   try{

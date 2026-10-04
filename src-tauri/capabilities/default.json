@@ -20,6 +20,9 @@
       "allow": [
         {
           "url": "https://api.github.com/**"
+        },
+        {
+          "url": "https://translate.google.com/translate_tts*"
         }
       ]
     }

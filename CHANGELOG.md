@@ -1,5 +1,33 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.48 — Radio screens say “Zone” and “Ch”
+
+**Every radio screen now reads “Zone ALL” and “Ch 2 US-West”**, after Sean asked for the word Zone next to the zone name and the channel number next to the channel name.
+
+- All 12 radio faces and the mini radio show the zone as “Zone” plus its name, and the channel as “Ch” plus its number in front of the channel name. A zone already named “Zone 1” isn't doubled up (the channel announcement follows the same rule).
+- On small screens a long channel name shrinks a little first and is then cut short with “…”, so “Ch 2” always stays readable.
+- Faces that showed the channel number on its own line (the control head, and the “Ch 1 · ALL” line on the compact handheld and corded head) now show it once, in front of the name.
+- Version set to 0.2.48 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.47 — Keypad tones and the Motorola MDC-1200 roger beep
+
+**Radio keys beep when pressed, and the roger beep can be a Motorola MDC burst**, after Sean asked for buttons that make noise and an MDC roger beep.
+
+- Every key on every radio face, the palm mic and the mini radio now gives a short Motorola-style key beep when pressed, by mouse, touch or keyboard. PTT keys and knobs stay quiet, like the real radios.
+- Settings, Programming, Radio features has a new **Keypad tones** row: on by default, with its own volume slider and a Test button.
+- The roger beep list adds **Motorola MDC-1200**: the 1200 baud data burst (1200 Hz and 1800 Hz) Motorola radios send at the end of a transmission, built like a real packet with the MDC sync word, a PTT ID and a checksum. Test plays it.
+- Version set to 0.2.47 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.46 — Google voices for the channel announcement
+
+**The announce voice can now be a Google voice**, after Sean asked for the Google voice.
+
+- Settings, Programming, Radio features, Announce voice lists Google US English, Google UK English, Google Australian English and Google Indian English under “Google (needs internet)”, next to the computer's own voices. No Google account or key is needed.
+- Voice speed works with Google voices; the pitch slider only changes the computer's voices, so it's greyed out for Google.
+- If Google doesn't answer (no internet, or Google refuses), the announcement is spoken with the computer's voice instead, and the Test button says so.
+- The desktop app fetches the Google audio itself; `translate.google.com` is added to the app's allowed web addresses for that.
+- Version set to 0.2.46 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.45 — Channel announcement says the zone
 
 **The channel announcement now says “Zone” before the zone name**, after Sean noticed it didn't say the zone.

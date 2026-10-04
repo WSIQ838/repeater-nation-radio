@@ -1,4 +1,6 @@
 import {useEffect,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {Knob,photoBoxes,useFace} from "./ControlHead";
 import {Flutes,StubbyAntenna,pttHandlers} from "./TouchHandheld";
 import {KeyList,useKeypadMenu} from "./KeypadHandheld";
@@ -117,7 +119,7 @@ const DOTS=[[[50,50]],[[34,50],[66,50]],[[50,32],[34,66],[66,66]]];
 // The monochrome screen, laid out like the photo: status icons, time, then three centred
 // lines (zone, channel, activity) and three softkey labels over the dot buttons.
 function Screen({p,f,ui}){
-  const {channelName,zoneName,connected,muted,scanning}=p;
+  const {channelName,channelNumber,zoneName,connected,muted,scanning}=p;
   const {screen,soft}=ui;
   const b=f.banner;
   const [now,setNow]=useState(()=>Date.now());
@@ -138,8 +140,8 @@ function Screen({p,f,ui}){
         <span className="ab-cname" style={M.at(368,505,439,516.4)}>CH {f.entry}<u>_</u></span>
         <span className="ab-act" style={M.at(368,517.4,439,525.4)}># Enter · * Clear</span>
       </>:<>
-        <span className="ab-zname" style={M.at(368,496.4,439,504.4)}>{zoneName||"All Zones"}</span>
-        <span className="ab-cname" style={M.at(368,505,439,516.4)}>{channelName}</span>
+        <span className="ab-zname" style={M.at(368,496.4,439,504.4)}><span className="lbl">{zoneLabel(zoneName)}</span></span>
+        <span className="ab-cname" style={M.at(368,505,439,516.4)}><ChanLine number={channelNumber} name={channelName}/></span>
         <span className={"ab-act "+b.tone} style={M.at(368,517.4,439,525.4)}>{b.title}{b.sub?" · "+b.sub:""}</span>
       </>}
     </button>:<KeyList ui={ui} prefix="ab" style={S.at(368,496,439,533)}/>}
