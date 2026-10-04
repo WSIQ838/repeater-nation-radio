@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.46 — Google voices for the channel announcement
+
+**The announce voice can now be a Google voice**, after Sean asked for the Google voice.
+
+- Settings, Programming, Radio features, Announce voice lists Google US English, Google UK English, Google Australian English and Google Indian English under “Google (needs internet)”, next to the computer's own voices. No Google account or key is needed.
+- Voice speed works with Google voices; the pitch slider only changes the computer's voices, so it's greyed out for Google.
+- If Google doesn't answer (no internet, or Google refuses), the announcement is spoken with the computer's voice instead, and the Test button says so.
+- The desktop app fetches the Google audio itself; `translate.google.com` is added to the app's allowed web addresses for that.
+- Version set to 0.2.46 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.45 — Channel announcement says the zone
 
 **The channel announcement now says “Zone” before the zone name**, after Sean noticed it didn't say the zone.

@@ -18,7 +18,7 @@ import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
 import {clearTraffic,deleteTraffic,getAudio,listTraffic,loadTrafficSettings,onTrafficChange,prune,recordTrack,saveTrafficSettings,saveTransmission} from "./lib/traffic";
 import {setSink} from "./hooks/useRadio";
-import {DEFAULT_VOLUME,volumeGain,announce,canAnnounce,listVoices,loadFeatures,loadVolumes,playTone,ROGER_TONES,rogerSteps,saveFeatures,saveVolumes} from "./lib/tones";
+import {DEFAULT_VOLUME,volumeGain,announce,canAnnounce,GOOGLE_VOICES,isGoogleVoice,listVoices,loadFeatures,loadVolumes,playTone,ROGER_TONES,rogerSteps,saveFeatures,saveVolumes} from "./lib/tones";
 import {VOICE_FX,previewVoiceFx,setVoiceFx,voiceFx} from "./lib/voicefx";
 import "./apx.css";
 
@@ -146,8 +146,10 @@ function UpdateStatus(){
 }
 
 function RadioFeatures({features,setFeature,hasTray,onTest}){
-  const [voices,setVoices]=useState([]);
+  const [voices,setVoices]=useState([]),[voiceNote,setVoiceNote]=useState("");
   useEffect(()=>listVoices(setVoices),[]);
+  const google=isGoogleVoice(features.announceVoice);
+  const testVoice=async()=>{setVoiceNote("");const how=await onTest("announce");if(how==="fallback")setVoiceNote("Google's voice didn't answer (no internet?), so the computer's voice was used.");else if(!how)setVoiceNote("This voice couldn't play.")};
   return <div className="features">
     <label>Talk-permit tone<input type="checkbox" checked={features.permitTone} onChange={e=>setFeature("permitTone",e.target.checked)}/></label>
     <label>Busy tone<input type="checkbox" checked={features.busyTone} onChange={e=>setFeature("busyTone",e.target.checked)}/></label>
@@ -167,12 +169,14 @@ function RadioFeatures({features,setFeature,hasTray,onTest}){
       <label>Announce voice<span className="feature-pick">
         <select aria-label="Announce voice" value={features.announceVoice||""} onChange={e=>setFeature("announceVoice",e.target.value)}>
           <option value="">Computer's default voice</option>
-          {voices.map(v=><option key={v.id} value={v.id}>{v.name}{v.lang?` (${v.lang})`:""}</option>)}
+          {!!voices.length&&<optgroup label="On this computer">{voices.map(v=><option key={v.id} value={v.id}>{v.name}{v.lang?` (${v.lang})`:""}</option>)}</optgroup>}
+          <optgroup label="Google (needs internet)">{GOOGLE_VOICES.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</optgroup>
         </select>
-        <button type="button" className="feature-test" onClick={()=>onTest("announce")}>Test</button></span></label>
+        <button type="button" className="feature-test" onClick={testVoice}>Test</button></span></label>
       <label>Voice speed<span className="feature-pick"><input type="range" aria-label="Voice speed" min="0.6" max="1.6" step="0.05" value={features.announceRate??1.05} onChange={e=>setFeature("announceRate",Number(e.target.value))}/><small className="feature-val">{Number(features.announceRate??1.05).toFixed(2)}×</small></span></label>
-      <label>Voice pitch<span className="feature-pick"><input type="range" aria-label="Voice pitch" min="0.5" max="1.8" step="0.05" value={features.announcePitch??1} onChange={e=>setFeature("announcePitch",Number(e.target.value))}/><small className="feature-val">{Number(features.announcePitch??1).toFixed(2)}</small></span></label>
-      {!voices.length&&<small>This computer hasn't listed any voices yet; the default voice is used.</small>}
+      <label>Voice pitch<span className="feature-pick"><input type="range" aria-label="Voice pitch" min="0.5" max="1.8" step="0.05" value={features.announcePitch??1} disabled={google} title={google?"Pitch works with the computer's voices":undefined} onChange={e=>setFeature("announcePitch",Number(e.target.value))}/><small className="feature-val">{Number(features.announcePitch??1).toFixed(2)}</small></span></label>
+      {google&&<small>Google voices need the internet; pitch only changes the computer's voices.</small>}
+      {voiceNote&&<small className="feature-note">{voiceNote}</small>}
     </div>}
   </div>;
 }
@@ -399,7 +403,7 @@ function RadioApp({session,onSignOut}){
     const f=featuresRef.current;
     if(what==="roger")tone("roger",rogerSteps(f.rogerTone));
     else if(what==="fx")previewVoiceFx(f.voiceFx||"clean",Math.max(0.3,volumeGain(volumeRef.current)));
-    else if(what==="announce"){const c=currentChannelRef.current;announce(c?announceText(c):"Zone one, channel one, Nation Wide",{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch})}
+    else if(what==="announce"){const c=currentChannelRef.current;return announce(c?announceText(c):"Zone one, channel one, Nation Wide",{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch})}
   };
   const changeVolume=dir=>{
     const next=Math.max(0,Math.min(10,volume+dir));
