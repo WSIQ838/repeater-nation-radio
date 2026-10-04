@@ -51,18 +51,78 @@ export function playTone(name,volume=0.6,steps0=null){
   }
 }
 
-// Spoken channel announcements where the WebView has speech synthesis. opts picks
-// the voice (by voiceURI, from the voices installed on the computer), speed and pitch.
-export function announce(text,{voice="",rate=1.05,pitch=1}={}){
+// Google voices: the Google Translate voice, fetched as audio over the internet, so it works
+// in the desktop app (whose WebView only lists the computer's own voices) with no account.
+export const GOOGLE_VOICES=[
+  {id:"google:en-US",name:"Google US English",lang:"en-US"},
+  {id:"google:en-GB",name:"Google UK English",lang:"en-GB"},
+  {id:"google:en-AU",name:"Google Australian English",lang:"en-AU"},
+  {id:"google:en-IN",name:"Google Indian English",lang:"en-IN"},
+];
+export const isGoogleVoice=id=>String(id||"").startsWith("google:");
+const GOOGLE_TIMEOUT_MS=4000;
+let speaking=null;
+function stopSpeaking(){
+  if(speaking){try{speaking.pause?.();speaking.removeAttribute?.("src");speaking.load?.()}catch{}speaking=null}
+  try{window.speechSynthesis?.cancel()}catch{}
+}
+function speakComputer(text,{voice="",rate=1.05,pitch=1}={}){
+  const s=window.speechSynthesis;if(!s)return false;
+  const u=new SpeechSynthesisUtterance(text);u.rate=rate;u.pitch=pitch;
+  const v=voice&&s.getVoices().find(x=>x.voiceURI===voice);
+  if(v){u.voice=v;u.lang=v.lang}
+  s.speak(u);
+  return true;
+}
+const googleUrl=(text,lang)=>`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${encodeURIComponent(lang)}&q=${encodeURIComponent(text.slice(0,200))}`;
+// In the desktop app the audio is fetched through the app itself (like the update check), so
+// Google sees a plain request rather than one from the app's own page; the browser plays it
+// straight from Google.
+async function googleSource(url){
+  if(typeof window!=="undefined"&&window.__TAURI_INTERNALS__){
+    try{
+      const {fetch}=await import("@tauri-apps/plugin-http");
+      const r=await fetch(url,{headers:{"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"}});
+      if(r.ok){const b=await r.blob();if(b.size)return URL.createObjectURL(new Blob([b],{type:"audio/mpeg"}))}
+    }catch{}
+  }
+  return url;
+}
+// Resolves true once the Google voice starts playing, false when it can't (no internet, or
+// Google refused), so the caller can fall back to the computer's voice.
+function speakGoogle(text,lang,rate){
+  return new Promise(resolve=>{
+    let done=false,a=null;
+    const token={};speaking=token;
+    const finish=ok=>{if(done)return;done=true;clearTimeout(t);resolve(ok)};
+    const t=setTimeout(()=>{if(speaking===a||speaking===token)stopSpeaking();finish(false)},GOOGLE_TIMEOUT_MS);
+    googleSource(googleUrl(text,lang)).then(src=>{
+      const free=()=>{if(src.startsWith("blob:"))URL.revokeObjectURL(src)};
+      // Another announcement started while this one was loading.
+      if(done||speaking!==token){free();return}
+      a=new Audio(src);a.preservesPitch=true;a.playbackRate=rate;speaking=a;
+      a.addEventListener("playing",()=>finish(true),{once:true});
+      a.addEventListener("error",()=>{if(speaking===a)speaking=null;free();finish(false)},{once:true});
+      a.addEventListener("ended",()=>{if(speaking===a)speaking=null;free()},{once:true});
+      a.play().catch(()=>{if(speaking===a)speaking=null;free();finish(false)});
+    });
+  });
+}
+// Spoken channel announcements. opts picks the voice (a voiceURI from the computer's voices,
+// or a Google voice id), speed and pitch (pitch only applies to the computer's voices).
+// Returns a promise of how it was spoken: "computer", "google", "fallback" or "" (couldn't).
+export async function announce(text,{voice="",rate=1.05,pitch=1}={}){
   try{
-    const s=window.speechSynthesis;if(!s||!text)return false;
-    s.cancel();
-    const u=new SpeechSynthesisUtterance(text);u.rate=rate;u.pitch=pitch;
-    const v=voice&&s.getVoices().find(x=>x.voiceURI===voice);
-    if(v){u.voice=v;u.lang=v.lang}
-    s.speak(u);
-    return true;
-  }catch{return false}
+    if(!text)return "";
+    stopSpeaking();
+    if(isGoogleVoice(voice)){
+      const lang=voice.slice(7);
+      if(await speakGoogle(text,lang,rate))return "google";
+      // Google didn't answer: say it with the computer's voice rather than nothing.
+      return speakComputer(text,{rate,pitch})?"fallback":"";
+    }
+    return speakComputer(text,{voice,rate,pitch})?"computer":"";
+  }catch{return ""}
 }
 // The computer's voices; they load late in some browsers, so watch voiceschanged too.
 export function listVoices(onChange){
@@ -71,7 +131,7 @@ export function listVoices(onChange){
   send();s.addEventListener?.("voiceschanged",send);
   return()=>s.removeEventListener?.("voiceschanged",send);
 }
-export const canAnnounce=()=>typeof window!=="undefined"&&!!window.speechSynthesis;
+export const canAnnounce=()=>typeof window!=="undefined"&&(!!window.speechSynthesis||typeof Audio!=="undefined");
 
 // Saved radio feature settings.
 const KEY="rn-features";
