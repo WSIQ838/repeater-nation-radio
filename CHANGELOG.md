@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.49 — "Channel not found" no longer stops the radio
+
+**The radio tries again when the server says "Channel not found" for a channel it just listed**, after Sean got that error.
+
+- The radio server answers "Channel not found" whenever its own lookup of the channel fails for a moment (a slow or refused database read), even though the channel exists. All 12 channels in the ALL, GMRS and HAM zones are still there and turned on.
+- Turning the radio on now asks again up to three more times (after 1, 2.5 and 5 seconds), showing "Radio server busy, trying again…". If it still can't, the screen says "The radio server couldn't look up this channel just now. Press power to try again." and Settings keeps the server's exact words.
+- PTT asks once more after a short pause when the same answer comes back while keying up.
+- Scan and the Console no longer drop a channel for good after one "Channel not found"; they keep retrying it like any other hiccup. Real refusals (no access to a zone) still stop at once.
+- Version set to 0.2.49 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.48 — Radio screens say “Zone” and “Ch”
 
 **Every radio screen now reads “Zone ALL” and “Ch 2 US-West”**, after Sean asked for the word Zone next to the zone name and the channel number next to the channel name.

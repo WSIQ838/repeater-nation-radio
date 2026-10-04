@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { connectRadio, disconnectRadio, isPublished, openMicrophone, publishMicrophoneTrack, unpublishMicrophone, listAudioDevices, waitForPublishPermission } from "../lib/livekit";
-import { issueRadioSession, issueRadioPTT } from "../lib/auth";
+import { issueRadioSession, issueRadioPTT, lookupHiccup } from "../lib/auth";
 import {attachVoice} from "../lib/voicefx";
 import { config } from "../lib/config";
 
@@ -17,6 +17,8 @@ const SESSION_REFRESH_MS=4*60*1000;
 // would leave the radio stuck on "Connecting…" or "Requesting…".
 const SESSION_TIMEOUT_MS=20000, PTT_TIMEOUT_MS=8000, MIC_TIMEOUT_MS=8000;
 const CONNECT_ATTEMPTS=2, RETRY_DELAY_MS=1500;
+// Waits between radio pass requests the server turned down with a lookup hiccup (see lookupHiccup).
+const LOOKUP_RETRY_MS=[1000,2500,5000], PTT_LOOKUP_RETRY_MS=400;
 // After LiveKit gives up on its own reconnect (about a minute), keep trying with fresh
 // radio passes for about five minutes before showing an error.
 const RECONNECT_DELAYS_MS=[2000,5000,10000,20000,30000,30000,30000,30000,30000,30000,30000];
@@ -42,6 +44,7 @@ const hostOf=url=>{try{return new URL(url).host}catch{return url||"the voice ser
 // Plain-language connect errors; the raw LiveKit text stays in errorDetail.
 export function connectMessage(err,url){
   const raw=err?.message||"",host=hostOf(url);
+  if(lookupHiccup(err))return "The radio server couldn't look up this channel just now. Press power to try again.";
   if(err?.noRetry)return raw||"Could not start radio session.";
   if(err?.reason===5||/timed out/i.test(raw))return `Voice server ${host} didn't answer. Press power to try again.`;
   if(err?.reason===0)return `Voice server ${host} refused the radio pass${err.status?" ("+err.status+")":""}.`;
@@ -256,7 +259,19 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
         if(!sessionData){
           // An automatic reconnect keeps the same voice identity, so the server and other
           // radios see the same connection come back instead of a new one.
-          const s=await withTimeout(issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number, "radio", auto?radioIdRef.current.sessionId:""),SESSION_TIMEOUT_MS,"The radio server didn't answer. Press power to try again.");
+          let s;
+          for(let i=0;;i++){
+            try{s=await withTimeout(issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number, "radio", auto?radioIdRef.current.sessionId:""),SESSION_TIMEOUT_MS,"The radio server didn't answer. Press power to try again.");break}
+            catch(err){
+              // "Channel not found" for a channel from the server's own list is the server's
+              // lookup failing for a moment: ask again instead of giving up.
+              if(!lookupHiccup(err)||i>=LOOKUP_RETRY_MS.length||gen!==connGenRef.current)throw err;
+              console.warn("[radio] channel lookup hiccup, retrying",{channelId,zoneId:channelInfo?.zoneId,number:channelInfo?.number});
+              if(!auto)setConnectNote("Radio server busy, trying again…");
+              await sleep(LOOKUP_RETRY_MS[i]);
+              if(gen!==connGenRef.current)return null;
+            }
+          }
           if(gen!==connGenRef.current)return null;
           if(!s?.ok) throw Object.assign(new Error(s?.error||"Could not start radio session."),{noRetry:true});
           sessionData=s;
@@ -378,7 +393,9 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       // The server can leave this radio's turned-down claim behind; releasing it is safe
       // (the server only removes this connection's own claims).
       const deny=r=>{floorAskedRef.current=false;callPTT("release").catch(()=>{});setPttError(r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return r.reason==="busy"?"busy":"denied"};
-      const ask=()=>withTimeout(callPTT("request"),PTT_TIMEOUT_MS,"The radio server didn't answer the PTT request.");
+      const askOnce=()=>withTimeout(callPTT("request"),PTT_TIMEOUT_MS,"The radio server didn't answer the PTT request.");
+      // A "Channel not found" lookup hiccup gets one quick second try while PTT is held.
+      const ask=()=>askOnce().catch(async err=>{if(!lookupHiccup(err)||stale())throw err;await sleep(PTT_LOOKUP_RETRY_MS);if(stale())throw err;return askOnce()});
       // The server can answer "busy" for a claim it just wrote but can't read back yet.
       // If nobody is on air here and PTT is still held, ask once more before giving up:
       // a real talker still answers busy, a false one is granted.
