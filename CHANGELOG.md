@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.50 — Linux and Mac downloads on the GitHub release
+
+**Every release on GitHub now carries the Linux and Mac installers next to the Windows ones**, after Sean asked for Linux and Mac on GitHub.
+
+- The Linux build adds the AppImage, .deb and .rpm to the `radio-vX.Y.Z` release, and the Mac build adds the Apple Silicon and Intel .dmg files. Before, those only went to the Actions run as artifacts.
+- They wait for the Windows build to create the release first, so all three platforms land on the same release.
+- The Mac app isn't signed with an Apple developer account, so the first time it's opened it needs right-click, Open.
+- Version set to 0.2.50 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.49 — "Channel not found" no longer stops the radio
 
 **The radio tries again when the server says "Channel not found" for a channel it just listed**, after Sean got that error.

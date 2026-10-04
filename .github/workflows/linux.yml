@@ -9,7 +9,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-22.04
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
@@ -58,3 +58,20 @@ jobs:
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/rpm/*.rpm
           if-no-files-found: error
+
+      - name: Add Linux installers to the GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="radio-v$VERSION"
+          # The Windows workflow creates this release; wait for it so the two don't race.
+          for i in $(seq 1 40); do
+            gh release view "$TAG" >/dev/null 2>&1 && break
+            sleep 30
+          done
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes "" || \
+            gh release view "$TAG" >/dev/null
+          gh release upload "$TAG" src-tauri/target/release/bundle/appimage/*.AppImage src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/rpm/*.rpm --clobber
