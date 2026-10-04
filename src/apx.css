@@ -1084,3 +1084,10 @@ button.fal-key:active{transform:translateY(1px);box-shadow:0 0 0 1.4px #131410,i
 .ph-navbar button{display:grid;place-items:center;color:#d9dde6}
 .ph-navbar svg{width:16px;height:16px}
 .ph-navbar button:active{background:rgba(255,255,255,.08)}
+.feature-pick{display:flex;align-items:center;gap:8px;flex:none}
+.feature-pick select{max-width:230px}
+.feature-test{background:#16202b;color:#dce3ea;border:1px solid #2f3b48;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer}
+.feature-test:hover:not(:disabled){border-color:#4f6275}
+.feature-test:disabled{opacity:.45;cursor:default}
+.feature-sub{display:flex;flex-direction:column;gap:8px;padding:8px 0 2px 14px;border-left:2px solid #232c36}
+.feature-val{min-width:40px;text-align:right;font-variant-numeric:tabular-nums}

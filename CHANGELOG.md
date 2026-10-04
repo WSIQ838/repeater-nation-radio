@@ -1,3 +1,12 @@
+## 0.2.43 — Choose the announce voice, roger beep and voice filter
+
+**Settings, Programming, Radio features now lets you change how the radio sounds**, after Sean asked to change the channel-announce voice, the roger beep and the voice filters. Each choice has a Test button.
+
+- **Roger beep**: pick Off, Two-tone up (the old beep), Two-tone down, Single beep, Double chirp, Triple beep, Morse K, Data burst or Low bloop. It plays at the end of each transmission you hear.
+- **Voice filter**: pick how received voices sound: Clean (no filter), Analog FM, Digital P25, Old AM or Police scanner. It applies to the radio, scan and Console listening, switches voices that are already playing, and leaves private calls clean. It changes only what you hear, not what others hear from you, since each listener picks their own.
+- **Announce voice**: under Announce channel changes, pick any voice installed on the computer, plus Voice speed and Voice pitch sliders. Test reads out the current channel.
+- Version set to 0.2.43 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.42 — Keyboard key bindings fixed
 
 **Keys mapped in Settings, Buttons and PTT work from the keyboard again**, after Sean reported that key bindings weren't picking up his keyboard.

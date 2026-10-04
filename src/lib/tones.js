@@ -1,6 +1,6 @@
 // Radio alert tones made with Web Audio, so they work the same on Windows, macOS and Linux.
 let ctx=null;
-const audio=()=>{
+export const audio=()=>{
   if(typeof window==="undefined")return null;
   const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;
   if(!ctx)ctx=new AC();
@@ -18,8 +18,22 @@ const PATTERNS={
   error:[[330,250]],
 };
 
-export function playTone(name,volume=0.6){
-  const ac=audio(),steps=PATTERNS[name];if(!ac||!steps||volume<=0)return;
+// Roger beep choices for the end of each received transmission ("off" plays nothing).
+export const ROGER_TONES=[
+  {id:"off",label:"Off"},
+  {id:"classic",label:"Two-tone up",steps:PATTERNS.roger},
+  {id:"down",label:"Two-tone down",steps:[[1400,90],[0,30],[1050,120]]},
+  {id:"single",label:"Single beep",steps:[[1000,160]]},
+  {id:"chirp",label:"Double chirp",steps:[[1900,45],[0,25],[1900,45]]},
+  {id:"triple",label:"Triple beep",steps:[[1250,55],[0,40],[1250,55],[0,40],[1250,55]]},
+  {id:"morse-k",label:"Morse K (– · –)",steps:[[800,180],[0,60],[800,60],[0,60],[800,180]]},
+  {id:"data",label:"Data burst",steps:Array.from({length:14},(_,i)=>[i%3===1?1200:1800,16])},
+  {id:"low",label:"Low bloop",steps:[[620,70],[0,20],[470,140]]},
+];
+export const rogerSteps=id=>ROGER_TONES.find(t=>t.id===id)?.steps||PATTERNS.roger;
+
+export function playTone(name,volume=0.6,steps0=null){
+  const ac=audio(),steps=steps0||PATTERNS[name];if(!ac||!steps||volume<=0)return;
   let t=ac.currentTime+0.01;
   for(const [freq,ms] of steps){
     const d=ms/1000;
@@ -37,20 +51,31 @@ export function playTone(name,volume=0.6){
   }
 }
 
-// Spoken channel announcements where the WebView has speech synthesis.
-export function announce(text){
+// Spoken channel announcements where the WebView has speech synthesis. opts picks
+// the voice (by voiceURI, from the voices installed on the computer), speed and pitch.
+export function announce(text,{voice="",rate=1.05,pitch=1}={}){
   try{
     const s=window.speechSynthesis;if(!s||!text)return false;
     s.cancel();
-    const u=new SpeechSynthesisUtterance(text);u.rate=1.05;s.speak(u);
+    const u=new SpeechSynthesisUtterance(text);u.rate=rate;u.pitch=pitch;
+    const v=voice&&s.getVoices().find(x=>x.voiceURI===voice);
+    if(v){u.voice=v;u.lang=v.lang}
+    s.speak(u);
     return true;
   }catch{return false}
+}
+// The computer's voices; they load late in some browsers, so watch voiceschanged too.
+export function listVoices(onChange){
+  const s=typeof window!=="undefined"&&window.speechSynthesis;if(!s)return()=>{};
+  const send=()=>{try{onChange(s.getVoices().map(v=>({id:v.voiceURI,name:v.name,lang:v.lang,local:v.localService})))}catch{}};
+  send();s.addEventListener?.("voiceschanged",send);
+  return()=>s.removeEventListener?.("voiceschanged",send);
 }
 export const canAnnounce=()=>typeof window!=="undefined"&&!!window.speechSynthesis;
 
 // Saved radio feature settings.
 const KEY="rn-features";
-export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,tot:60,announce:false,toneVolume:0.6,notifyCalls:true,notifyTalk:false,closeToTray:false};
+export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,rogerTone:"classic",tot:60,announce:false,announceVoice:"",announceRate:1.05,announcePitch:1,voiceFx:"clean",toneVolume:0.6,notifyCalls:true,notifyTalk:false,closeToTray:false};
 const VALID_TOT=new Set([0,30,60,120,180]);
 export function loadFeatures(){
   try{

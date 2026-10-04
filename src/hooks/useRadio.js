@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { connectRadio, disconnectRadio, isPublished, openMicrophone, publishMicrophoneTrack, unpublishMicrophone, listAudioDevices } from "../lib/livekit";
 import { issueRadioSession, issueRadioPTT } from "../lib/auth";
+import {attachVoice} from "../lib/voicefx";
 
 // Route a member's audio to the chosen speaker (WebView2 supports setSinkId; others keep the default).
 export function setSink(el,deviceId){if(el?.setSinkId)el.setSinkId(deviceId||"").catch(()=>{})}
@@ -31,7 +32,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     if(track.kind!=="audio")return;
     const existing=audioElsRef.current.get(participant.identity);
     if(existing){try{existing.remove()}catch{}}
-    const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=mutedRef.current?0:volumeRef.current;setSink(el,outputRef.current);document.body.appendChild(el);audioElsRef.current.set(participant.identity,el);
+    const el=attachVoice(track);el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=mutedRef.current?0:volumeRef.current;setSink(el,outputRef.current);document.body.appendChild(el);audioElsRef.current.set(participant.identity,el);
     el.play().catch(()=>{});
   },[]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);

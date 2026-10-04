@@ -18,7 +18,8 @@ import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
 import {clearTraffic,deleteTraffic,getAudio,listTraffic,loadTrafficSettings,onTrafficChange,prune,recordTrack,saveTrafficSettings,saveTransmission} from "./lib/traffic";
 import {setSink} from "./hooks/useRadio";
-import {DEFAULT_VOLUME,volumeGain,announce,canAnnounce,loadFeatures,loadVolumes,playTone,saveFeatures,saveVolumes} from "./lib/tones";
+import {DEFAULT_VOLUME,volumeGain,announce,canAnnounce,listVoices,loadFeatures,loadVolumes,playTone,ROGER_TONES,rogerSteps,saveFeatures,saveVolumes} from "./lib/tones";
+import {VOICE_FX,previewVoiceFx,setVoiceFx,voiceFx} from "./lib/voicefx";
 import "./apx.css";
 
 const AUTO_CONNECT_SETTLE_MS=350;
@@ -144,17 +145,35 @@ function UpdateStatus(){
   return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date · {String(__APP_VERSION__)}</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div></div>;
 }
 
-function RadioFeatures({features,setFeature,hasTray}){
+function RadioFeatures({features,setFeature,hasTray,onTest}){
+  const [voices,setVoices]=useState([]);
+  useEffect(()=>listVoices(setVoices),[]);
   return <div className="features">
     <label>Talk-permit tone<input type="checkbox" checked={features.permitTone} onChange={e=>setFeature("permitTone",e.target.checked)}/></label>
     <label>Busy tone<input type="checkbox" checked={features.busyTone} onChange={e=>setFeature("busyTone",e.target.checked)}/></label>
-    <label>Roger beep after each received transmission<input type="checkbox" checked={features.rogerBeep} onChange={e=>setFeature("rogerBeep",e.target.checked)}/></label>
+    <label>Roger beep after each received transmission<span className="feature-pick">
+      <select aria-label="Roger beep" value={features.rogerBeep?features.rogerTone||"classic":"off"} onChange={e=>{setFeature("rogerTone",e.target.value);setFeature("rogerBeep",e.target.value!=="off")}}>{ROGER_TONES.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select>
+      <button type="button" className="feature-test" onClick={()=>onTest("roger")} disabled={!features.rogerBeep||features.rogerTone==="off"}>Test</button></span></label>
+    <label>Voice filter (how received voices sound)<span className="feature-pick">
+      <select aria-label="Voice filter" value={features.voiceFx||"clean"} onChange={e=>setFeature("voiceFx",e.target.value)}>{VOICE_FX.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select>
+      <button type="button" className="feature-test" onClick={()=>onTest("fx")}>Test</button></span></label>
     <label>Time-out timer<select value={features.tot} onChange={e=>setFeature("tot",Number(e.target.value))}>{[[0,"Off"],[30,"30 s"],[60,"60 s"],[120,"2 min"],[180,"3 min"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
     <label>Tone volume<input type="range" min="0" max="1" step="0.1" value={features.toneVolume} onChange={e=>setFeature("toneVolume",Number(e.target.value))}/></label>
     <label>Notify incoming calls when the radio is in the background<input type="checkbox" checked={features.notifyCalls} onChange={e=>setFeature("notifyCalls",e.target.checked)}/></label>
     <label>Notify when someone talks while the radio is in the background<input type="checkbox" checked={features.notifyTalk} onChange={e=>setFeature("notifyTalk",e.target.checked)}/></label>
     {hasTray&&<label>Close button keeps the radio running in the tray<input type="checkbox" checked={features.closeToTray} onChange={e=>setFeature("closeToTray",e.target.checked)}/></label>}
     <label>Announce channel changes{canAnnounce()?<input type="checkbox" checked={features.announce} onChange={e=>setFeature("announce",e.target.checked)}/>:<small>Not available on this system</small>}</label>
+    {canAnnounce()&&<div className="feature-sub">
+      <label>Announce voice<span className="feature-pick">
+        <select aria-label="Announce voice" value={features.announceVoice||""} onChange={e=>setFeature("announceVoice",e.target.value)}>
+          <option value="">Computer's default voice</option>
+          {voices.map(v=><option key={v.id} value={v.id}>{v.name}{v.lang?` (${v.lang})`:""}</option>)}
+        </select>
+        <button type="button" className="feature-test" onClick={()=>onTest("announce")}>Test</button></span></label>
+      <label>Voice speed<span className="feature-pick"><input type="range" aria-label="Voice speed" min="0.6" max="1.6" step="0.05" value={features.announceRate??1.05} onChange={e=>setFeature("announceRate",Number(e.target.value))}/><small className="feature-val">{Number(features.announceRate??1.05).toFixed(2)}×</small></span></label>
+      <label>Voice pitch<span className="feature-pick"><input type="range" aria-label="Voice pitch" min="0.5" max="1.8" step="0.05" value={features.announcePitch??1} onChange={e=>setFeature("announcePitch",Number(e.target.value))}/><small className="feature-val">{Number(features.announcePitch??1).toFixed(2)}</small></span></label>
+      {!voices.length&&<small>This computer hasn't listed any voices yet; the default voice is used.</small>}
+    </div>}
   </div>;
 }
 
@@ -363,14 +382,23 @@ function RadioApp({session,onSignOut}){
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
   // Radio features: tones, time-out timer, announcements and per-channel volume.
   const [features,setFeatures]=useState(loadFeatures),featuresRef=useRef(features);featuresRef.current=features;
-  const setFeature=(k,v)=>setFeatures(f=>{const next={...f,[k]:v};saveFeatures(next);return next});
+  const setFeature=(k,v)=>{if(k==="voiceFx")setVoiceFx(v);setFeatures(f=>{const next={...f,[k]:v};saveFeatures(next);return next})};
+  // The voice filter lives in voicefx.js (it reroutes audio already playing); start it from the saved choice.
+  useEffect(()=>{if(features.voiceFx&&features.voiceFx!==voiceFx())setVoiceFx(features.voiceFx)},[]);
   const [volumes,setVolumes]=useState(loadVolumes);
   const volume=volumes[channelId]??DEFAULT_VOLUME,volumeRef=useRef(volume);volumeRef.current=volume;
   const [flash,setFlash]=useState(null);
   // Which radio is drawn (control head, handheld, mobile). All of them work the same.
   const [face,setFace]=useState(loadFace);
   const chooseFace=v=>{setFace(v);saveFace(v)};
-  const tone=name=>playTone(name,featuresRef.current.toneVolume*Math.max(0.3,volumeRef.current/10));
+  const tone=(name,steps=null)=>playTone(name,featuresRef.current.toneVolume*Math.max(0.3,volumeRef.current/10),steps);
+  // Test buttons in Settings: hear the roger beep, the voice filter or the announce voice.
+  const testFeature=what=>{
+    const f=featuresRef.current;
+    if(what==="roger")tone("roger",rogerSteps(f.rogerTone));
+    else if(what==="fx")previewVoiceFx(f.voiceFx||"clean",Math.max(0.3,volumeGain(volumeRef.current)));
+    else if(what==="announce"){const c=currentChannelRef.current;announce(c?`${c.zoneName||""} channel ${c.number??""}, ${c.name}`:"Zone one, channel one, Nation Wide",{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch})}
+  };
   const changeVolume=dir=>{
     const next=Math.max(0,Math.min(10,volume+dir));
     setVolumes(v=>{const all={...v,[channelId]:next};saveVolumes(all);return all});
@@ -383,7 +411,7 @@ function RadioApp({session,onSignOut}){
   const saveRecording=e=>{if(trafficRef.current.enabled)saveTransmission(e).catch(err=>console.warn("[traffic] save failed",err))};
   const ownRecRef=useRef(null);
   const radioEvents={
-    onTalkEnd:e=>{if(featuresRef.current.rogerBeep&&e.ms>300&&!mutedRef.current)tone("roger")},
+    onTalkEnd:e=>{const f=featuresRef.current;if(f.rogerBeep&&f.rogerTone!=="off"&&e.ms>300&&!mutedRef.current)tone("roger",rogerSteps(f.rogerTone))},
     onRecorded:saveRecording,
     onOwnTalkStart:mic=>{
       if(!trafficRef.current.enabled||ownRecRef.current)return;
@@ -453,6 +481,7 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{if(onAir?.name)setLastTalk(l=>({...l,[channelId]:{name:onAir.name,at:Date.now()}}))},[onAir?.identity]);
   const nuisance=()=>{const c=nuisanceDelete();if(c)setFlash({text:"Deleted "+c.name+" from scan"})};
   const currentChannel=channels.find(x=>x.id===channelId);
+  const currentChannelRef=useRef(null);currentChannelRef.current=currentChannel?{...currentChannel,zoneName:zones.find(z=>z.id===currentChannel.zoneId)?.name||currentChannel.zoneName}:null;
   const selectZone=async next=>{
     if(next===zoneId)return;
     if(!next)return;
@@ -475,7 +504,8 @@ function RadioApp({session,onSignOut}){
     if(!tuneSeq||!channelId)return;
     const id=setTimeout(()=>connectRef.current().catch(()=>{}),AUTO_CONNECT_SETTLE_MS);
     const c=channels.find(x=>x.id===channelId);
-    if(c&&featuresRef.current.announce)announce(`${c.zoneName||""} channel ${c.number??""}, ${c.name}`);
+    const f=featuresRef.current;
+    if(c&&f.announce)announce(`${c.zoneName||""} channel ${c.number??""}, ${c.name}`,{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch});
     return()=>clearTimeout(id);
   },[tuneSeq]);
   const chooseZone=e=>selectZone(e.target.value);
@@ -686,7 +716,7 @@ function RadioApp({session,onSignOut}){
         {tab==="log"&&<TrafficLog channels={channels} settings={trafficSettings} setSettings={setTrafficSettings} speakerId={speakerId} volume={volumeGain(volume)}/>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="settings-group label">PROGRAMMING</div><div className="setting keymap-setting"><span>Radio</span><div className="face-picker">{FACES.map(x=><label key={x.id} className={face===x.id?"on":""}><input type="radio" name="face" value={x.id} checked={face===x.id} onChange={()=>chooseFace(x.id)}/><strong>{x.label}</strong><small>{x.note}</small></label>)}</div></div><div className="setting keymap-setting"><span>Zone and channel</span><div className="prog-fields"><label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><small>{connected?participants.length+" on channel":"Not connected"}</small></div></div><div className="setting keymap-setting"><span>Microphone and speaker</span><div className="prog-fields"><label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label><label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label><small>{muted?"Speaker muted":"Speaker on"}</small></div></div><div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray}/></div><div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="settings-group label">ACCOUNT AND APP</div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="settings-group label">PROGRAMMING</div><div className="setting keymap-setting"><span>Radio</span><div className="face-picker">{FACES.map(x=><label key={x.id} className={face===x.id?"on":""}><input type="radio" name="face" value={x.id} checked={face===x.id} onChange={()=>chooseFace(x.id)}/><strong>{x.label}</strong><small>{x.note}</small></label>)}</div></div><div className="setting keymap-setting"><span>Zone and channel</span><div className="prog-fields"><label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><small>{connected?participants.length+" on channel":"Not connected"}</small></div></div><div className="setting keymap-setting"><span>Microphone and speaker</span><div className="prog-fields"><label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label><label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label><small>{muted?"Speaker muted":"Speaker on"}</small></div></div><div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray} onTest={testFeature}/></div><div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="settings-group label">ACCOUNT AND APP</div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||config.livekitUrl}</code></div><UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>
