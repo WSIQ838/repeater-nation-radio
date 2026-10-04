@@ -9,6 +9,23 @@ use tauri::{AppHandle, Emitter, Manager, Runtime, Window, WindowEvent};
 const TRAY_ID: &str = "radio";
 static CLOSE_TO_TRAY: AtomicBool = AtomicBool::new(false);
 static HAS_TRAY: AtomicBool = AtomicBool::new(false);
+static QUITTING: AtomicBool = AtomicBool::new(false);
+
+/// Quit after giving the page a moment to leave the radio channel and hand back a held
+/// PTT floor; otherwise the server keeps the channel busy for everyone else for 30 s.
+/// The page hears "quit" as a tray action. A second quit request goes straight through.
+pub fn quit_gracefully<R: Runtime>(app: &AppHandle<R>) -> bool {
+    if QUITTING.swap(true, Ordering::SeqCst) {
+        return false;
+    }
+    let _ = app.emit("tray-action", "quit".to_string());
+    let app = app.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(700));
+        app.exit(0);
+    });
+    true
+}
 
 pub fn show_main<R: Runtime>(app: &AppHandle<R>) {
     if let Some(w) = app.get_webview_window("main") {
@@ -48,7 +65,9 @@ pub fn start<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
             "show" => show_main(app),
-            "quit" => app.exit(0),
+            "quit" => {
+                quit_gracefully(app);
+            }
             action => {
                 if action == "mini" {
                     show_main(app);
@@ -81,9 +100,14 @@ pub fn tray_set<R: Runtime>(app: AppHandle<R>, tooltip: String, close_to_tray: b
 
 pub fn on_window_event<R: Runtime>(window: &Window<R>, event: &WindowEvent) {
     if let WindowEvent::CloseRequested { api, .. } = event {
-        if window.label() == "main" && CLOSE_TO_TRAY.load(Ordering::SeqCst) && HAS_TRAY.load(Ordering::SeqCst) {
+        if window.label() != "main" {
+            return;
+        }
+        if CLOSE_TO_TRAY.load(Ordering::SeqCst) && HAS_TRAY.load(Ordering::SeqCst) {
             api.prevent_close();
             let _ = window.hide();
+        } else if quit_gracefully(window.app_handle()) {
+            api.prevent_close();
         }
     }
 }
