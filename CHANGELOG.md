@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.48 — Radio screens say “Zone” and “Ch”
+
+**Every radio screen now reads “Zone ALL” and “Ch 2 US-West”**, after Sean asked for the word Zone next to the zone name and the channel number next to the channel name.
+
+- All 12 radio faces and the mini radio show the zone as “Zone” plus its name, and the channel as “Ch” plus its number in front of the channel name. A zone already named “Zone 1” isn't doubled up (the channel announcement follows the same rule).
+- On small screens a long channel name shrinks a little first and is then cut short with “…”, so “Ch 2” always stays readable.
+- Faces that showed the channel number on its own line (the control head, and the “Ch 1 · ALL” line on the compact handheld and corded head) now show it once, in front of the name.
+- Version set to 0.2.48 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.47 — Keypad tones and the Motorola MDC-1200 roger beep
 
 **Radio keys beep when pressed, and the roger beep can be a Motorola MDC burst**, after Sean asked for buttons that make noise and an MDC roger beep.

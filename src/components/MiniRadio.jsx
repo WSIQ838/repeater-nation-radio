@@ -1,4 +1,6 @@
 import {useEffect,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {Maximize2,Mic,Power,Volume2,VolumeX,Minus,Plus,ChevronLeft,ChevronRight,PhoneCall,PhoneOff} from "lucide-react";
 
 // Compact always-on-top radio: channel, who's talking, signal, PTT and the few
@@ -18,13 +20,13 @@ export function MiniRadio({
   const release=()=>onUp();
   return <div className={"mini-radio "+tone}>
     <div className="mini-top">
-      <span className="mini-zone">{zoneName||"Radio"}</span>
+      <span className="mini-zone">{zoneLabel(zoneName,"Radio")}</span>
       <span className="mini-bars" title={connected?"Connection: "+quality:"No signal"}>{[1,2,3,4].map(n=><i key={n} className={n<=bars?"on":""}/>)}</span>
       <button type="button" className="mini-icon" onClick={onExpand} title="Full radio" aria-label="Full radio"><Maximize2 size={15}/></button>
     </div>
     <div className="mini-channel">
       <button type="button" className="mini-icon" onClick={()=>onChannel(-1)} title="Channel down" aria-label="Channel down"><ChevronLeft size={18}/></button>
-      <div><strong>{channelName}</strong><small>{channelNumber!=null?"CH "+channelNumber:""}</small></div>
+      <div><strong><ChanLine number={channelNumber} name={channelName}/></strong></div>
       <button type="button" className="mini-icon" onClick={()=>onChannel(1)} title="Channel up" aria-label="Channel up"><ChevronRight size={18}/></button>
     </div>
     <div className="mini-status">{incoming?"Call · "+(incoming.caller_display_name||incoming.caller_callsign||"Member"):notice||status}</div>

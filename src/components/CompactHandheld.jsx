@@ -1,4 +1,6 @@
 import {useEffect,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {Knob,photoBoxes,useFace} from "./ControlHead";
 import {Flutes,hhmm,pttHandlers} from "./TouchHandheld";
 import {KeyList,useKeypadMenu} from "./KeypadHandheld";
@@ -134,8 +136,8 @@ function Screen({p,f,ui}){
         <span className="xp-sub">Channel number · # Enter</span>
         <span className="xp-cname">Ch {f.entry}<u>_</u></span>
       </>:<>
-        <span className={"xp-sub"+(busy?" "+b.tone:"")}>{busy?b.title+(b.sub?" · "+b.sub:""):`Ch ${num} · ${zoneName||"All Zones"}`}</span>
-        <span className="xp-cname">{channelName}</span>
+        <span className={"xp-sub"+(busy?" "+b.tone:"")}>{busy?b.title+(b.sub?" · "+b.sub:""):zoneLabel(zoneName)}</span>
+        <span className="xp-cname"><ChanLine number={num} name={channelName}/></span>
       </>}
     </button>:<KeyList ui={ui} prefix="xp" style={S.at(227,346,306.6,378.6)}/>}
     <div className="xp-soft" style={S.at(226,379,307.6,393.4)}>

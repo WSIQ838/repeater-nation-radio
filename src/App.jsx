@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useRef,useState} from "react";
+import {zoneLabel} from "./lib/labels";
 import {Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
@@ -388,7 +389,7 @@ function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio",order:c.zoneOrder??999}])).values()).sort((a,b)=>a.order-b.order),[channels]);
   // What the channel announcement says: "Zone ALL, channel 1, Nation Wide".
-  const announceText=c=>{const z=String(zones.find(x=>x.id===c.zoneId)?.name||c.zoneName||"").trim();return `${z?`Zone ${z}, `:""}channel ${c.number??""}, ${c.name}`};
+  const announceText=c=>{const z=String(zones.find(x=>x.id===c.zoneId)?.name||c.zoneName||"").trim();return `${z?zoneLabel(z)+", ":""}channel ${c.number??""}, ${c.name}`};
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
   // Radio features: tones, time-out timer, announcements and per-channel volume.
   const [features,setFeatures]=useState(loadFeatures),featuresRef=useRef(features);featuresRef.current=features;

@@ -1,4 +1,6 @@
 import {useEffect,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {Knob,photoBoxes,useFace} from "./ControlHead";
 import {Flutes,clock,hhmm,pttHandlers,secs} from "./TouchHandheld";
 import {STATUSES,statusClass} from "../lib/status";
@@ -114,7 +116,7 @@ const KEY_COLS=[[431,500],[504,581],[585,654]],KEY_ROWS=[[859,891.5],[909,941.5]
 // The colour screen: status icons, date and time, zone/channel card, last-heard card and
 // two on-screen softkeys. Menu lists are worked with the nav pad, OK and Back.
 function Screen({p,f,ui}){
-  const {channelName,zoneName,connected,muted,participants=[],lastHeard=[],scanning,incoming,call,callState}=p;
+  const {channelName,channelNumber,zoneName,connected,muted,participants=[],lastHeard=[],scanning,incoming,call,callState}=p;
   const {screen,soft}=ui;
   const b=f.banner,last=lastHeard[0];
   const [now,setNow]=useState(()=>Date.now());
@@ -137,8 +139,8 @@ function Screen({p,f,ui}){
           <span className="kh-cname" style={ZC.at(474,551,632,576)}>CH {f.entry}<u>_</u></span>
           <span className={"kh-act"} style={ZC.at(474,585,632,602)}># Enter · * Clear</span>
         </>:<>
-          <span className="kh-zname" style={ZC.at(474,526,632,548)}>{zoneName||"All Zones"}</span>
-          <span className="kh-cname" style={ZC.at(474,551,632,576)}>{channelName}</span>
+          <span className="kh-zname" style={ZC.at(474,526,632,548)}><span className="lbl">{zoneLabel(zoneName)}</span></span>
+          <span className="kh-cname" style={ZC.at(474,551,632,576)}><ChanLine number={channelNumber} name={channelName}/></span>
           <span className={"kh-act "+b.tone} style={ZC.at(474,585,632,602)}>{b.title}{b.sub?" · "+b.sub:""}</span>
         </>}
       </button>

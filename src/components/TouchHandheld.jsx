@@ -1,4 +1,6 @@
 import {useEffect,useState} from "react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
 import {ChevronLeft,ListChecks,Power,RefreshCw,Sun,UserRound,Users,Volume2,VolumeX} from "lucide-react";
 import {Knob,photoBoxes,useFace} from "./ControlHead";
 import {STATUSES,statusClass} from "../lib/status";
@@ -133,7 +135,7 @@ function Body(){
 // The touch screen: header, zone/channel card, tabs, last-heard card and status bar,
 // all live; Zone, More, the channel name and the profile icon open list screens.
 function Screen({p,f,screen,setScreen}){
-  const {channelName,zoneName,zones=[],zoneId,visibleChannels=[],channelId,connected,muted,participants=[],lastHeard=[],
+  const {channelName,channelNumber,zoneName,zones=[],zoneId,visibleChannels=[],channelId,connected,muted,participants=[],lastHeard=[],
     myStatus="",onStatus,onScan,scanning,onTab,onReplay,incoming,call,callState,onAnswer,onDecline,onEndCall,state,onPower,onChannel,onZone,displayName,callsign}=p;
   const b=f.banner,last=lastHeard[0];
   const [now,setNow]=useState(()=>Date.now());
@@ -171,8 +173,8 @@ function Screen({p,f,screen,setScreen}){
         <b className={connected?"":"off"} title={connected?"On air":"Off"}>{f.ledTx?"TX":"H"}</b>
         <Users size={8.5} strokeWidth={3}/><b>{participants.length}</b>
       </div>
-      <button type="button" className="hh-zone" style={Z.at(59,526,128,537)} onClick={()=>setScreen("zones")} title="Choose zone">{zoneName||"All Zones"}</button>
-      <button type="button" className="hh-chan" style={Z.at(59,537.5,135,550)} onClick={()=>setScreen("channels")} title="Choose channel">{channelName}</button>
+      <button type="button" className="hh-zone" style={Z.at(59,526,128,537)} onClick={()=>setScreen("zones")} title="Choose zone"><span className="lbl">{zoneLabel(zoneName)}</span></button>
+      <button type="button" className="hh-chan" style={Z.at(59,537.5,135,550)} onClick={()=>setScreen("channels")} title="Choose channel"><ChanLine number={channelNumber} name={channelName}/></button>
       <span className={"hh-activity "+b.tone} style={Z.at(59,551,140,561)}>{b.title}{b.sub?" · "+b.sub:""}</span>
       <button type="button" className={"hh-ico hh-scan"+(scanning?" on":"")} style={Z.dot(147,535,12)} onClick={onScan||undefined} disabled={!onScan} title={scanning?"Scan off":"Scan"} aria-label="Scan"><svg viewBox="0 0 12 12"><rect x="1" y="2" width="10" height="3" rx="1.5"/><rect x="1" y="7" width="10" height="3" rx="1.5"/><circle cx={scanning?8.6:3.4} cy="3.5" r="2.2"/><circle cx={scanning?3.4:8.6} cy="8.5" r="2.2"/></svg></button>
       <button type="button" className="hh-ico" style={Z.dot(146.5,555,11)} onClick={f.replayLast} title="Replay last" aria-label="Replay last"><svg viewBox="0 0 12 12"><rect x="1" y="3" width="10" height="8" rx="1.6"/><path d="M4 2.6 5.2 1h1.6L8 2.6" /><path d="M3.6 7.4a2.4 2.4 0 1 0 1-2" fill="none" strokeWidth="1.1"/><path d="M3 4.2v1.8h1.8" fill="none" strokeWidth="1.1"/></svg></button>
