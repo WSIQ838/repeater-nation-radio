@@ -16,7 +16,28 @@ const PATTERNS={
   tot:[[880,90],[0,60],[880,90],[0,60],[880,90]], // time-out timer about to key you off
   timeout:[[660,350]],                          // time-out timer keyed you off
   error:[[330,250]],
+  key:[[1850,38]],                              // key press on a radio face
 };
+
+// Motorola MDC-1200 data burst: 1200 baud FSK, 1200 Hz / 1800 Hz, sent as a "post" PTT ID at
+// the end of a transmission. Built like a real packet: bit-sync leader, the MDC sync word,
+// then opcode, argument, unit ID and CRC, convolutionally encoded and interleaved.
+function mdcCrc(bytes){
+  const flip=(v,n)=>{let r=0;for(let i=0;i<n;i++)if(v&(1<<i))r|=1<<(n-1-i);return r};
+  let crc=0;
+  for(const b0 of bytes){const c=flip(b0,8);for(let j=0x80;j;j>>=1){let bit=crc&0x8000;crc=(crc<<1)&0xffff;if(c&j)bit^=0x8000;if(bit)crc^=0x1021}}
+  return (flip(crc,16)^0xffff)&0xffff;
+}
+function mdcBits(op=0x01,arg=0x80,unit=0x1234){
+  const d=[op,arg,(unit>>8)&0xff,unit&0xff];const crc=mdcCrc(d);d.push(crc&0xff,(crc>>8)&0xff,0);
+  const csr=[0,0,0,0,0,0,0],lbits=[];
+  for(const byte of d)for(let j=0;j<8;j++){const b=(byte>>j)&1;csr.unshift(b);csr.pop();lbits.push(b,(csr[0]+csr[2]+csr[5]+csr[6])&1)}
+  const coded=[];let k=0;
+  for(let i=0;i<112;i++){coded.push(lbits[k]);k+=16;if(k>111)k-=111}
+  const bytesToBits=bs=>bs.flatMap(b=>Array.from({length:8},(_,i)=>(b>>(7-i))&1));
+  return [...bytesToBits([0x55,0x55,0x55,0x55,0x55,0x55,0x55,0x07,0x09,0x2a,0x44,0x6f]),...coded];
+}
+const MDC={fsk:mdcBits(),baud:1200,mark:1200,space:1800};
 
 // Roger beep choices for the end of each received transmission ("off" plays nothing).
 export const ROGER_TONES=[
@@ -29,11 +50,26 @@ export const ROGER_TONES=[
   {id:"morse-k",label:"Morse K (– · –)",steps:[[800,180],[0,60],[800,60],[0,60],[800,180]]},
   {id:"data",label:"Data burst",steps:Array.from({length:14},(_,i)=>[i%3===1?1200:1800,16])},
   {id:"low",label:"Low bloop",steps:[[620,70],[0,20],[470,140]]},
+  {id:"mdc",label:"Motorola MDC-1200",steps:MDC},
 ];
 export const rogerSteps=id=>ROGER_TONES.find(t=>t.id===id)?.steps||PATTERNS.roger;
 
+// One phase-continuous oscillator switching between mark and space each bit (NRZI, like MDC).
+function playFsk(ac,{fsk,baud,mark,space},volume){
+  const t0=ac.currentTime+0.01,bit=1/baud,end=t0+fsk.length*bit;
+  const osc=ac.createOscillator(),gain=ac.createGain();
+  osc.type="sine";
+  let prev=0;
+  fsk.forEach((b,i)=>{osc.frequency.setValueAtTime(b!==prev?space:mark,t0+i*bit);prev=b});
+  gain.gain.setValueAtTime(0,t0);gain.gain.linearRampToValueAtTime(0.22*volume,t0+0.004);
+  gain.gain.setValueAtTime(0.22*volume,end-0.004);gain.gain.linearRampToValueAtTime(0,end);
+  osc.connect(gain).connect(ac.destination);
+  osc.start(t0);osc.stop(end+0.02);
+}
+
 export function playTone(name,volume=0.6,steps0=null){
   const ac=audio(),steps=steps0||PATTERNS[name];if(!ac||!steps||volume<=0)return;
+  if(steps.fsk){playFsk(ac,steps,volume);return}
   let t=ac.currentTime+0.01;
   for(const [freq,ms] of steps){
     const d=ms/1000;
@@ -135,7 +171,7 @@ export const canAnnounce=()=>typeof window!=="undefined"&&(!!window.speechSynthe
 
 // Saved radio feature settings.
 const KEY="rn-features";
-export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,rogerTone:"classic",tot:60,announce:false,announceVoice:"",announceRate:1.05,announcePitch:1,voiceFx:"clean",toneVolume:0.6,notifyCalls:true,notifyTalk:false,closeToTray:false};
+export const FEATURE_DEFAULTS={permitTone:true,busyTone:true,rogerBeep:true,rogerTone:"classic",tot:60,announce:false,announceVoice:"",announceRate:1.05,announcePitch:1,voiceFx:"clean",toneVolume:0.6,keyTones:true,keyToneVolume:0.5,notifyCalls:true,notifyTalk:false,closeToTray:false};
 const VALID_TOT=new Set([0,30,60,120,180]);
 export function loadFeatures(){
   try{

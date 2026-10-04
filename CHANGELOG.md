@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.47 — Keypad tones and the Motorola MDC-1200 roger beep
+
+**Radio keys beep when pressed, and the roger beep can be a Motorola MDC burst**, after Sean asked for buttons that make noise and an MDC roger beep.
+
+- Every key on every radio face, the palm mic and the mini radio now gives a short Motorola-style key beep when pressed, by mouse, touch or keyboard. PTT keys and knobs stay quiet, like the real radios.
+- Settings, Programming, Radio features has a new **Keypad tones** row: on by default, with its own volume slider and a Test button.
+- The roger beep list adds **Motorola MDC-1200**: the 1200 baud data burst (1200 Hz and 1800 Hz) Motorola radios send at the end of a transmission, built like a real packet with the MDC sync word, a PTT ID and a checksum. Test plays it.
+- Version set to 0.2.47 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.46 — Google voices for the channel announcement
 
 **The announce voice can now be a Google voice**, after Sean asked for the Google voice.

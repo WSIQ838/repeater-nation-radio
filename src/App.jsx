@@ -161,6 +161,10 @@ function RadioFeatures({features,setFeature,hasTray,onTest}){
       <button type="button" className="feature-test" onClick={()=>onTest("fx")}>Test</button></span></label>
     <label>Time-out timer<select value={features.tot} onChange={e=>setFeature("tot",Number(e.target.value))}>{[[0,"Off"],[30,"30 s"],[60,"60 s"],[120,"2 min"],[180,"3 min"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
     <label>Tone volume<input type="range" min="0" max="1" step="0.1" value={features.toneVolume} onChange={e=>setFeature("toneVolume",Number(e.target.value))}/></label>
+    <label>Keypad tones (a beep when you press a key on the radio)<span className="feature-pick">
+      <input type="range" aria-label="Keypad tone volume" min="0.1" max="1" step="0.1" value={features.keyToneVolume??0.5} disabled={!features.keyTones} onChange={e=>setFeature("keyToneVolume",Number(e.target.value))}/>
+      <button type="button" className="feature-test" onClick={()=>onTest("key")} disabled={!features.keyTones}>Test</button>
+      <input type="checkbox" aria-label="Keypad tones" checked={features.keyTones!==false} onChange={e=>setFeature("keyTones",e.target.checked)}/></span></label>
     <label>Notify incoming calls when the radio is in the background<input type="checkbox" checked={features.notifyCalls} onChange={e=>setFeature("notifyCalls",e.target.checked)}/></label>
     <label>Notify when someone talks while the radio is in the background<input type="checkbox" checked={features.notifyTalk} onChange={e=>setFeature("notifyTalk",e.target.checked)}/></label>
     {hasTray&&<label>Close button keeps the radio running in the tray<input type="checkbox" checked={features.closeToTray} onChange={e=>setFeature("closeToTray",e.target.checked)}/></label>}
@@ -402,9 +406,27 @@ function RadioApp({session,onSignOut}){
   const testFeature=what=>{
     const f=featuresRef.current;
     if(what==="roger")tone("roger",rogerSteps(f.rogerTone));
+    else if(what==="key")playTone("key",f.keyToneVolume??0.5);
     else if(what==="fx")previewVoiceFx(f.voiceFx||"clean",Math.max(0.3,volumeGain(volumeRef.current)));
     else if(what==="announce"){const c=currentChannelRef.current;return announce(c?announceText(c):"Zone one, channel one, Nation Wide",{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch})}
   };
+  // Keypad tones: a short Motorola-style beep when any key on a radio face, the palm mic or the
+  // mini radio is pressed. PTT keys and knobs stay quiet, like on the real radios.
+  useEffect(()=>{
+    const KEYS=".apx-stage, .mini-radio";
+    const QUIET='.apx-knob, [class*="ptt"], [aria-label*="PTT"], [aria-label*="ush to talk"], [title*="ush to talk"]';
+    const beep=target=>{
+      const f=featuresRef.current;if(f.keyTones===false)return;
+      const el=target?.closest?.('button, [role="button"]');
+      if(!el||el.disabled||el.getAttribute("aria-disabled")==="true"||!el.closest(KEYS)||el.closest(QUIET))return;
+      playTone("key",f.keyToneVolume??0.5);
+    };
+    const down=e=>{if(e.button===0||e.pointerType!=="mouse")beep(e.target)};
+    // A key pressed from the keyboard (Enter or Space on a focused button) clicks with detail 0.
+    const click=e=>{if(e.detail===0)beep(e.target)};
+    document.addEventListener("pointerdown",down,true);document.addEventListener("click",click,true);
+    return()=>{document.removeEventListener("pointerdown",down,true);document.removeEventListener("click",click,true)};
+  },[]);
   const changeVolume=dir=>{
     const next=Math.max(0,Math.min(10,volume+dir));
     setVolumes(v=>{const all={...v,[channelId]:next};saveVolumes(all);return all});
