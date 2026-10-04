@@ -6,11 +6,35 @@ import {Power,Volume2,VolumeX,Mic,Signal,PhoneIncoming,Phone,Users} from "lucide
 export const O7_STATUS_KEYS=["At Scene","En Route","Busy","Returning","Available"];
 export const KEYPAD=[["1",". ? !"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]];
 
-// Scrolling a knob turns it one detent per notch. The listener is non-passive so the
-// wheel does not also scroll the page, and trackpad deltas are summed into detents.
+// A knob turns one detent per scroll notch, per DRAG_STEP_PX of dragging (up or right is
+// clockwise, like turning it up), or per arrow key. The wheel listener is non-passive so
+// the page doesn't scroll too, and trackpad deltas are summed into detents. A click with
+// no turn still runs onClick (mute on the volume knobs). onStep(-1) is clockwise.
+const DRAG_STEP_PX=14;
 export function Knob({className="",angle=0,label,onClick,onStep,children,title}){
-  const ref=useRef(null),stepRef=useRef(onStep),accRef=useRef(0);
+  const ref=useRef(null),stepRef=useRef(onStep),accRef=useRef(0),dragRef=useRef(null),turnedRef=useRef(false);
   stepRef.current=onStep;
+  const onPointerDown=e=>{
+    if(!stepRef.current||(e.pointerType==="mouse"&&e.button!==0))return;
+    dragRef.current={id:e.pointerId,x:e.clientX,y:e.clientY};turnedRef.current=false;
+    try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+  };
+  const onPointerMove=e=>{
+    const d=dragRef.current;if(!d||d.id!==e.pointerId)return;
+    const travel=(e.clientX-d.x)-(e.clientY-d.y);
+    const steps=Math.trunc(travel/DRAG_STEP_PX);if(!steps)return;
+    // Move the reference by whole detents so slow drags keep turning smoothly.
+    const used=steps*DRAG_STEP_PX/2;d.x+=used;d.y-=used;
+    turnedRef.current=true;
+    for(let i=0;i<Math.abs(steps);i++)stepRef.current?.(steps>0?-1:1);
+  };
+  const endDrag=e=>{if(dragRef.current?.id===e.pointerId)dragRef.current=null};
+  const click=e=>{if(turnedRef.current){turnedRef.current=false;e.preventDefault();return}onClick?.(e)};
+  const onKeyDown=e=>{
+    if(!stepRef.current)return;
+    const dir=e.key==="ArrowUp"||e.key==="ArrowRight"?-1:e.key==="ArrowDown"||e.key==="ArrowLeft"?1:0;
+    if(!dir)return;e.preventDefault();e.stopPropagation();stepRef.current(dir);
+  };
   useEffect(()=>{
     const el=ref.current;if(!el)return;
     const onWheel=e=>{
@@ -24,7 +48,9 @@ export function Knob({className="",angle=0,label,onClick,onStep,children,title})
     el.addEventListener("wheel",onWheel,{passive:false});
     return()=>el.removeEventListener("wheel",onWheel);
   },[]);
-  return <button type="button" ref={ref} className={"apx-knob "+className} onClick={onClick} title={title} aria-label={title}>
+  return <button type="button" ref={ref} className={"apx-knob "+className} onClick={click} title={title} aria-label={title}
+    onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} onKeyDown={onKeyDown}
+    style={onStep?{touchAction:"none",cursor:"grab"}:undefined}>
     <span className="apx-knob-cap" style={{transform:`rotate(${angle}deg)`}}><i/></span>
     {children}
     {label&&<span className="apx-knob-label">{label}</span>}

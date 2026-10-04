@@ -71,4 +71,7 @@ export function saveFeatures(f){try{localStorage.setItem(KEY,JSON.stringify(f))}
 const VKEY="rn-volume";
 export function loadVolumes(){try{return JSON.parse(localStorage.getItem(VKEY)||"{}")||{}}catch{return {}}}
 export function saveVolumes(v){try{localStorage.setItem(VKEY,JSON.stringify(v))}catch{}}
+// Hearing is logarithmic, so a straight 0-1 scale barely changes between 10 and 5. A squared
+// curve makes every knob detent an audible step (level 5 is a quarter of full gain).
+export const volumeGain=level=>{const v=Math.max(0,Math.min(10,Number(level)||0))/10;return v*v};
 export const DEFAULT_VOLUME=7;

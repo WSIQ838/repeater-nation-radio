@@ -1,3 +1,14 @@
+## 0.2.37 — Volume knobs that really turn
+
+**Every radio's volume knob now changes the volume**, as Sean asked.
+
+- Volume knobs on every radio face turn by dragging: drag up or right to turn it up, down or left to turn it down, one step per short drag. They also turn with the mouse wheel and the arrow keys. Before, only the mouse wheel turned them, so pressing and turning one did nothing (a click muted the radio instead).
+- A plain click still mutes and unmutes; a drag never mutes.
+- Each knob step now makes an audible difference. The level used to map straight to loudness, so 10 down to 5 barely changed what you hear; it now follows a hearing-based curve (level 5 is a quarter of full volume). This applies to the radio, scan, the Console, Log playback and direct calls.
+- Direct calls now follow the volume knob too.
+- The handheld control head's volume keys and the mini radio's − and + buttons work as before, with the new curve.
+- Version set to 0.2.37 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.36 — Unified radio connection rebuild
 
 - Rebuilt the desktop LiveKit connection lifecycle to use the same Repeater Nation radio-session and PTT backend as the website.

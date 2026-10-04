@@ -5,13 +5,16 @@ import { connectRadio, disconnectRadio, publishMicrophone, unpublishMicrophone }
 
 const sameData=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);
 
-export function useDirectCalls(userId, outputDeviceId="") {
+export function useDirectCalls(userId, outputDeviceId="", volume=1) {
+  // Calls follow the radio's volume knob, like the radio's own audio.
+  const gainRef=useRef(volume);gainRef.current=volume;
   const outputRef=useRef(outputDeviceId);outputRef.current=outputDeviceId;
   const roomRef=useRef(null), micRef=useRef(null), callIdRef=useRef(null);
   const audioElsRef=useRef(new Map());
   const [onlineUsers,setOnlineUsers]=useState([]),[incoming,setIncoming]=useState(null),[call,setCall]=useState(null),[callState,setCallState]=useState("idle"),[error,setError]=useState("");
 
   useEffect(()=>{for(const el of audioElsRef.current.values())setSink(el,outputDeviceId)},[outputDeviceId]);
+  useEffect(()=>{for(const el of audioElsRef.current.values())el.volume=volume},[volume]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
   const disconnect=useCallback(async()=>{cleanupAudio();await unpublishMicrophone(roomRef.current,micRef.current);micRef.current=null;await disconnectRadio(roomRef.current);roomRef.current=null},[cleanupAudio]);
 
@@ -21,7 +24,7 @@ export function useDirectCalls(userId, outputDeviceId="") {
     if(!tokenData?.ok)throw new Error(tokenData?.error||"Could not join direct call.");
     const room=await connectRadio(tokenData.liveKitToken,tokenData.liveKitUrl,{onTrackSubscribed:(track,_pub,participant)=>{
       if(track.kind!=="audio")return;
-      const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";setSink(el,outputRef.current);document.body.appendChild(el);el.play().catch(()=>{});audioElsRef.current.set(participant.identity,el);
+      const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=gainRef.current;setSink(el,outputRef.current);document.body.appendChild(el);el.play().catch(()=>{});audioElsRef.current.set(participant.identity,el);
     },onDisconnected:()=>setCallState("idle")});
     roomRef.current=room;
     micRef.current=await publishMicrophone(room);
