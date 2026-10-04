@@ -2,6 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import {Power} from "lucide-react";
 import {ControlHead,FaceDisplay,Knob,O7Icon,O7_KEYS,photoBoxes,useFace,useFit,useHoldRepeat} from "./ControlHead";
 import {FalconRadio} from "./FalconRadio";
+import {IPhoneRadio} from "./PhoneRadio";
 import {TouchHandheld} from "./TouchHandheld";
 import {KeypadHandheld} from "./KeypadHandheld";
 import {AllBandHandheld} from "./AllBandHandheld";
@@ -22,6 +23,7 @@ export const FACES=[
   {id:"hand-head",label:"Handheld control head",note:"Corded head, P1–P4, volume keys, keypad"},
   {id:"nx-mobile",label:"Compact mobile",note:"Colour screen, volume keys, four softkeys, speaker grille"},
   {id:"field-radio",label:"Field radio",note:"Green LCD, keypad with VOL and PRE rockers, mode knob, carry handles"},
+  {id:"iphone",label:"iPhone style",note:"Push-to-talk app; side buttons for volume, side key for PTT"},
 ];
 export const DEFAULT_FACE="control-head";
 const FACE_KEY="rn-face";
@@ -189,5 +191,6 @@ export function RadioFace({face=DEFAULT_FACE,...p}){
   if(face==="hand-head")return <CordHead {...p}/>;
   if(face==="nx-mobile")return <NxMobile {...p}/>;
   if(face==="field-radio")return <FalconRadio {...p}/>;
+  if(face==="iphone")return <IPhoneRadio {...p}/>;
   return <ControlHead {...p}/>;
 }

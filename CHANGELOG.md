@@ -1,3 +1,15 @@
+## 0.2.40 — iPhone style phone
+
+**New face in the picker: "iPhone style"**, built from the iPhone X photo Sean posted, with the radio running on its screen as a push-to-talk app.
+
+- The phone is drawn to match the photo: the stainless frame, the black border, the notch with its speaker and camera, the home bar, the antenna bands and the side keys. There is no maker logo.
+- The app reads REPEATER NATION with your name and callsign and a power button. Below that are the zone (‹ ›), the channel name and number (‹ › or tap it to pick from a list), and the activity line (Listening, Receiving · who, Transmitting).
+- A big orange **Hold to talk** button transmits while held. It turns red while talking and green while receiving, and is grey while the radio is off.
+- Quick buttons: Scan, Mute (shows the level), Replay last and My Status. The last station heard shows underneath and opens Recent.
+- The tab bar has Radio, Channels (with a zone picker), Who's On, Recent and Settings. Incoming private calls show Answer and Decline, and a connected call shows End call.
+- The side keys work like the phone's: volume up and down change the real volume (hold to keep going) with a volume pop-up, the ring/silent switch mutes, and the side button on the right is push-to-talk.
+- Version set to 0.2.40 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.39 — Field radio
 
 **New radio in the picker: "Field radio"**, built from the Harris Falcon III photo Sean posted.

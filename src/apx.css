@@ -982,3 +982,98 @@ button.fal-key:active{transform:translateY(1px);box-shadow:0 0 0 1.4px #131410,i
 .fal-knob .apx-knob-cap{background:radial-gradient(circle at 46% 40%,#2c2c2b,#121212 55%,#1e1e1d 64%,#0b0b0b 72%,#262625 100%);box-shadow:0 3px 7px rgba(0,0,0,.6),inset 0 0 0 1.5px #050505,0 0 0 3px #3b3e30}
 .fal-knob .apx-knob-cap:after{inset:30%;background:radial-gradient(circle at 45% 40%,#3a3a38,#151515 70%);box-shadow:0 0 0 2px #0a0a0a,inset 0 0 0 3px #1d1d1c}
 .fal-knob .apx-knob-cap i{top:3%;height:22%;width:3px;margin-left:-1.5px;background:#f2f2ee}
+
+/* Phones (iPhone X and Galaxy style photos) running the radio as a push-to-talk app */
+.apx-stage.face-iphone{grid-template-columns:360px minmax(220px,1fr)}
+.ph{position:relative;flex:none;user-select:none;-webkit-user-select:none}
+.ph>*{position:absolute;box-sizing:border-box}
+.ph-svg{display:block;width:100%;height:100%}
+:where(.ph button){border:0;padding:0;font:inherit;color:inherit;background:none;cursor:pointer}
+.ph-side{background:transparent;border-radius:3px}
+.ph-side:active:not(:disabled){background:rgba(0,0,0,.18)}
+.ph-pttkey:disabled{cursor:not-allowed}
+.ph-pttkey.pressed{background:rgba(255,59,48,.35)}
+.ph-switch{background:transparent}
+.ph-switch i{position:absolute;left:46%;top:30%;width:3px;height:40%;border-radius:2px;background:transparent}
+.ph-switch.on i{background:#ff7a1a;box-shadow:0 0 3px #ff7a1a}
+.ph-screen{overflow:hidden;background:#000;isolation:isolate}
+.ph-screen.iphone{border-radius:27px}
+.ph-notch{position:absolute;left:21.97%;width:56.06%;top:0;height:24px;z-index:5;pointer-events:none}
+.ph-notch svg{display:block;width:100%;height:100%}
+.ph-homebar{position:absolute;left:50%;bottom:7px;width:112px;height:4.5px;margin-left:-56px;border-radius:3px;background:#f2f2f7;opacity:.85;z-index:5;pointer-events:none}
+.ph-app{height:100%;display:flex;flex-direction:column;background:radial-gradient(120% 60% at 50% 0%,#1d2636,#0b0f17 60%);color:#f2f4f8;font-family:-apple-system,"SF Pro Text",Inter,Roboto,"Segoe UI",Arial,sans-serif;font-size:13px;position:relative}
+.ph-statusbar{flex:none;height:35px;display:flex;align-items:center;justify-content:space-between;padding:4px 20px 0 26px;font-size:13px;font-weight:600;letter-spacing:.2px}
+.ph-app.galaxy .ph-statusbar{height:28px;padding:2px 16px 0 18px;font-size:12px;font-weight:500}
+.ph-sys{display:flex;align-items:center;gap:5px}
+.ph-sys em{font-style:normal;font-size:9px;font-weight:800;padding:0 4px;border-radius:4px;line-height:13px}
+.ph-sys em.tx{background:#ff3b30}.ph-sys em.rx{background:#30d158;color:#04210d}
+.ph-bars{display:flex;align-items:flex-end;gap:1.5px;height:11px}
+.ph-bars i{display:block;width:3px;border-radius:1px;background:rgba(255,255,255,.3)}
+.ph-bars i:nth-child(1){height:4px}.ph-bars i:nth-child(2){height:6px}.ph-bars i:nth-child(3){height:8.5px}.ph-bars i:nth-child(4){height:11px}
+.ph-bars i.on{background:#fff}
+.ph-batt{width:23px;height:11px}
+.ph-body{flex:1;min-height:0;overflow:auto;scrollbar-width:none}
+.ph-body::-webkit-scrollbar{display:none}
+.ph-home{display:flex;flex-direction:column;gap:9px;padding:6px 14px 10px}
+.ph-apphead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ph-apphead strong{display:block;font-size:13px;font-weight:800;letter-spacing:1.6px;color:#ff9a3c}
+.ph-apphead small{display:block;font-size:11px;color:#9aa3b5;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.ph-power{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#232b3a;color:#8b95a8;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.ph-power.on{background:#163a24;color:#4cf08a;box-shadow:0 0 10px rgba(76,240,138,.35),inset 0 0 0 1px rgba(76,240,138,.4)}
+.ph-power:disabled{opacity:.6;cursor:wait}
+.ph-zone{display:flex;align-items:center;justify-content:space-between;background:#151c29;border-radius:10px;height:30px;padding:0 4px;font-size:12px;font-weight:600;color:#c9d1e0;text-transform:uppercase;letter-spacing:.8px}
+.ph-zone button{width:26px;height:26px;display:grid;place-items:center;border-radius:8px;color:#9aa3b5}
+.ph-zone button:active,.ph-step:active{background:rgba(255,255,255,.08)}
+.ph-chan{display:flex;align-items:center;gap:4px;background:linear-gradient(180deg,#1b2333,#151c29);border-radius:14px;padding:8px 4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.ph-step{width:34px;height:48px;display:grid;place-items:center;border-radius:10px;color:#c9d1e0;flex:none}
+.ph-channame{flex:1;min-width:0;text-align:center}
+.ph-channame strong{display:block;font-size:22px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-channame small{display:block;font-size:11px;color:#8b95a8;margin-top:2px;letter-spacing:.6px}
+.ph-activity{display:flex;align-items:center;gap:6px;justify-content:center;font-size:12px;font-weight:600;color:#c9d1e0;min-height:18px;white-space:nowrap;overflow:hidden}
+.ph-activity span{font-weight:400;color:#9aa3b5;overflow:hidden;text-overflow:ellipsis}
+.ph-activity i{width:8px;height:8px;border-radius:50%;background:#5b6475;flex:none}
+.ph-activity.listen i{background:#4cf08a}.ph-activity.rx i{background:#4cf08a;box-shadow:0 0 8px #4cf08a}.ph-activity.rx{color:#7dffab}
+.ph-activity.tx i{background:#ff3b30;box-shadow:0 0 8px #ff3b30}.ph-activity.tx{color:#ff8a80}
+.ph-activity.warn i{background:#ffcc00}.ph-activity.warn{color:#ffe07a}.ph-activity.call i{background:#5ac8fa}
+.ph-ptt{align-self:center;width:176px;height:176px;margin:4px 0;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 38%,#ffad5c,#ff7a1a 55%,#d65a00);box-shadow:0 0 0 7px rgba(255,138,31,.16),0 0 0 14px rgba(255,138,31,.07),0 12px 26px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.35);color:#fff;touch-action:none;transition:transform .08s,box-shadow .15s}
+.ph-ptt span{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:15px;font-weight:800;letter-spacing:.6px;text-transform:uppercase}
+.ph-ptt:active:not(:disabled),.ph-ptt.tx{transform:scale(.97)}
+.ph-ptt.tx{background:radial-gradient(circle at 50% 38%,#ff7b72,#ff3b30 55%,#c4170e);box-shadow:0 0 0 8px rgba(255,59,48,.3),0 0 0 18px rgba(255,59,48,.12),0 10px 24px rgba(0,0,0,.5)}
+.ph-ptt.rx{background:radial-gradient(circle at 50% 38%,#6ff3a3,#2fbf68 55%,#178a45);box-shadow:0 0 0 8px rgba(76,240,138,.25),0 0 0 18px rgba(76,240,138,.1),0 10px 24px rgba(0,0,0,.5)}
+.ph-ptt:disabled{background:radial-gradient(circle at 50% 38%,#4a5263,#2c3342 60%,#232938);box-shadow:0 0 0 7px rgba(255,255,255,.04),0 10px 24px rgba(0,0,0,.5);color:#9aa3b5;cursor:not-allowed}
+.ph-callcard{background:#152234;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px;text-align:center;font-size:14px;margin:30px 0}
+.ph-callcard div{display:flex;gap:10px;justify-content:center}
+.ph-callcard button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border-radius:20px;font-weight:700}
+.ph-callcard .go{background:#30d158;color:#04210d}.ph-callcard .stop{background:#ff3b30;color:#fff}
+.ph-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ph-actions button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:12px;background:#151c29;font-size:10.5px;color:#c9d1e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-actions button.on{background:#2b2210;color:#ffb35c;box-shadow:inset 0 0 0 1px rgba(255,154,60,.4)}
+.ph-actions button:disabled{opacity:.45}
+.ph-last{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:12px;background:#151c29;font-size:12px;color:#c9d1e0;text-align:left}
+.ph-last span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-last small{color:#8b95a8}
+.ph-page{display:flex;flex-direction:column;min-height:100%}
+.ph-pagehead{position:relative;display:flex;align-items:center;justify-content:center;height:40px;font-size:15px}
+.ph-back{position:absolute;left:6px;display:flex;align-items:center;color:#ff9a3c;font-size:14px}
+.ph-list{display:flex;flex-direction:column;gap:2px;padding:4px 10px 12px}
+.ph-row{display:flex;align-items:center;gap:10px;min-height:42px;padding:0 12px;border-radius:10px;background:#151c29;font-size:14px;text-align:left}
+.ph-row span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-row b{width:24px;color:#8b95a8;font-weight:600;font-size:12px}
+.ph-row small{color:#8b95a8;font-size:11px}
+.ph-row em{font-style:normal;font-size:11px;color:#ff9a3c}
+.ph-row.on{box-shadow:inset 0 0 0 1px rgba(255,154,60,.5)}
+.ph-row:disabled{opacity:.55}
+.ph-seg{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.ph-seg button{flex:none;padding:5px 11px;border-radius:14px;background:#151c29;font-size:12px;color:#c9d1e0}
+.ph-seg button.on{background:#ff8a1f;color:#1b0d00;font-weight:700}
+.ph-dim{padding:24px 8px;text-align:center;color:#8b95a8}
+.ph-tabs{flex:none;display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px 20px;background:rgba(14,19,29,.92);border-top:1px solid rgba(255,255,255,.07)}
+.ph-app.galaxy .ph-tabs{padding-bottom:8px}
+.ph-tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9.5px;color:#7d8699}
+.ph-tabs button.on{color:#ff9a3c}
+.ph-toast{position:absolute;left:50%;top:44px;transform:translateX(-50%);max-width:86%;padding:7px 14px;border-radius:16px;background:rgba(40,46,58,.96);color:#fff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 18px rgba(0,0,0,.45);z-index:4;pointer-events:none}
+.ph-hud{position:absolute;top:118px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 6px;border-radius:14px;background:rgba(30,34,42,.9);color:#fff;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;z-index:6}
+.ph-hud.left{left:8px;transform:translateX(-8px)}.ph-hud.right{right:8px;transform:translateX(8px)}
+.ph-hud.show{opacity:1;transform:none}
+.ph-hud-bar{position:relative;width:8px;height:96px;border-radius:4px;background:rgba(255,255,255,.22);overflow:hidden}
+.ph-hud-bar i{position:absolute;left:0;right:0;bottom:0;background:#fff;transition:height .15s}
