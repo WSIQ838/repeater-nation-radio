@@ -1,3 +1,14 @@
+## 0.2.38 — Compact mobile radio
+
+**New radio in the picker: "Compact mobile"**, built from the Kenwood NX-5000 style photo Sean posted.
+
+- Drawn to match the photo: the slanted top with its two vents and seven studs on the back edge, the power key and two status lights, the square mic jack, the volume column, the colour screen in its bezel, the ▲ ▼ column, the six keys along the bottom, the orange emergency key and the three-slot speaker grille. The badge reads REPEATER NATION instead of the maker's name.
+- The screen is dark blue with white text like the photo: status icons and time along the top, zone above a large channel name, and a blue softkey row reading Menu, Scan, Zone+ and Zone-.
+- This radio has no volume knob. Its + and − keys left of the screen change the real volume, one step per press, and keep stepping while held. The key's tooltip shows the level.
+- ▲ and ▼ step through the channels. The four keys under the screen run the softkeys shown above them (Menu opens Settings, Scan starts or stops scan, Zone+ and Zone- change zone). The house key goes back to the home screen and the round key opens Recent. Power connects and disconnects; the lights show transmit, receive and calls. The emergency key is not used.
+- Pick it in Settings, Programming, Radio.
+- Version set to 0.2.38 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.37 — Volume knobs that really turn
 
 **Every radio's volume knob now changes the volume**, as Sean asked.

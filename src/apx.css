@@ -332,7 +332,7 @@ button.o7-key:active,.o7-soft:active:not(:disabled),.o7-round:active:not(:disabl
 
 /* Photo-matched mobile heads (dash mount and slim). Boxes are placed inline from
    each photo's coordinates (RadioFaces.jsx); these set the materials. */
-.apx-stage.face-dash-head,.apx-stage.face-slim-head{grid-template-columns:1fr;max-width:900px}
+.apx-stage.face-dash-head,.apx-stage.face-slim-head,.apx-stage.face-nx-mobile{grid-template-columns:1fr;max-width:900px}
 .fx{--apx-bright:1;position:relative;flex:none;user-select:none;font-family:Arial,"Liberation Sans",Helvetica,sans-serif;color:#f2f2f2}
 .fx>*{position:absolute;box-sizing:border-box}
 :where(.fx button){border:0;padding:0;font-family:inherit;color:#f2f2f2;background:none;cursor:pointer}
@@ -889,3 +889,49 @@ button.fx-key:active,button.fx-round:active:not(:disabled),.fx-soft:active:not(:
 .grid.radio-calls{grid-template-columns:1fr}
 .console-extras{align-items:start}
 .console-status .status-panel{max-width:none;padding-top:14px}
+
+/* Compact mobile (Kenwood NX-5000 style photo) */
+.nx{width:867px;height:342px}
+.nx-top{background:linear-gradient(180deg,#2b2b2e,#38383b 60%,#323235);box-shadow:inset 0 1px 0 rgba(255,255,255,.1);clip-path:polygon(10.7% 0,90.6% 0,100% 100%,0 100%)}
+.nx-vent{position:absolute;inset:8% 0 0 0;background:linear-gradient(180deg,#151517,#1d1d20)}
+.nx-vent.l{clip-path:polygon(12% 0,22.5% 0,17.4% 100%,6.2% 100%)}
+.nx-vent.r{clip-path:polygon(75.9% 0,85.3% 0,92% 100%,79% 100%)}
+.nx-stud{border-radius:50%;background:radial-gradient(circle at 40% 35%,#e2e2e4,#8d8d92 70%);box-shadow:0 1px 1px rgba(0,0,0,.4)}
+.nx-front{border-radius:16px;background:linear-gradient(180deg,#29292c,#1d1d20 18%,#18181b 70%,#151517);box-shadow:0 16px 30px rgba(0,0,0,.5),inset 0 0 0 2px #3a3a3e,inset 0 0 0 5px #1b1b1e,inset 0 0 0 6.5px #2a2a2e,inset 0 2px 0 6px rgba(255,255,255,.06)}
+.nx-badge{display:grid;place-items:center;border-radius:5px;background:linear-gradient(180deg,#3b3b3f,#232326);box-shadow:inset 0 0 0 1.2px #151517,0 1px 0 rgba(255,255,255,.08);font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:#c9c9cc;white-space:nowrap}
+.nx-well{border-radius:12px;background:#151517;box-shadow:inset 0 0 0 1.4px #2b2b2f,inset 0 2px 4px rgba(0,0,0,.7)}
+.nx-power svg{color:#ececee}
+.nx-power.on svg{color:#7dffad}
+.nx-led{display:block;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d7e6ee,#87a3b1 70%);box-shadow:0 0 4px rgba(150,190,210,.35)}
+.nx-led.pill{border-radius:6px;background:linear-gradient(180deg,#c9d5dc,#7f939d)}
+.nx-led.rx{background:#30d158;box-shadow:0 0 9px #30d158}
+.nx-led.tx{background:#ff3b30;box-shadow:0 0 9px #ff3b30}
+.nx-led.call{background:#ffcc00;box-shadow:0 0 8px #ffcc00}
+.nx-jack{border-radius:14px 14px 10px 10px;background:linear-gradient(180deg,#2a2a2d,#1b1b1e);box-shadow:inset 0 0 0 1.6px #0f0f11,inset 0 2px 0 rgba(255,255,255,.08)}
+.nx-jack i{position:absolute;left:20%;right:20%;top:20%;bottom:16%;border-radius:4px;background:linear-gradient(180deg,#0b0b0c,#141416);box-shadow:inset 0 0 0 1.4px #2a2a2d}
+.nx-column{border-radius:9px;background:#151517;box-shadow:inset 0 0 0 1.4px #2a2a2e,inset 0 2px 4px rgba(0,0,0,.6)}
+.nx-key{border-radius:7px;background:linear-gradient(180deg,#38383c,#262629 55%,#1f1f22);font-size:15px;font-weight:700;color:#ececee}
+.nx-vol{font-size:30px;font-weight:400;line-height:1}
+.nx-arrow{font-size:25px;line-height:1}
+.nx-jack i:after{content:"";position:absolute;left:30%;right:30%;bottom:-1px;height:22%;border-radius:2px 2px 0 0;background:#1d1d20;box-shadow:inset 0 0 0 1.2px #2a2a2d}
+.nx-key svg{width:44%;height:auto}
+.nx-bottom svg{width:38%}
+.nx-bezel{border-radius:9px;background:#0e0e10;box-shadow:inset 0 0 0 1.6px #2c2c30,inset 0 2px 5px rgba(0,0,0,.8)}
+.nx-screen{border-radius:3px;background:#05070f}
+.nx-display{background:linear-gradient(180deg,#0b1430,#050812 30%,#03050b);color:#fff}
+.nx-display .apx-icons{height:21px;color:#fff;background:linear-gradient(180deg,#1d3e86,#0e2153);font-size:12px}
+.nx-display .apx-icons svg.lit{color:#5fe06f}
+.nx-display .apx-bars i{background:#3a4c74}.nx-display .apx-bars i.on{background:#fff}
+.nx-display .apx-main{text-align:center;align-items:center;justify-content:center}
+.nx-display .apx-zone{color:#fff;font-size:17px;font-family:"DejaVu Sans Mono",Consolas,"Liberation Mono",monospace}
+.nx-display .apx-channel{color:#fff;font-size:30px;font-weight:700;font-family:"DejaVu Sans Mono",Consolas,"Liberation Mono",monospace;letter-spacing:-.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nx-display .apx-banner{font-size:12px;justify-content:center}
+.nx-display .apx-banner.listen{display:none}
+.nx-display .apx-banner.idle{background:transparent;color:#b7c6e6}
+.nx-display .apx-menu{height:22px;grid-template-columns:repeat(4,1fr);background:linear-gradient(180deg,#2a63c7,#1645a0);margin:0 4px 3px}
+.nx-display .apx-menu span{font-size:14px;font-weight:400;border-right-color:#0b1d48;border-right-width:2px;font-family:"DejaVu Sans Mono",Consolas,"Liberation Mono",monospace}
+.nx-display .apx-who,.nx-display .apx-who .dim,.nx-display .apx-entry{color:#fff}
+.nx-grille{display:grid;grid-template-rows:repeat(3,1fr);gap:5%;padding:1% 0 0 1%}
+.nx-grille i{position:relative;border-radius:22px 8px 8px 22px;background:linear-gradient(180deg,#3a3a3e 0,#2a2a2d 12%,#09090a 30%,#121214 70%,#26262a);box-shadow:inset 0 0 0 1.6px #2c2c30,0 2px 0 rgba(255,255,255,.05)}
+.nx-keyrail{border-radius:9px;background:#141416;box-shadow:inset 0 0 0 1.4px #28282c}
+.nx-emerg{background:radial-gradient(circle at 42% 36%,#ffb24d,#f68a12 60%,#c76a07);box-shadow:0 0 0 3px #1a1a1c,0 0 0 4.5px #3a3a3e,0 2px 4px rgba(0,0,0,.6)}

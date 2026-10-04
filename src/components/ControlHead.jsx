@@ -155,6 +155,11 @@ export function useFace(p,{layout}={}){
     {label:"Zone",act:()=>stepZone(1)},
     {label:"Chan",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+  ]:layout==="nx"?[
+    {label:"Menu",act:()=>onTab("settings")},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+    {label:"Zone+",act:()=>stepZone(1)},
+    {label:"Zone-",act:()=>stepZone(-1)},
   ]:o7?[
     {label:"Channel",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
