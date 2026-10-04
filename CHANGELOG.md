@@ -1,5 +1,13 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.45 — Channel announcement says the zone
+
+**The channel announcement now says “Zone” before the zone name**, after Sean noticed it didn't say the zone.
+
+- Changing channel or zone now announces “Zone ALL, channel 2, US-West” instead of “ALL channel 2, US-West”, using the zone name as programmed. A zone change says the new zone's name.
+- The Test button next to the announce voice reads it the same way.
+- Version set to 0.2.45 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.44 — Connection fixes, combined with the 0.2.36 connection rebuild
 
 **The connection fixes from the full radio check, combined with the connection rebuild that went straight to main as 0.2.36**, so both can be merged.

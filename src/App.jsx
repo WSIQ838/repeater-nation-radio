@@ -379,6 +379,8 @@ function BluetoothPtt({status,setStatus}){
 function RadioApp({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio",order:c.zoneOrder??999}])).values()).sort((a,b)=>a.order-b.order),[channels]);
+  // What the channel announcement says: "Zone ALL, channel 1, Nation Wide".
+  const announceText=c=>{const z=String(zones.find(x=>x.id===c.zoneId)?.name||c.zoneName||"").trim();return `${z?`Zone ${z}, `:""}channel ${c.number??""}, ${c.name}`};
   const visibleChannels=useMemo(()=>zoneId?channels.filter(c=>c.zoneId===zoneId):channels,[channels,zoneId]);
   // Radio features: tones, time-out timer, announcements and per-channel volume.
   const [features,setFeatures]=useState(loadFeatures),featuresRef=useRef(features);featuresRef.current=features;
@@ -397,7 +399,7 @@ function RadioApp({session,onSignOut}){
     const f=featuresRef.current;
     if(what==="roger")tone("roger",rogerSteps(f.rogerTone));
     else if(what==="fx")previewVoiceFx(f.voiceFx||"clean",Math.max(0.3,volumeGain(volumeRef.current)));
-    else if(what==="announce"){const c=currentChannelRef.current;announce(c?`${c.zoneName||""} channel ${c.number??""}, ${c.name}`:"Zone one, channel one, Nation Wide",{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch})}
+    else if(what==="announce"){const c=currentChannelRef.current;announce(c?announceText(c):"Zone one, channel one, Nation Wide",{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch})}
   };
   const changeVolume=dir=>{
     const next=Math.max(0,Math.min(10,volume+dir));
@@ -521,7 +523,7 @@ function RadioApp({session,onSignOut}){
     const id=setTimeout(()=>connectRef.current().catch(()=>{}),AUTO_CONNECT_SETTLE_MS);
     const c=channels.find(x=>x.id===channelId);
     const f=featuresRef.current;
-    if(c&&f.announce)announce(`${c.zoneName||""} channel ${c.number??""}, ${c.name}`,{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch});
+    if(c&&f.announce)announce(announceText(c),{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch});
     return()=>clearTimeout(id);
   },[tuneSeq]);
   const chooseZone=e=>selectZone(e.target.value);
