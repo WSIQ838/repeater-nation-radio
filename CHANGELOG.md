@@ -1,3 +1,15 @@
+## 0.2.39 — Field radio
+
+**New radio in the picker: "Field radio"**, built from the Harris Falcon III photo Sean posted.
+
+- Drawn to match the photo: the olive green body with its ribbed battery cover, the two black carry handles, the four corner bolts, the antenna, GPS, data, audio, KDU and USB connectors with their printed labels, the grounding mark, the side screw, the green LCD in its black bezel, the rubber keypad and the big mode knob with OFF, CT, PT, CC, LD and Z printed round it. Under the LCD it reads REPEATER on the left and NATION on the right, where the photo has the maker's name and model.
+- The green LCD shows the status icons and time, the zone, the channel in capitals and a menu row: ZONE, SCAN, WHO and CHAN. Tap a menu word on the screen to use it. Transmit, receive and calls show in reverse on the second line.
+- VOL + and − change the real volume, one step per press, and keep stepping while held.
+- PRE + and − step through the channels. ◀ and ▶ change zone. The number keys type a channel number, ENT goes to it and CLR clears it (CLR also returns to the home screen).
+- The mode knob is the power switch: click it, or turn it right off OFF to switch the radio on (it points at PT), and turn it back to OFF or click it again to switch off.
+- Shared code: the press-and-hold repeat for volume keys is now one helper used by both new radios, and the zoom-to-fit for wide radios moved next to it.
+- Version set to 0.2.39 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.38 — Compact mobile radio
 
 **New radio in the picker: "Compact mobile"**, built from the Kenwood NX-5000 style photo Sean posted.

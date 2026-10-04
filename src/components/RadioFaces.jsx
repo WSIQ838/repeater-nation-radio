@@ -1,6 +1,7 @@
 import {useEffect,useRef,useState} from "react";
 import {Power} from "lucide-react";
-import {ControlHead,FaceDisplay,Knob,O7Icon,O7_KEYS,photoBoxes,useFace} from "./ControlHead";
+import {ControlHead,FaceDisplay,Knob,O7Icon,O7_KEYS,photoBoxes,useFace,useFit,useHoldRepeat} from "./ControlHead";
+import {FalconRadio} from "./FalconRadio";
 import {TouchHandheld} from "./TouchHandheld";
 import {KeypadHandheld} from "./KeypadHandheld";
 import {AllBandHandheld} from "./AllBandHandheld";
@@ -20,6 +21,7 @@ export const FACES=[
   {id:"compact-handheld",label:"Compact handheld",note:"Speaker grille, colour screen, P1/P2, nav pad, keypad"},
   {id:"hand-head",label:"Handheld control head",note:"Corded head, P1–P4, volume keys, keypad"},
   {id:"nx-mobile",label:"Compact mobile",note:"Colour screen, volume keys, four softkeys, speaker grille"},
+  {id:"field-radio",label:"Field radio",note:"Green LCD, keypad with VOL and PRE rockers, mode knob, carry handles"},
 ];
 export const DEFAULT_FACE="control-head";
 const FACE_KEY="rn-face";
@@ -49,17 +51,6 @@ const Softkeys=({f,xs,y,box,count=xs.length})=>f.bottom.slice(0,count).map((k,i)
   onClick={k.act||undefined} disabled={!k.act||k.disabled} aria-label={k.label||"Unused softkey"} title={k.label||undefined}><i/></button>);
 const Leds=({f,boxes})=>boxes.map((b,i)=><i key={i} className={"fx-led"+([f.ledTx&&" tx",f.ledRx&&" rx",f.ledCall&&" call"][i]||"")} style={b} title={["Transmit","Receive","Call"][i]}/>);
 const brightnessStep=f=>()=>f.setBrightness(b=>b>0?b-1:3);
-// The wide heads are drawn at a fixed size; in a narrow window they are zoomed down
-// to fit the radio column instead of overflowing it.
-function useFit(width){
-  const ref=useRef(null),[zoom,setZoom]=useState(1);
-  useEffect(()=>{
-    const host=ref.current?.parentElement;if(!host||typeof ResizeObserver==="undefined")return;
-    const ro=new ResizeObserver(()=>{const w=host.clientWidth;setZoom(w&&w<width?Math.max(.5,w/width):1)});
-    ro.observe(host);return()=>ro.disconnect();
-  },[width]);
-  return [ref,zoom];
-}
 
 // Dash mount head (APX Mobile photo, 439×192: radio from x 35–393, y 28–158).
 const AM=photoBoxes(35,28,2.4);
@@ -143,17 +134,8 @@ function NxMobile(p){
   const {at,dot}=NX;
   const {connected,state,muted,volume=7,onPower,onMute,onVolume}=p;
   const [ref,zoom]=useFit(880);
-  const holdRef=useRef(null),volRef=useRef(onVolume);
-  volRef.current=onVolume;
-  // Holding + or − keeps stepping, like the radio's own volume keys. The repeat reads
-  // the latest onVolume so each step starts from the level the last one set.
-  const volKey=dir=>({
-    onPointerDown:e=>{if(e.pointerType==="mouse"&&e.button!==0)return;volRef.current?.(dir);clearTimeout(holdRef.current);clearInterval(holdRef.current);holdRef.current=setTimeout(()=>{holdRef.current=setInterval(()=>volRef.current?.(dir),160)},420)},
-    onPointerUp:()=>{clearTimeout(holdRef.current);clearInterval(holdRef.current)},
-    onPointerLeave:()=>{clearTimeout(holdRef.current);clearInterval(holdRef.current)},
-    onKeyDown:e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();onVolume?.(dir)}},
-  });
-  useEffect(()=>()=>{clearTimeout(holdRef.current);clearInterval(holdRef.current)},[]);
+  // Holding + or − keeps stepping, like the radio's own volume keys.
+  const volKey=useHoldRepeat(dir=>onVolume?.(dir));
   return <div ref={ref} className="fx nx" style={{"--apx-bright":0.55+f.brightness*0.15,zoom}}>
     <div className="nx-top" style={at(77,124,450,156)}><i className="nx-vent l"/><i className="nx-vent r"/></div>
     {[251,266,282,297,313,328,344].map(x=><Inert key={x} className="nx-stud" style={dot(x,121.5,3.4)}/>)}
@@ -167,8 +149,8 @@ function NxMobile(p){
     <div className="nx-jack" style={at(76,216,121,261)}><i/></div>
 
     <Inert className="nx-column" style={at(125,167.5,147.5,229)}/>
-    <button type="button" className="fx-key nx-key nx-vol" style={at(128.8,172.5,143.8,196)} {...volKey(1)} onContextMenu={e=>e.preventDefault()} title={`Volume up (${muted?"muted":volume})`} aria-label="Volume up">+</button>
-    <button type="button" className="fx-key nx-key nx-vol" style={at(128.8,202.5,143.8,225.5)} {...volKey(-1)} onContextMenu={e=>e.preventDefault()} title={`Volume down (${muted?"muted":volume})`} aria-label="Volume down">−</button>
+    <button type="button" className="fx-key nx-key nx-vol" style={at(128.8,172.5,143.8,196)} {...volKey(1)} title={`Volume up (${muted?"muted":volume})`} aria-label="Volume up">+</button>
+    <button type="button" className="fx-key nx-key nx-vol" style={at(128.8,202.5,143.8,225.5)} {...volKey(-1)} title={`Volume down (${muted?"muted":volume})`} aria-label="Volume down">−</button>
 
     <div className="fx-bezel nx-bezel" style={at(158.8,171,320,229)}/>
     <div className="fx-screen nx-screen" style={at(163.8,173.8,316.3,226.3)}><FaceDisplay p={p} f={f} menus={false} softRow={f.bottom.slice(0,4)} className="fx-display nx-display"/></div>
@@ -206,5 +188,6 @@ export function RadioFace({face=DEFAULT_FACE,...p}){
   if(face==="compact-handheld")return <CompactHandheld {...p}/>;
   if(face==="hand-head")return <CordHead {...p}/>;
   if(face==="nx-mobile")return <NxMobile {...p}/>;
+  if(face==="field-radio")return <FalconRadio {...p}/>;
   return <ControlHead {...p}/>;
 }

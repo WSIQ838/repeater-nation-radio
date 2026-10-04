@@ -63,6 +63,34 @@ function Clock(){
   return <span>{now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
 }
 
+// The wide heads are drawn at a fixed size; in a narrow window they are zoomed down
+// to fit the radio column instead of overflowing it.
+export function useFit(width){
+  const ref=useRef(null),[zoom,setZoom]=useState(1);
+  useEffect(()=>{
+    const host=ref.current?.parentElement;if(!host||typeof ResizeObserver==="undefined")return;
+    const ro=new ResizeObserver(()=>{const w=host.clientWidth;setZoom(w&&w<width?Math.max(.5,w/width):1)});
+    ro.observe(host);return()=>ro.disconnect();
+  },[width]);
+  return [ref,zoom];
+}
+
+// Press-and-hold keys (volume + and −, preset rockers): one step on press, then
+// repeating while held. Always calls the latest fn, so each step starts from the
+// level the previous one set.
+export function useHoldRepeat(fn){
+  const fnRef=useRef(fn),timer=useRef(null);
+  fnRef.current=fn;
+  const stop=()=>{clearTimeout(timer.current);clearInterval(timer.current)};
+  useEffect(()=>stop,[]);
+  return arg=>({
+    onPointerDown:e=>{if(e.pointerType==="mouse"&&e.button!==0)return;fnRef.current?.(arg);stop();timer.current=setTimeout(()=>{timer.current=setInterval(()=>fnRef.current?.(arg),160)},420)},
+    onPointerUp:stop,onPointerLeave:stop,onPointerCancel:stop,
+    onKeyDown:e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fnRef.current?.(arg)}},
+    onContextMenu:e=>e.preventDefault(),
+  });
+}
+
 // Shared radio behaviour for every radio face: display views, keypad entry, softkey
 // menus, banner text, signal bars and mapped-button commands. A face only draws it.
 export function useFace(p,{layout}={}){
@@ -160,6 +188,11 @@ export function useFace(p,{layout}={}){
     scanActive?{label:"Nuis Del",act:onNuisance}:{label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
     {label:"Zone+",act:()=>stepZone(1)},
     {label:"Zone-",act:()=>stepZone(-1)},
+  ]:layout==="falcon"?[
+    {label:"Zone",act:()=>stepZone(1)},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+    {label:view==="who"?"Back":"Who",act:()=>setView(v=>v==="who"?"home":"who")},
+    {label:"Chan",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
   ]:o7?[
     {label:"Channel",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
