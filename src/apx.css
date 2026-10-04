@@ -1091,3 +1091,4 @@ button.fal-key:active{transform:translateY(1px);box-shadow:0 0 0 1.4px #131410,i
 .feature-test:disabled{opacity:.45;cursor:default}
 .feature-sub{display:flex;flex-direction:column;gap:8px;padding:8px 0 2px 14px;border-left:2px solid #232c36}
 .feature-val{min-width:40px;text-align:right;font-variant-numeric:tabular-nums}
+.setting-error{white-space:normal;word-break:break-word;text-align:right;color:#f2c14e!important;max-width:60%}

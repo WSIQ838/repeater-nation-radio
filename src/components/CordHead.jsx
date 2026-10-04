@@ -127,7 +127,7 @@ export function CordHead(p){
   const {screen,okKey,backKey,nav,digit}=ui;
   return <div className="cd" style={{"--apx-bright":0.55+f.brightness*0.15,width:W*K,height:H*K}}>
     <Body/>
-    <button type="button" className={"cd-power"+(connected?" on":"")} style={at(190,58,326,106)} onClick={onPower} disabled={state==="connecting"} title={connected?"Power: radio off":"Power: radio on"} aria-label="Power"/>
+    <button type="button" className={"cd-power"+(connected?" on":"")} style={at(190,58,326,106)} onClick={onPower} title={connected?"Power: radio off":"Power: radio on"} aria-label="Power"/>
     <button type="button" className="cd-rock" style={at(420,58,556,104)} onClick={()=>f.stepChannel(-1)} title="CH −: previous channel" aria-label="Channel down"/>
     <button type="button" className="cd-rock" style={at(556,58,690,104)} onClick={()=>f.stepChannel(1)} title="CH +: next channel" aria-label="Channel up"/>
     <i className={"cd-led"+(f.ledTx?" tx":"")} style={at(323,105,343,117)} title="Transmit light"/>

@@ -1,3 +1,60 @@
+# Repeater Nation Radio — Changelog
+
+## 0.2.44 — Connection fixes, combined with the 0.2.36 connection rebuild
+
+**The connection fixes from the full radio check, combined with the connection rebuild that went straight to main as 0.2.36**, so both can be merged.
+
+- Where the two overlapped (automatic reconnect, Reconnecting… while LiveKit recovers, handing back a held channel when the link drops), the connection fixes' version is kept, since it also cancels slow connects, waits for the network and says why a radio was dropped.
+- From the rebuild: an automatic reconnect keeps the same voice identity, so the server sees the same connection come back, and the radio re-issues its radio session every 4 minutes in the background. Unlike the rebuild, that refresh never drops the connection (LiveKit refreshes its own room pass while connected).
+- Version set to 0.2.44 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+**Connection fixes from a full check of every part of the radio that connects**, after Sean saw "could not establish signal connection: room connection has timed out (signal)" and "Channel is busy" while holding PTT.
+
+Connecting:
+- When the voice server doesn't answer in time, the radio tries once more by itself ("Voice server slow, retrying…") before giving up. If it still fails, the screen says which server didn't answer in plain words, and Settings shows the exact LiveKit error under **Last connection error**.
+- The power button works while the radio is connecting, so a slow connect can be cancelled. Before, every power control was greyed out until the attempt ended.
+- A call to the Repeater Nation server that never answers now gives up after 20 seconds with a message, instead of leaving "Connecting…" up forever.
+- When the connection drops on its own (Wi-Fi drop, sleep, server restart), the radio shows **Reconnecting…** and keeps trying for about five minutes with fresh radio passes. It retries straight away when the network comes back or the window is shown again. Before, it went quietly to "Radio Off" and stayed off.
+- If the same account opens the channel on the website or another radio, or a channel admin removes this radio, the screen says so instead of just turning off.
+- While LiveKit is reconnecting, the radio shows Reconnecting… instead of a false "Listening", and PTT says it is reconnecting instead of keying into a dead link.
+
+PTT:
+- The server sometimes answers "busy" for a PTT claim it just wrote but can't read back yet. When nobody is on the air, the radio now asks once more, and that false busy is granted.
+- PTT calls to the server go out one at a time, so a quick re-key can no longer have its new claim deleted by the previous release.
+- A PTT request that gets no answer gives up after 8 seconds. The PTT banner reads "Requesting channel…" until the server grants it.
+- The channel hold is renewed every 8 seconds (like the website). A slow or failed renew is retried for up to 20 seconds before the transmission ends; a "you no longer hold the channel" answer ends it at once. Either way the radio says "Transmission ended…" and plays the error tone, instead of cutting out silently.
+- If the server takes the channel back mid-transmission (a moderator, or the account keying up elsewhere), the radio stops transmitting right away.
+- The radio waits briefly for the server's permission to talk before publishing the mic, and retries once if the first try is refused.
+- A held channel is handed back when the connection drops, and a release lost to a network blip is sent again.
+- PTT messages ("Channel is busy", "You are muted…") clear after 5 seconds instead of staying on the screen.
+- A saved microphone that was unplugged no longer makes every PTT fail; the closest microphone is used.
+- Pressing PTT while the radio is off or reconnecting plays the error tone and says why.
+- PTT calls now name this radio's own voice connection (the `radio_session_id` and `radio_callsign` the server's radio pass returns). The website's server gives each connection its own voice identity since 2026-10-03, and without this the server unlocked talking for the wrong identity, so a granted PTT sent no audio.
+- Turning the radio off waits at most 3 seconds for the server to take back a held channel.
+- Keeps the PTT fixes from 0.2.24 to 0.2.35, reworked to fit the changes above: a repeated key-down while a request is out is ignored (a press after key-up still goes ahead), a turned-down request hands back any claim the server left, the open mic stays silent until the floor is granted, the mic is unpublished on release so listeners hear the end at once, a microphone that never becomes ready gives up after 8 seconds, and the error banner clears at each new press. The roster and Last heard show the numbered radio callsign (for example 1-WSIQ838) when the server sends one.
+
+Scan and the monitor console:
+- Scan and console channels join with their own listen-only pass. They used the account's own identity before, so a scan join that finished late could knock this radio (or the website) off the channel.
+- Channels join two at a time, starting a moment after the main radio connects, instead of up to ten at once on the same link.
+- A channel that can't be joined is retried with growing waits (2 s up to a minute), not every 5 s forever. Channels you aren't allowed on stop retrying, and the reason shows on the console tile and in the scan list.
+- Nothing rejoins after scan or the console is turned off, and retries pause while offline.
+- Scan and console rooms stay up through a short main-radio reconnect (15 s grace) instead of leaving and rejoining all of them.
+- Who's On no longer lists other members' scan and console listeners.
+
+Direct calls:
+- A call ends on this side when the other side hangs up, declines or never answers. Before, "Call connected" stayed up with the microphone open.
+- The caller sees "Calling…" until the other side answers.
+- A dropped call reconnects once, then ends and tells the other side. The microphone is always released when a call ends.
+- Calls use the microphone chosen in Settings.
+- Who's online is checked every 15 seconds while the window is visible, and the call list every 4 seconds, instead of both every 3 seconds all day.
+
+Sign-in and app:
+- **Sign out / switch account** no longer sends the app window to the website's logout page; it signs out inside the app.
+- If the Repeater Nation sign-in expires while the app runs, the app goes back to the sign-in screen and says so, instead of every radio call failing with "Authentication required".
+- Server error messages keep their meaning ("Can't reach Repeater Nation. Check the internet connection." instead of "Network Error"), and the mini radio shows errors.
+- If the channel list fails to load at start, it is retried until it loads.
+- Quitting from the tray or closing the window leaves the channel and hands back a held PTT first.
+
 ## 0.2.43 — Choose the announce voice, roger beep and voice filter
 
 **Settings, Programming, Radio features now lets you change how the radio sounds**, after Sean asked to change the channel-announce voice, the roger beep and the voice filters. Each choice has a Test button.
@@ -82,8 +139,6 @@
 - Added pre-expiry radio-session refresh and LiveKit token update when supported, with a reconnect fallback when token refresh is unavailable.
 - Active PTT floor leases are released only when the transport is genuinely lost or the user deliberately disconnects.
 - Bumped the desktop app version to 0.2.36.
-
-# Repeater Nation Radio — Changelog
 
 ## 0.2.34
 

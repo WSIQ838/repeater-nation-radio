@@ -154,7 +154,7 @@ function Screen({p,f,screen,setScreen}){
     <button type="button" className="hh-item" onClick={()=>setScreen("recent")}><RefreshCw size={12}/>Recent</button>
     <button type="button" className="hh-item" onClick={()=>setScreen("status")}><UserRound size={12}/>My Status</button>
     <button type="button" className="hh-item" onClick={()=>f.setBrightness(x=>x>0?x-1:3)}><Sun size={12}/>Brightness</button>
-    <button type="button" className="hh-item" onClick={()=>{onPower?.();setScreen("home")}} disabled={state==="connecting"}><Power size={12}/>{connected?"Radio off":"Radio on"}</button>
+    <button type="button" className="hh-item" onClick={()=>{onPower?.();setScreen("home")}}><Power size={12}/>{connected||state==="connecting"||state==="reconnecting"?"Radio off":"Radio on"}</button>
     <button type="button" className="hh-item" onClick={()=>onTab("settings")}><ListChecks size={12}/>Setup</button>
   </>);
   else body=<>
@@ -188,7 +188,7 @@ function Screen({p,f,screen,setScreen}){
         <span className="hh-msg-text" style={M.at(55,601.5,152,609)}>Incoming private call</span>
         <div className="hh-msg-btns" style={M.at(51,611,154,631)}><button type="button" className="go" onClick={onAnswer}>Answer</button><button type="button" className="stop" onClick={onDecline}>Decline</button></div>
       </>:call?<>
-        <span className="hh-msg-name call" style={M.at(55,591,152,601)}>{callState==="calling"?"Calling…":"Call connected"}</span>
+        <span className="hh-msg-name call" style={M.at(55,591,152,601)}>{callState==="calling"?"Calling…":callState==="reconnecting"?"Reconnecting…":"Call connected"}</span>
         <span className="hh-msg-text" style={M.at(55,601.5,152,609)}>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span>
         <div className="hh-msg-btns" style={M.at(51,611,154,631)}><button type="button" className="stop" onClick={onEndCall}>End Call</button></div>
       </>:<>
