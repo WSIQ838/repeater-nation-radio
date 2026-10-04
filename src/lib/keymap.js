@@ -43,9 +43,11 @@ export function defaultBindings(globalKeys){
 export function defaultGlobal(input){
   if(input.kind==="webkey")return false;
   if(input.kind!=="key")return true;
-  const vk=Number(input.code);
-  return (vk>=0x7C&&vk<=0x87)||(vk>=0xA6&&vk<=0xB7);
+  return nativeOnlyKey(Number(input.code));
 }
+// Keys nobody types with: F13–F24 and the browser, media and volume keys hand mics
+// send (Windows virtual-key codes). Only the native hook reads these.
+export const nativeOnlyKey=vk=>(vk>=0x7C&&vk<=0x87)||(vk>=0xA6&&vk<=0xB7);
 
 const KEY="rn-keymap",OLD_PTT_KEY="rn-ptt-binding";
 export function loadKeymap(globalKeys){

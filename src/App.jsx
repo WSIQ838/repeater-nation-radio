@@ -10,7 +10,7 @@ import {useDirectCalls} from "./hooks/useDirectCalls";
 import {SCAN_MAX,useScan} from "./hooks/useScan";
 import {canShareStatus,prewarmRadio,shareStatus} from "./lib/livekit";
 import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
-import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
+import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,nativeOnlyKey,sameInput,saveKeymap} from "./lib/keymap";
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
@@ -308,6 +308,11 @@ function StatusButtons({status,onStatus,shared,connected}){
 
 const readPref=key=>{try{return localStorage.getItem(key)}catch{return null}};
 const writePref=(key,value)=>{try{localStorage.setItem(key,value)}catch{}};
+// The Windows virtual-key code for a key event, matching what the native hook reports
+// (left and right Shift, Ctrl and Alt are separate keys there).
+const SIDE_VK={ShiftLeft:0xA0,ShiftRight:0xA1,ControlLeft:0xA2,ControlRight:0xA3,AltLeft:0xA4,AltRight:0xA5};
+// Number-pad digits count as Num 0–9 whether Num Lock is on or off.
+const keyVk=e=>{const pad=/^Numpad(\d)$/.exec(e.code||"");return pad?0x60+Number(pad[1]):SIDE_VK[e.code]??e.keyCode};
 const keyLabel=e=>e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,"");
 
 // Whether a binding can be set to work while the app isn't focused.
@@ -316,7 +321,7 @@ const GROUPS=[...new Set(ACTIONS.map(a=>a.group))];
 
 function KeyMap({keymap,caps,learnFor,notice,onLearn,onRemove,onToggleGlobal,onReset}){
   return <div className="keymap">
-    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused.</p>
+    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused. Keyboard keys start as “App only” so typing elsewhere doesn't key the radio; click “App only” on a key to make it work anywhere.</p>
     {notice&&<div className="keymap-notice">{notice}</div>}
     {GROUPS.map(g=><div key={g} className="keymap-group"><h4>{g}</h4>
       {ACTIONS.filter(a=>a.group===g).map(a=>{
@@ -503,7 +508,9 @@ function RadioApp({session,onSignOut}){
   const [hwCaps,setHwCaps]=useState(null),[keymap,setKeymap]=useState(null),[learnFor,setLearnFor]=useState(""),[mapNotice,setMapNotice]=useState("");
   const keymapRef=useRef(keymap),learnForRef=useRef(learnFor);keymapRef.current=keymap;learnForRef.current=learnFor;
   const updateKeymap=m=>{setKeymap(m);saveKeymap(m);setHardwareBindings(m)};
-  const learn=id=>{setLearnFor(id);setMapNotice("");setLearning(!!id)};
+  // Starting to learn takes focus off the Add button, so the key being learned (Space,
+  // Enter) can't press it again and restart learning.
+  const learn=id=>{if(id)document.activeElement?.blur?.();setLearnFor(id);setMapNotice("");setLearning(!!id)};
   const addLearned=input=>{
     const action=learnForRef.current,map=keymapRef.current||[];
     if(!action)return;
@@ -556,26 +563,42 @@ function RadioApp({session,onSignOut}){
 
   useEffect(()=>{
     if(!keymap)return;
-    const web=keymap.filter(b=>b.kind==="webkey"),nativeKeys=new Set(keymap.filter(b=>b.kind==="key").map(b=>Number(b.code)));
-    const typing=e=>/^(INPUT|TEXTAREA)$/.test(e.target?.tagName||"");
+    // The page reads typed keys itself while the app is in front: in-window keys, and
+    // keys learned through the Windows hook (matched by virtual-key code). Keys nobody
+    // types with (F13–F24, media and volume keys) stay with the hook, which also adds
+    // "Anywhere" keys while another window is in front.
+    const forPage=b=>b.kind==="webkey"||(b.kind==="key"&&!nativeOnlyKey(Number(b.code)));
+    const page=keymap.filter(forPage),hookOnly=new Set(keymap.filter(b=>b.kind==="key"&&!forPage(b)).map(b=>Number(b.code)));
+    const matches=e=>{const vk=keyVk(e);return page.filter(b=>b.kind==="webkey"?b.code===e.code:Number(b.code)===vk)};
+    const typing=e=>/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||"")||!!e.target?.isContentEditable;
+    const held=new Map();// key → actions its press fired, so the release reaches the same ones
     const keyDown=e=>{
-      // Without the Windows hook, buttons are learned from in-window keys.
-      if(learnFor){if(hwCaps?.global_keys)return;e.preventDefault();if(e.code==="Escape")learn("");else addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return}
+      if(learnFor){
+        // Keep Space/Enter from also pressing the focused button while a button is learned.
+        e.preventDefault();
+        // With the Windows hook the native side learns the key (it also sees mouse and media buttons).
+        if(hwCaps?.global_keys)return;
+        if(e.code==="Escape")learn("");else addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return;
+      }
       if(typing(e))return;
-      // Keys mapped through the Windows hook are handled there; just keep them from the page.
-      if(nativeKeys.has(e.keyCode)){e.preventDefault();return}
-      const hits=web.filter(b=>b.code===e.code);if(!hits.length)return;
-      e.preventDefault();if(e.repeat)return;
+      if(hookOnly.has(keyVk(e))){e.preventDefault();return}
+      const hits=matches(e);if(!hits.length)return;
+      e.preventDefault();if(e.repeat||held.has(e.code))return;
+      held.set(e.code,hits);
       hits.forEach(b=>handleAction({action:b.action,pressed:true,global:true}));
     };
     const keyUp=e=>{
-      if(typing(e))return;
-      if(nativeKeys.has(e.keyCode)){e.preventDefault();return}
-      const hits=web.filter(b=>b.code===e.code);if(!hits.length)return;
-      e.preventDefault();hits.forEach(b=>handleAction({action:b.action,pressed:false,global:true}));
+      if(learnFor){e.preventDefault();return}
+      if(hookOnly.has(keyVk(e))){e.preventDefault();return}
+      const hits=held.get(e.code);if(!hits)return;
+      held.delete(e.code);e.preventDefault();
+      hits.forEach(b=>handleAction({action:b.action,pressed:false,global:true}));
     };
-    window.addEventListener("keydown",keyDown);window.addEventListener("keyup",keyUp);
-    return()=>{window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp)}
+    // A key let go after switching to another window never sends its key-up here, so
+    // release everything held (otherwise PTT would stay keyed).
+    const releaseAll=()=>{held.forEach(hits=>hits.forEach(b=>handleAction({action:b.action,pressed:false,global:true})));held.clear()};
+    window.addEventListener("keydown",keyDown);window.addEventListener("keyup",keyUp);window.addEventListener("blur",releaseAll);
+    return()=>{releaseAll();window.removeEventListener("keydown",keyDown);window.removeEventListener("keyup",keyUp);window.removeEventListener("blur",releaseAll)}
   },[keymap,learnFor,hwCaps]);
 
   // Remember audio devices, and pick a hand mic automatically the first time one shows up.

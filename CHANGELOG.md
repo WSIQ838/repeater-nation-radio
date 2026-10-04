@@ -1,3 +1,15 @@
+## 0.2.42 — Keyboard key bindings fixed
+
+**Keys mapped in Settings, Buttons and PTT work from the keyboard again**, after Sean reported that key bindings weren't picking up his keyboard.
+
+- On Windows, every keyboard key went through a background keyboard hook, even with the app in front. Windows quietly switches such a hook off whenever it answers slowly once (a busy PC, waking from sleep), and after that no mapped key worked until the app was restarted. Now the app reads typed keys itself while it's in front, the same way it reads any typing, so Space, Num 0 and any learned key always work there.
+- The background hook is now set up again every 20 seconds, so keys set to “Anywhere” (and hand mic, foot switch and mouse buttons) keep working while another window is in front.
+- Learning Space or Enter no longer presses the Add button again and restarts learning.
+- Number-pad keys count as Num 0–9 whether Num Lock is on or off, and left and right Shift, Ctrl and Alt match the key that was learned.
+- A mapped key no longer fires while you type in a text box. Letting go of a key after switching to another window releases it, so PTT can't stay keyed.
+- Settings explains that keyboard keys start as “App only” and how to make one work anywhere.
+- Version set to 0.2.42 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.41 — Android phone
 
 **New face in the picker: "Android phone"**, built from the Samsung Galaxy A54 photo Sean posted, running the same push-to-talk app as the iPhone style face.
