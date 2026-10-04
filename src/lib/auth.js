@@ -155,6 +155,13 @@ async function invoke(name, payload, timeoutMs = INVOKE_TIMEOUT_MS) {
   }
 }
 
+// The radio server answers "Channel not found" (or "Zone not found") whenever its own
+// database lookup fails for a moment: it can't tell a slow or refused lookup from a missing
+// channel. The channel list comes from that same database, so for a listed channel this is
+// a passing hiccup worth trying again, not a channel that is gone.
+export const lookupHiccup = (err) =>
+  err?.status === 404 && /^(channel|zone) not found\.?$/i.test(String(err?.message || "").trim());
+
 // sessionType "monitor" is a receive-only pass with its own LiveKit identity (scan and
 // the console); "radio" is the main radio. The server gives each radio connection its own
 // identity (radioSessionId), which PTT calls then name.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { connectRadio, disconnectRadio } from "../lib/livekit";
-import { issueRadioSession } from "../lib/auth";
+import { issueRadioSession, lookupHiccup } from "../lib/auth";
 import { setSink } from "./useRadio";
 import { recordTrack } from "../lib/traffic";
 import {attachVoice} from "../lib/voicefx";
@@ -25,8 +25,9 @@ const LEAVE_GRACE_MS=15000;
 // LiveKit DisconnectReason: the server removed this listener on purpose.
 const DUPLICATE_IDENTITY=2, PARTICIPANT_REMOVED=4;
 // Not allowed on that channel, or the channel is gone: retrying won't help. (A 401 can be a
-// passing server hiccup; a lapsed sign-in is caught by auth.js and ends the session.)
-const permanent=err=>[403,404].includes(err?.status);
+// passing server hiccup; a lapsed sign-in is caught by auth.js and ends the session. So is
+// "Channel not found" for a listed channel: the server's lookup failed, see lookupHiccup.)
+const permanent=err=>[403,404].includes(err?.status)&&!lookupHiccup(err);
 // Signed-out answers, rate limits and LiveKit refusing the pass wait the longest.
 const slow=err=>err?.status===401||err?.status===429||err?.reason===0;
 const backoff=tries=>{const base=Math.min(RETRY_MAX_MS,RETRY_BASE_MS*2**tries);return Math.round(base*(0.75+Math.random()*0.5))};
