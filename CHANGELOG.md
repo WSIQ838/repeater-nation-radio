@@ -55,6 +55,82 @@ Sign-in and app:
 - If the channel list fails to load at start, it is retried until it loads.
 - Quitting from the tray or closing the window leaves the channel and hands back a held PTT first.
 
+## 0.2.43 — Choose the announce voice, roger beep and voice filter
+
+**Settings, Programming, Radio features now lets you change how the radio sounds**, after Sean asked to change the channel-announce voice, the roger beep and the voice filters. Each choice has a Test button.
+
+- **Roger beep**: pick Off, Two-tone up (the old beep), Two-tone down, Single beep, Double chirp, Triple beep, Morse K, Data burst or Low bloop. It plays at the end of each transmission you hear.
+- **Voice filter**: pick how received voices sound: Clean (no filter), Analog FM, Digital P25, Old AM or Police scanner. It applies to the radio, scan and Console listening, switches voices that are already playing, and leaves private calls clean. It changes only what you hear, not what others hear from you, since each listener picks their own.
+- **Announce voice**: under Announce channel changes, pick any voice installed on the computer, plus Voice speed and Voice pitch sliders. Test reads out the current channel.
+- Version set to 0.2.43 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.42 — Keyboard key bindings fixed
+
+**Keys mapped in Settings, Buttons and PTT work from the keyboard again**, after Sean reported that key bindings weren't picking up his keyboard.
+
+- On Windows, every keyboard key went through a background keyboard hook, even with the app in front. Windows quietly switches such a hook off whenever it answers slowly once (a busy PC, waking from sleep), and after that no mapped key worked until the app was restarted. Now the app reads typed keys itself while it's in front, the same way it reads any typing, so Space, Num 0 and any learned key always work there.
+- The background hook is now set up again every 20 seconds, so keys set to “Anywhere” (and hand mic, foot switch and mouse buttons) keep working while another window is in front.
+- Learning Space or Enter no longer presses the Add button again and restarts learning.
+- Number-pad keys count as Num 0–9 whether Num Lock is on or off, and left and right Shift, Ctrl and Alt match the key that was learned.
+- A mapped key no longer fires while you type in a text box. Letting go of a key after switching to another window releases it, so PTT can't stay keyed.
+- Settings explains that keyboard keys start as “App only” and how to make one work anywhere.
+- Version set to 0.2.42 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.41 — Android phone
+
+**New face in the picker: "Android phone"**, built from the Samsung Galaxy A54 photo Sean posted, running the same push-to-talk app as the iPhone style face.
+
+- The phone is drawn to match the photo: the graphite frame, the thin black border, the punch-hole camera at the top centre of the screen, and the volume rocker and side key on the right. There is no maker logo.
+- The app is the same as on the iPhone style face, with an Android status bar and the Android navigation keys along the bottom: ||| opens Recent, ○ goes to the radio screen and ‹ goes back.
+- The volume rocker changes the real volume, top half up and bottom half down (hold to keep going), and the volume pop-up shows on the right next to it. The side key below it is push-to-talk.
+- Version set to 0.2.41 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.40 — iPhone style phone
+
+**New face in the picker: "iPhone style"**, built from the iPhone X photo Sean posted, with the radio running on its screen as a push-to-talk app.
+
+- The phone is drawn to match the photo: the stainless frame, the black border, the notch with its speaker and camera, the home bar, the antenna bands and the side keys. There is no maker logo.
+- The app reads REPEATER NATION with your name and callsign and a power button. Below that are the zone (‹ ›), the channel name and number (‹ › or tap it to pick from a list), and the activity line (Listening, Receiving · who, Transmitting).
+- A big orange **Hold to talk** button transmits while held. It turns red while talking and green while receiving, and is grey while the radio is off.
+- Quick buttons: Scan, Mute (shows the level), Replay last and My Status. The last station heard shows underneath and opens Recent.
+- The tab bar has Radio, Channels (with a zone picker), Who's On, Recent and Settings. Incoming private calls show Answer and Decline, and a connected call shows End call.
+- The side keys work like the phone's: volume up and down change the real volume (hold to keep going) with a volume pop-up, the ring/silent switch mutes, and the side button on the right is push-to-talk.
+- Version set to 0.2.40 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.39 — Field radio
+
+**New radio in the picker: "Field radio"**, built from the Harris Falcon III photo Sean posted.
+
+- Drawn to match the photo: the olive green body with its ribbed battery cover, the two black carry handles, the four corner bolts, the antenna, GPS, data, audio, KDU and USB connectors with their printed labels, the grounding mark, the side screw, the green LCD in its black bezel, the rubber keypad and the big mode knob with OFF, CT, PT, CC, LD and Z printed round it. Under the LCD it reads REPEATER on the left and NATION on the right, where the photo has the maker's name and model.
+- The green LCD shows the status icons and time, the zone, the channel in capitals and a menu row: ZONE, SCAN, WHO and CHAN. Tap a menu word on the screen to use it. Transmit, receive and calls show in reverse on the second line.
+- VOL + and − change the real volume, one step per press, and keep stepping while held.
+- PRE + and − step through the channels. ◀ and ▶ change zone. The number keys type a channel number, ENT goes to it and CLR clears it (CLR also returns to the home screen).
+- The mode knob is the power switch: click it, or turn it right off OFF to switch the radio on (it points at PT), and turn it back to OFF or click it again to switch off.
+- Shared code: the press-and-hold repeat for volume keys is now one helper used by both new radios, and the zoom-to-fit for wide radios moved next to it.
+- Version set to 0.2.39 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.38 — Compact mobile radio
+
+**New radio in the picker: "Compact mobile"**, built from the Kenwood NX-5000 style photo Sean posted.
+
+- Drawn to match the photo: the slanted top with its two vents and seven studs on the back edge, the power key and two status lights, the square mic jack, the volume column, the colour screen in its bezel, the ▲ ▼ column, the six keys along the bottom, the orange emergency key and the three-slot speaker grille. The badge reads REPEATER NATION instead of the maker's name.
+- The screen is dark blue with white text like the photo: status icons and time along the top, zone above a large channel name, and a blue softkey row reading Menu, Scan, Zone+ and Zone-.
+- This radio has no volume knob. Its + and − keys left of the screen change the real volume, one step per press, and keep stepping while held. The key's tooltip shows the level.
+- ▲ and ▼ step through the channels. The four keys under the screen run the softkeys shown above them (Menu opens Settings, Scan starts or stops scan, Zone+ and Zone- change zone). The house key goes back to the home screen and the round key opens Recent. Power connects and disconnects; the lights show transmit, receive and calls. The emergency key is not used.
+- Pick it in Settings, Programming, Radio.
+- Version set to 0.2.38 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.37 — Volume knobs that really turn
+
+**Every radio's volume knob now changes the volume**, as Sean asked.
+
+- Volume knobs on every radio face turn by dragging: drag up or right to turn it up, down or left to turn it down, one step per short drag. They also turn with the mouse wheel and the arrow keys. Before, only the mouse wheel turned them, so pressing and turning one did nothing (a click muted the radio instead).
+- A plain click still mutes and unmutes; a drag never mutes.
+- Each knob step now makes an audible difference. The level used to map straight to loudness, so 10 down to 5 barely changed what you hear; it now follows a hearing-based curve (level 5 is a quarter of full volume). This applies to the radio, scan, the Console, Log playback and direct calls.
+- Direct calls now follow the volume knob too.
+- The handheld control head's volume keys and the mini radio's − and + buttons work as before, with the new curve.
+- Version set to 0.2.37 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.36 — Unified radio connection rebuild
 
 - Rebuilt the desktop LiveKit connection lifecycle to use the same Repeater Nation radio-session and PTT backend as the website.

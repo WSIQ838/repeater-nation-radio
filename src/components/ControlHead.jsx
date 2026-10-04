@@ -6,11 +6,35 @@ import {Power,Volume2,VolumeX,Mic,Signal,PhoneIncoming,Phone,Users} from "lucide
 export const O7_STATUS_KEYS=["At Scene","En Route","Busy","Returning","Available"];
 export const KEYPAD=[["1",". ? !"],["2","ABC"],["3","DEF"],["4","GHI"],["5","JKL"],["6","MNO"],["7","PQRS"],["8","TUV"],["9","WXYZ"],["*",""],["0","+"],["#",""]];
 
-// Scrolling a knob turns it one detent per notch. The listener is non-passive so the
-// wheel does not also scroll the page, and trackpad deltas are summed into detents.
+// A knob turns one detent per scroll notch, per DRAG_STEP_PX of dragging (up or right is
+// clockwise, like turning it up), or per arrow key. The wheel listener is non-passive so
+// the page doesn't scroll too, and trackpad deltas are summed into detents. A click with
+// no turn still runs onClick (mute on the volume knobs). onStep(-1) is clockwise.
+const DRAG_STEP_PX=14;
 export function Knob({className="",angle=0,label,onClick,onStep,children,title}){
-  const ref=useRef(null),stepRef=useRef(onStep),accRef=useRef(0);
+  const ref=useRef(null),stepRef=useRef(onStep),accRef=useRef(0),dragRef=useRef(null),turnedRef=useRef(false);
   stepRef.current=onStep;
+  const onPointerDown=e=>{
+    if(!stepRef.current||(e.pointerType==="mouse"&&e.button!==0))return;
+    dragRef.current={id:e.pointerId,x:e.clientX,y:e.clientY};turnedRef.current=false;
+    try{e.currentTarget.setPointerCapture(e.pointerId)}catch{}
+  };
+  const onPointerMove=e=>{
+    const d=dragRef.current;if(!d||d.id!==e.pointerId)return;
+    const travel=(e.clientX-d.x)-(e.clientY-d.y);
+    const steps=Math.trunc(travel/DRAG_STEP_PX);if(!steps)return;
+    // Move the reference by whole detents so slow drags keep turning smoothly.
+    const used=steps*DRAG_STEP_PX/2;d.x+=used;d.y-=used;
+    turnedRef.current=true;
+    for(let i=0;i<Math.abs(steps);i++)stepRef.current?.(steps>0?-1:1);
+  };
+  const endDrag=e=>{if(dragRef.current?.id===e.pointerId)dragRef.current=null};
+  const click=e=>{if(turnedRef.current){turnedRef.current=false;e.preventDefault();return}onClick?.(e)};
+  const onKeyDown=e=>{
+    if(!stepRef.current)return;
+    const dir=e.key==="ArrowUp"||e.key==="ArrowRight"?-1:e.key==="ArrowDown"||e.key==="ArrowLeft"?1:0;
+    if(!dir)return;e.preventDefault();e.stopPropagation();stepRef.current(dir);
+  };
   useEffect(()=>{
     const el=ref.current;if(!el)return;
     const onWheel=e=>{
@@ -24,7 +48,9 @@ export function Knob({className="",angle=0,label,onClick,onStep,children,title})
     el.addEventListener("wheel",onWheel,{passive:false});
     return()=>el.removeEventListener("wheel",onWheel);
   },[]);
-  return <button type="button" ref={ref} className={"apx-knob "+className} onClick={onClick} title={title} aria-label={title}>
+  return <button type="button" ref={ref} className={"apx-knob "+className} onClick={click} title={title} aria-label={title}
+    onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag} onKeyDown={onKeyDown}
+    style={onStep?{touchAction:"none",cursor:"grab"}:undefined}>
     <span className="apx-knob-cap" style={{transform:`rotate(${angle}deg)`}}><i/></span>
     {children}
     {label&&<span className="apx-knob-label">{label}</span>}
@@ -35,6 +61,34 @@ function Clock(){
   const [now,setNow]=useState(()=>new Date());
   useEffect(()=>{const id=setInterval(()=>setNow(new Date()),15000);return()=>clearInterval(id)},[]);
   return <span>{now.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</span>
+}
+
+// The wide heads are drawn at a fixed size; in a narrow window they are zoomed down
+// to fit the radio column instead of overflowing it.
+export function useFit(width){
+  const ref=useRef(null),[zoom,setZoom]=useState(1);
+  useEffect(()=>{
+    const host=ref.current?.parentElement;if(!host||typeof ResizeObserver==="undefined")return;
+    const ro=new ResizeObserver(()=>{const w=host.clientWidth;setZoom(w&&w<width?Math.max(.5,w/width):1)});
+    ro.observe(host);return()=>ro.disconnect();
+  },[width]);
+  return [ref,zoom];
+}
+
+// Press-and-hold keys (volume + and −, preset rockers): one step on press, then
+// repeating while held. Always calls the latest fn, so each step starts from the
+// level the previous one set.
+export function useHoldRepeat(fn){
+  const fnRef=useRef(fn),timer=useRef(null);
+  fnRef.current=fn;
+  const stop=()=>{clearTimeout(timer.current);clearInterval(timer.current)};
+  useEffect(()=>stop,[]);
+  return arg=>({
+    onPointerDown:e=>{if(e.pointerType==="mouse"&&e.button!==0)return;fnRef.current?.(arg);stop();timer.current=setTimeout(()=>{timer.current=setInterval(()=>fnRef.current?.(arg),160)},420)},
+    onPointerUp:stop,onPointerLeave:stop,onPointerCancel:stop,
+    onKeyDown:e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fnRef.current?.(arg)}},
+    onContextMenu:e=>e.preventDefault(),
+  });
 }
 
 // Shared radio behaviour for every radio face: display views, keypad entry, softkey
@@ -129,6 +183,16 @@ export function useFace(p,{layout}={}){
     {label:"Zone",act:()=>stepZone(1)},
     {label:"Chan",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+  ]:layout==="nx"?[
+    {label:"Menu",act:()=>onTab("settings")},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+    {label:"Zone+",act:()=>stepZone(1)},
+    {label:"Zone-",act:()=>stepZone(-1)},
+  ]:layout==="falcon"?[
+    {label:"Zone",act:()=>stepZone(1)},
+    scanActive?{label:"Nuis Del",act:onNuisance}:{label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},
+    {label:view==="who"?"Back":"Who",act:()=>setView(v=>v==="who"?"home":"who")},
+    {label:"Chan",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
   ]:o7?[
     {label:"Channel",act:()=>{setEntry("");setView(v=>v==="chan"?"home":"chan")}},
     {label:scanning?"Scan Off":"Scan",act:onScan,disabled:!onScan},

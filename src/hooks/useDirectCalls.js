@@ -15,7 +15,9 @@ const START_GRACE_MS=8000;
 const CLIENT_INITIATED=1, PARTICIPANT_REMOVED=4, ROOM_DELETED=5;
 const REJOIN_DELAY_MS=2000;
 
-export function useDirectCalls(userId, outputDeviceId="", micDeviceId="") {
+export function useDirectCalls(userId, outputDeviceId="", micDeviceId="", volume=1) {
+  // Calls follow the radio's volume knob, like the radio's own audio.
+  const gainRef=useRef(volume);gainRef.current=volume;
   const outputRef=useRef(outputDeviceId);outputRef.current=outputDeviceId;
   const micIdRef=useRef(micDeviceId);micIdRef.current=micDeviceId;
   const roomRef=useRef(null), micRef=useRef(null), callIdRef=useRef(null), startedAtRef=useRef(0), joinRef=useRef(null), rejoinedRef=useRef(false), answeredRef=useRef(false);
@@ -24,6 +26,7 @@ export function useDirectCalls(userId, outputDeviceId="", micDeviceId="") {
   const callStateRef=useRef(callState);callStateRef.current=callState;
 
   useEffect(()=>{for(const el of audioElsRef.current.values())setSink(el,outputDeviceId)},[outputDeviceId]);
+  useEffect(()=>{for(const el of audioElsRef.current.values())el.volume=volume},[volume]);
   const cleanupAudio=useCallback(()=>{for(const el of audioElsRef.current.values()){try{el.remove()}catch{}}audioElsRef.current.clear()},[]);
   const disconnect=useCallback(async()=>{
     cleanupAudio();
@@ -58,7 +61,7 @@ export function useDirectCalls(userId, outputDeviceId="", micDeviceId="") {
           onTrackSubscribed:(track,_pub,participant)=>{
             if(track.kind!=="audio"||roomRef.current!==room)return;
             const old=audioElsRef.current.get(participant.identity);if(old){try{old.remove()}catch{}}
-            const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";setSink(el,outputRef.current);document.body.appendChild(el);el.play().catch(()=>{});audioElsRef.current.set(participant.identity,el);
+            const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=gainRef.current;setSink(el,outputRef.current);document.body.appendChild(el);el.play().catch(()=>{});audioElsRef.current.set(participant.identity,el);
           },
           onReconnecting:()=>{if(roomRef.current===room)setCallState("reconnecting")},
           onReconnected:()=>{if(roomRef.current===room)setCallState(c=>c==="reconnecting"?liveState():c)},

@@ -3,6 +3,7 @@ import { connectRadio, disconnectRadio } from "../lib/livekit";
 import { issueRadioSession } from "../lib/auth";
 import { setSink } from "./useRadio";
 import { recordTrack } from "../lib/traffic";
+import {attachVoice} from "../lib/voicefx";
 
 // Scan: listen to every channel on the scan list at once (receive only) and play the one
 // with activity, like a real radio's scan. The selected channel always wins, the
@@ -153,7 +154,7 @@ export function useScan({enabled,channels,priorityId,volume=1,muted=false,output
       const room=await connectRadio(session.liveKitToken,session.liveKitUrl,{
         onTrackSubscribed:(track,pub,participant)=>{
           if(!live()||track.kind!=="audio")return;
-          const el=track.attach();el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=0;
+          const el=attachVoice(track);el.autoplay=true;el.playsInline=true;el.style.display="none";el.volume=0;
           setSink(el,settingsRef.current.outputDeviceId);document.body.appendChild(el);el.play().catch(()=>{});
           const old=entry.audio.get(participant.identity);if(old){try{old.remove()}catch{}}
           entry.audio.set(participant.identity,el);entry.tracks.set(participant.identity,track);
