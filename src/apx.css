@@ -984,7 +984,7 @@ button.fal-key:active{transform:translateY(1px);box-shadow:0 0 0 1.4px #131410,i
 .fal-knob .apx-knob-cap i{top:3%;height:22%;width:3px;margin-left:-1.5px;background:#f2f2ee}
 
 /* Phones (iPhone X and Galaxy style photos) running the radio as a push-to-talk app */
-.apx-stage.face-iphone{grid-template-columns:360px minmax(220px,1fr)}
+.apx-stage.face-iphone,.apx-stage.face-galaxy{grid-template-columns:360px minmax(220px,1fr)}
 .ph{position:relative;flex:none;user-select:none;-webkit-user-select:none}
 .ph>*{position:absolute;box-sizing:border-box}
 .ph-svg{display:block;width:100%;height:100%}
@@ -1077,3 +1077,10 @@ button.fal-key:active{transform:translateY(1px);box-shadow:0 0 0 1.4px #131410,i
 .ph-hud.show{opacity:1;transform:none}
 .ph-hud-bar{position:relative;width:8px;height:96px;border-radius:4px;background:rgba(255,255,255,.22);overflow:hidden}
 .ph-hud-bar i{position:absolute;left:0;right:0;bottom:0;background:#fff;transition:height .15s}
+.ph-screen.galaxy{border-radius:23px}
+.ph-punch{position:absolute;left:50%;top:4.5px;width:17px;height:17px;margin-left:-8.5px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#1d2a40 0 22%,#06080c 30% 62%,#000 66%);box-shadow:0 0 0 1px rgba(255,255,255,.06);z-index:5;pointer-events:none}
+.ph-app.galaxy{font-family:Roboto,"Samsung One",Inter,"Segoe UI",Arial,sans-serif}
+.ph-navbar{flex:none;display:grid;grid-template-columns:repeat(3,1fr);height:34px;background:#06080d}
+.ph-navbar button{display:grid;place-items:center;color:#d9dde6}
+.ph-navbar svg{width:16px;height:16px}
+.ph-navbar button:active{background:rgba(255,255,255,.08)}

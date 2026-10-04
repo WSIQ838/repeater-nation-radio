@@ -1,3 +1,12 @@
+## 0.2.41 — Android phone
+
+**New face in the picker: "Android phone"**, built from the Samsung Galaxy A54 photo Sean posted, running the same push-to-talk app as the iPhone style face.
+
+- The phone is drawn to match the photo: the graphite frame, the thin black border, the punch-hole camera at the top centre of the screen, and the volume rocker and side key on the right. There is no maker logo.
+- The app is the same as on the iPhone style face, with an Android status bar and the Android navigation keys along the bottom: ||| opens Recent, ○ goes to the radio screen and ‹ goes back.
+- The volume rocker changes the real volume, top half up and bottom half down (hold to keep going), and the volume pop-up shows on the right next to it. The side key below it is push-to-talk.
+- Version set to 0.2.41 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.40 — iPhone style phone
 
 **New face in the picker: "iPhone style"**, built from the iPhone X photo Sean posted, with the radio running on its screen as a push-to-talk app.

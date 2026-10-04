@@ -116,6 +116,11 @@ export function PhoneApp({p,f,variant="iphone"}){
       {tabs.map(([id,label,Ic])=><button type="button" key={id} className={screen===id?"on":""} onClick={()=>go(id)}><Ic size={19}/>{label}</button>)}
       <button type="button" onClick={()=>onTab("settings")}><Settings size={19}/>Settings</button>
     </nav>
+    {variant==="galaxy"&&<nav className="ph-navbar" aria-label="Phone navigation">
+      <button type="button" onClick={()=>go("recent")} aria-label="Recent apps" title="Recent"><svg viewBox="0 0 16 16"><path d="M4 3v10M8 3v10M12 3v10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" fill="none"/></svg></button>
+      <button type="button" onClick={()=>go("home")} aria-label="Home" title="Home"><svg viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="3.2" stroke="currentColor" strokeWidth="1.6" fill="none"/></svg></button>
+      <button type="button" onClick={()=>go("home")} aria-label="Back" title="Back"><svg viewBox="0 0 16 16"><path d="M10.5 3 5.5 8l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg></button>
+    </nav>}
     {f.notice&&<div className="ph-toast" role="status">{f.notice}</div>}
   </div>;
 }
@@ -167,5 +172,46 @@ export function IPhoneRadio(p){
     <button type="button" className="ph-side" style={at(46,269,60,349)} {...vol(1)} title={`Volume up (${muted?"muted":volume})`} aria-label="Volume up"/>
     <button type="button" className="ph-side" style={at(46,371,60,451)} {...vol(-1)} title={`Volume down (${muted?"muted":volume})`} aria-label="Volume down"/>
     <button type="button" className={"ph-side ph-pttkey"+(ptt?" pressed":"")} style={at(607,295,620,427)} disabled={!connected} title="Side button: push to talk (hold)" aria-label="Side PTT" {...pttHandlers(onPttDown,onPttUp)}/>
+  </div>;
+}
+
+// Galaxy A54 style (Sean's photo, 750×750: phone from x 213.75–534.5, y 45–705.5,
+// screen x 230.5–517, y 63–681 with a centred punch-hole camera). Right side: volume
+// rocker (top half up, bottom half down) and the side key (PTT).
+const GK=1.06,GX=208,GY=40,GW=332,GH=672;
+const GB=photoBoxes(GX,GY,GK);
+function GalaxyBody(){
+  return <svg className="ph-svg" viewBox={`${GX} ${GY} ${GW} ${GH}`} aria-hidden="true">
+    <defs>
+      <linearGradient id="gxFrame" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#1f1f21"/><stop offset=".012" stopColor="#6d6d72"/><stop offset=".03" stopColor="#3a3a3d"/><stop offset=".97" stopColor="#3a3a3d"/><stop offset=".988" stopColor="#6d6d72"/><stop offset="1" stopColor="#1f1f21"/></linearGradient>
+      <linearGradient id="gxFrameV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#7a7a7f" stopOpacity=".7"/><stop offset=".012" stopColor="#3a3a3d" stopOpacity="0"/><stop offset=".988" stopColor="#3a3a3d" stopOpacity="0"/><stop offset="1" stopColor="#7a7a7f" stopOpacity=".7"/></linearGradient>
+      <linearGradient id="gxKey" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="#2a2a2d"/><stop offset=".5" stopColor="#6e6e73"/><stop offset="1" stopColor="#3a3a3e"/></linearGradient>
+    </defs>
+    <rect x="532" y="211" width="4.4" height="83" rx="1.8" fill="url(#gxKey)"/>
+    <rect x="532" y="326" width="4.4" height="40" rx="1.8" fill="url(#gxKey)"/>
+    <rect x="213.75" y="45" width="320.75" height="660.5" rx="38" fill="#18181a"/>
+    <rect x="214.75" y="46" width="318.75" height="658.5" rx="37" fill="url(#gxFrame)"/>
+    <rect x="214.75" y="46" width="318.75" height="658.5" rx="37" fill="url(#gxFrameV)"/>
+    <rect x="218.5" y="49.5" width="311.25" height="651.5" rx="33.5" fill="#5b5b60"/>
+    <rect x="219.5" y="50.5" width="309.25" height="649.5" rx="32.5" fill="#030303"/>
+    <path d="M322,47.6 H426" stroke="#202022" strokeWidth="1.2"/>
+  </svg>;
+}
+
+export function GalaxyRadio(p){
+  const f=useFace(p);
+  const {at}=GB;
+  const {connected,ptt,muted,volume=7,onVolume,onPttDown,onPttUp}=p;
+  const vol=useVolumeButtons(onVolume);
+  return <div className="ph galaxy" style={{"--apx-bright":0.55+f.brightness*0.15,width:GW*GK,height:GH*GK}}>
+    <div style={at(GX,GY,GX+GW,GY+GH)}><GalaxyBody/></div>
+    <div className="ph-screen galaxy" style={at(230.5,63,517,681)}>
+      <PhoneApp p={p} f={f} variant="galaxy"/>
+      <i className="ph-punch" aria-hidden="true"/>
+      <VolumeHud volume={volume} muted={muted} side="right"/>
+    </div>
+    <button type="button" className="ph-side" style={at(530,211,542,252.5)} {...vol(1)} title={`Volume up (${muted?"muted":volume})`} aria-label="Volume up"/>
+    <button type="button" className="ph-side" style={at(530,252.5,542,294)} {...vol(-1)} title={`Volume down (${muted?"muted":volume})`} aria-label="Volume down"/>
+    <button type="button" className={"ph-side ph-pttkey"+(ptt?" pressed":"")} style={at(530,326,542,366)} disabled={!connected} title="Side key: push to talk (hold)" aria-label="Side PTT" {...pttHandlers(onPttDown,onPttUp)}/>
   </div>;
 }
