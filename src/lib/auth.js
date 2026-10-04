@@ -158,11 +158,12 @@ async function invoke(name, payload, timeoutMs = INVOKE_TIMEOUT_MS) {
 // sessionType "monitor" is a receive-only pass with its own LiveKit identity (scan and
 // the console); "radio" is the main radio. The server gives each radio connection its own
 // identity (radioSessionId), which PTT calls then name.
-export const issueRadioSession = (channelId, zoneId="", channelNumber=null, sessionType="radio") =>
+export const issueRadioSession = (channelId, zoneId="", channelNumber=null, sessionType="radio", radioSessionId="") =>
   invoke("issue-radio-session", {
     channel_id: channelId,
     zone_id: zoneId || "",
     channel_number: channelNumber ?? null,
+    radio_session_id: radioSessionId || "",
     session_type: sessionType,
   });
 

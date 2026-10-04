@@ -1,6 +1,12 @@
 # Repeater Nation Radio — Changelog
 
-## 0.2.36
+## 0.2.44 — Connection fixes, combined with the 0.2.36 connection rebuild
+
+**The connection fixes from the full radio check, combined with the connection rebuild that went straight to main as 0.2.36**, so both can be merged.
+
+- Where the two overlapped (automatic reconnect, Reconnecting… while LiveKit recovers, handing back a held channel when the link drops), the connection fixes' version is kept, since it also cancels slow connects, waits for the network and says why a radio was dropped.
+- From the rebuild: an automatic reconnect keeps the same voice identity, so the server sees the same connection come back, and the radio re-issues its radio session every 4 minutes in the background. Unlike the rebuild, that refresh never drops the connection (LiveKit refreshes its own room pass while connected).
+- Version set to 0.2.44 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
 **Connection fixes from a full check of every part of the radio that connects**, after Sean saw "could not establish signal connection: room connection has timed out (signal)" and "Channel is busy" while holding PTT.
 
@@ -48,7 +54,15 @@ Sign-in and app:
 - Server error messages keep their meaning ("Can't reach Repeater Nation. Check the internet connection." instead of "Network Error"), and the mini radio shows errors.
 - If the channel list fails to load at start, it is retried until it loads.
 - Quitting from the tray or closing the window leaves the channel and hands back a held PTT first.
-- Version set to 0.2.36 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.36 — Unified radio connection rebuild
+
+- Rebuilt the desktop LiveKit connection lifecycle to use the same Repeater Nation radio-session and PTT backend as the website.
+- Added automatic reconnect with backoff after a full voice-transport disconnect, while preserving the active radio session identity across reconnects.
+- Added LiveKit reconnect/reconnected state handling so temporary transport recovery does not look like a manual radio shutdown.
+- Added pre-expiry radio-session refresh and LiveKit token update when supported, with a reconnect fallback when token refresh is unavailable.
+- Active PTT floor leases are released only when the transport is genuinely lost or the user deliberately disconnects.
+- Bumped the desktop app version to 0.2.36.
 
 ## 0.2.34
 

@@ -8,6 +8,9 @@ export function setSink(el,deviceId){if(el?.setSinkId)el.setSinkId(deviceId||"")
 
 const nameOf=p=>{try{const m=p?.metadata?JSON.parse(p.metadata):{};return m.radioCallsign||m.callsign||m.displayName||p?.name||p?.identity||"Member"}catch{return p?.name||p?.identity||"Member"}};
 const LAST_HEARD_MAX=10;
+// Re-issue the radio session in the background so the server keeps this connection's
+// voice identity alive; LiveKit itself refreshes the room token while connected.
+const SESSION_REFRESH_MS=4*60*1000;
 
 // Neither the Base44 SDK nor the PTT calls time out on their own, so a hung server call
 // would leave the radio stuck on "Connecting…" or "Requesting…".
@@ -202,6 +205,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
   // Each connect/disconnect bumps the generation, so a connect that finishes after the
   // user has already switched channels drops its room instead of taking over.
   const connGenRef=useRef(0);
+  const sessionRefreshRef=useRef(null);
   // The Room of a connect still in progress, so a tune, power press or retry can cancel
   // it instead of leaving its signal connection hanging for up to 15 s.
   const pendingRef=useRef(null);
@@ -235,7 +239,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     const leaving=()=>{wantOnRef.current=false;if(floorAskedRef.current){floorAskedRef.current=false;callPTTRef.current("release").catch(()=>{})}const room=roomRef.current;if(room){try{room.disconnect()}catch{}}};
     window.addEventListener("online",online);window.addEventListener("focus",online);document.addEventListener("visibilitychange",shown);
     window.addEventListener("pagehide",leaving);window.addEventListener("beforeunload",leaving);window.addEventListener("rn-app-exiting",leaving);
-    return()=>{window.removeEventListener("online",online);window.removeEventListener("focus",online);document.removeEventListener("visibilitychange",shown);window.removeEventListener("pagehide",leaving);window.removeEventListener("beforeunload",leaving);window.removeEventListener("rn-app-exiting",leaving);stopReconnect()};
+    return()=>{window.removeEventListener("online",online);window.removeEventListener("focus",online);document.removeEventListener("visibilitychange",shown);window.removeEventListener("pagehide",leaving);window.removeEventListener("beforeunload",leaving);window.removeEventListener("rn-app-exiting",leaving);stopReconnect();clearInterval(sessionRefreshRef.current)};
   },[scheduleReconnect,stopReconnect]);
   const connect=useCallback(async(opts)=>{
     const auto=opts?.auto===true;
@@ -249,7 +253,9 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       let room=null;
       try {
         if(!sessionData){
-          const s=await withTimeout(issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number),SESSION_TIMEOUT_MS,"The radio server didn't answer. Press power to try again.");
+          // An automatic reconnect keeps the same voice identity, so the server and other
+          // radios see the same connection come back instead of a new one.
+          const s=await withTimeout(issueRadioSession(channelId, channelInfo?.zoneId, channelInfo?.number, "radio", auto?radioIdRef.current.sessionId:""),SESSION_TIMEOUT_MS,"The radio server didn't answer. Press power to try again.");
           if(gen!==connGenRef.current)return null;
           if(!s?.ok) throw Object.assign(new Error(s?.error||"Could not start radio session."),{noRetry:true});
           sessionData=s;
@@ -282,7 +288,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
             const held=floorAskedRef.current;
             clearOnAir();setQuality("unknown");if(renewRef.current)clearInterval(renewRef.current);renewRef.current=null;floorRef.current=false;floorAskedRef.current=false;micRef.current=null;pttRequestRef.current++;
             if(pubRef.current?.room===room){try{pubRef.current.track.stop()}catch{}pubRef.current=null}
-            cleanupAudio();roomRef.current=null;setSession(null);setParticipants([]);setState("ready");
+            cleanupAudio();clearInterval(sessionRefreshRef.current);roomRef.current=null;setSession(null);setParticipants([]);setState("ready");
             // Hand back a floor we were holding, and tell the app so PTT stops showing as keyed.
             if(held){callPTT("release").catch(()=>{});eventsRef.current.onFloorLost?.()}
             if(!wantOnRef.current)return;
@@ -292,7 +298,18 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
           }},{onRoom:r=>{room=r;pendingRef.current=r}});
         if(pendingRef.current===room)pendingRef.current=null;
         if(gen!==connGenRef.current){await disconnectRadio(room);return null}
-        roomRef.current=room;reconnectRef.current.tries=0;radioIdRef.current={sessionId:sessionData?.radioSessionId||"",callsign:sessionData?.radioCallsign||""};setSession(sessionData);setConnectNote("");refresh();setState("listening");return room;
+        roomRef.current=room;reconnectRef.current.tries=0;radioIdRef.current={sessionId:sessionData?.radioSessionId||"",callsign:sessionData?.radioCallsign||""};setSession(sessionData);setConnectNote("");refresh();setState("listening");
+        clearInterval(sessionRefreshRef.current);
+        sessionRefreshRef.current=setInterval(async()=>{
+          if(roomRef.current!==room)return;
+          try{
+            const fresh=await withTimeout(issueRadioSession(channelId,channelInfo?.zoneId,channelInfo?.number,"radio",radioIdRef.current.sessionId),SESSION_TIMEOUT_MS,"");
+            if(roomRef.current!==room||!fresh?.ok)return;
+            // Keep talking as this connection: only adopt the answer when it is the same identity.
+            if(!fresh.radioSessionId||fresh.radioSessionId===radioIdRef.current.sessionId){radioIdRef.current={sessionId:fresh.radioSessionId||radioIdRef.current.sessionId,callsign:fresh.radioCallsign||radioIdRef.current.callsign};setSession(fresh)}
+          }catch{}
+        },SESSION_REFRESH_MS);
+        return room;
       } catch(err){
         if(room&&pendingRef.current===room)pendingRef.current=null;
         if(gen!==connGenRef.current)return null;
@@ -445,7 +462,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
 
   const disconnect=useCallback(async()=>{
     const gen=++connGenRef.current;
-    wantOnRef.current=false;stopReconnect();
+    wantOnRef.current=false;stopReconnect();clearInterval(sessionRefreshRef.current);
     cancelPending();
     setConnectNote("");
     // Take the room now: a connect started while the release below is in flight gets a
