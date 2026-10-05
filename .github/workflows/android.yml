@@ -104,7 +104,7 @@ jobs:
             sleep 30
           done
           gh release view "$TAG" >/dev/null 2>&1 || \
-            gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes "" || \
+            gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes-file .github/release-notes.md || \
             gh release view "$TAG" >/dev/null
           gh release upload "$TAG" out/*.apk --clobber
 
