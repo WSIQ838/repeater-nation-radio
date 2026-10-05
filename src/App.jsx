@@ -11,7 +11,7 @@ import {useDirectCalls} from "./hooks/useDirectCalls";
 import {SCAN_MAX,useScan} from "./hooks/useScan";
 import {canShareStatus,prewarmRadio,shareStatus} from "./lib/livekit";
 import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
-import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,nativeOnlyKey,sameInput,saveKeymap} from "./lib/keymap";
+import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
 import {IS_PHONE,PhoneApp} from "./components/PhoneApp";
@@ -627,7 +627,14 @@ function RadioApp({session,onSignOut}){
     else{if(action==="home"||tab!=="radio")setTab("radio");setFaceCommand({action})}
   };
   const downRef=useRef(down),upRef=useRef(up),runRef=useRef(runAction);downRef.current=down;upRef.current=up;runRef.current=runAction;
-  const handleAction=({action,pressed,global})=>{
+  // A key the page and the Windows hook both see (hand-mic and media keys while the app is
+  // in front) arrives twice; act on the first report only. Either source alone (a blocked
+  // hook, or the app in the background) still works.
+  const lastFireRef=useRef(new Map());
+  const handleAction=({action,pressed,global},source="page")=>{
+    const id=action+(pressed?":down":":up"),now=Date.now(),last=lastFireRef.current.get(id);
+    if(last&&last.source!==source&&now-last.at<300)return;
+    lastFireRef.current.set(id,{source,at:now});
     if(action==="ptt"){pressed?downRef.current():upRef.current();return}
     if(!pressed||learnForRef.current||(!global&&!document.hasFocus()))return;
     runRef.current(action);
@@ -640,7 +647,7 @@ function RadioApp({session,onSignOut}){
     let alive=true;
     hwCapabilities().then(caps=>{if(!alive)return;const map=loadKeymap(caps.global_keys);setHwCaps(caps);setKeymap(map);setHardwareBindings(map)});
     const off=listenHardware({
-      onAction:a=>handleRef.current(a),
+      onAction:a=>handleRef.current(a,"hook"),
       onLearned:input=>addLearnedRef.current(input),
       onLearnCancel:()=>setLearnFor(""),
     });
@@ -650,12 +657,12 @@ function RadioApp({session,onSignOut}){
 
   useEffect(()=>{
     if(!keymap)return;
-    // The page reads typed keys itself while the app is in front: in-window keys, and
-    // keys learned through the Windows hook (matched by virtual-key code). Keys nobody
-    // types with (F13–F24, media and volume keys) stay with the hook, which also adds
+    // The page reads every mapped key itself while the app is in front: in-window keys,
+    // and keys learned by Windows key code. Keys nobody types with (F13–F24, media and
+    // volume keys) are also reported by the Windows hook, which handleAction de-duplicates;
+    // the page still gets them when antivirus blocks the hook. The hook alone handles
     // "Anywhere" keys while another window is in front.
-    const forPage=b=>b.kind==="webkey"||(b.kind==="key"&&!nativeOnlyKey(Number(b.code)));
-    const page=keymap.filter(forPage),hookOnly=new Set(keymap.filter(b=>b.kind==="key"&&!forPage(b)).map(b=>Number(b.code)));
+    const page=keymap.filter(b=>b.kind==="webkey"||b.kind==="key");
     const matches=e=>{const vk=keyVk(e);return page.filter(b=>b.kind==="webkey"?b.code===e.code:Number(b.code)===vk)};
     const typing=e=>/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||"")||!!e.target?.isContentEditable;
     const held=new Map();// key → actions its press fired, so the release reaches the same ones
@@ -676,7 +683,6 @@ function RadioApp({session,onSignOut}){
         addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return;
       }
       if(typing(e))return;
-      if(hookOnly.has(keyVk(e))){e.preventDefault();return}
       const hits=matches(e);if(!hits.length)return;
       e.preventDefault();if(e.repeat||held.has(e.code))return;
       held.set(e.code,hits);
@@ -684,7 +690,6 @@ function RadioApp({session,onSignOut}){
     };
     const keyUp=e=>{
       if(learnFor){e.preventDefault();return}
-      if(hookOnly.has(keyVk(e))){e.preventDefault();return}
       const hits=held.get(e.code);if(!hits)return;
       held.delete(e.code);e.preventDefault();
       hits.forEach(b=>handleAction({action:b.action,pressed:false,global:true}));
