@@ -341,7 +341,8 @@ const writePref=(key,value)=>{try{localStorage.setItem(key,value)}catch{}};
 const SIDE_VK={ShiftLeft:0xA0,ShiftRight:0xA1,ControlLeft:0xA2,ControlRight:0xA3,AltLeft:0xA4,AltRight:0xA5};
 // Number-pad digits count as Num 0–9 whether Num Lock is on or off.
 const keyVk=e=>{const pad=/^Numpad(\d)$/.exec(e.code||"");return pad?0x60+Number(pad[1]):SIDE_VK[e.code]??e.keyCode};
-const keyLabel=e=>e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,"");
+const MEDIA_LABEL={AudioVolumeMute:"Mute key",AudioVolumeDown:"Volume Down key",AudioVolumeUp:"Volume Up key",MediaTrackNext:"Next Track key",MediaTrackPrevious:"Previous Track key",MediaStop:"Stop key",MediaPlayPause:"Play/Pause key",BrowserBack:"Browser Back",BrowserForward:"Browser Forward"};
+const keyLabel=e=>MEDIA_LABEL[e.code]||(e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,""));
 
 // Whether a binding can be set to work while the app isn't focused.
 const canBeGlobal=(b,caps)=>b.kind==="pad"||b.kind==="ble"||((b.kind==="key"||b.kind==="mouse")&&!!caps?.global_keys);
