@@ -119,5 +119,8 @@ jobs:
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "Android test build" \
               --notes "Test version of the Repeater Nation Radio Android app. Download the .apk on your phone and open it to install."
-          gh release view "$TAG" --json assets -q '.assets[].name' | grep '\.apk$' | while read -r old; do gh release delete-asset "$TAG" "$old" -y; done
+          # Remove the last test APK (a new version has a new file name).
+          for old in $(gh release view "$TAG" --json assets -q '.assets[].name | select(endswith(".apk"))'); do
+            gh release delete-asset "$TAG" "$old" -y
+          done
           gh release upload "$TAG" out/*.apk --clobber
