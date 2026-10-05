@@ -116,7 +116,7 @@ jobs:
           gh release upload "$TAG" out/*.apk --clobber
 
       - name: Add the APK to the Android test release
-        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+        if: github.ref != 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
