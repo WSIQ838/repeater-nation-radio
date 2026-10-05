@@ -1,5 +1,13 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.55 — Keyboard keys can be learned again
+
+**Settings › Buttons and PTT learns keyboard keys again, not just mouse buttons**, after Sean reported that learning only picked up his mouse buttons.
+
+- On Windows, learning a button was left entirely to the app's Windows keyboard and mouse hook. When something on the PC (usually antivirus) blocks the keyboard hook but not the mouse hook, only mouse buttons could ever be learned.
+- The app now learns keyboard keys itself as well, by the same Windows key code, so a learned key works in the app straight away and can still be set to "Anywhere". Mouse, media and hand-mic buttons are still learned through the hook, and Esc still cancels.
+- Version set to 0.2.55 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.50 — Linux and Mac downloads on the GitHub release
 
 **Every release on GitHub now carries the Linux and Mac installers next to the Windows ones**, after Sean asked for Linux and Mac on GitHub.

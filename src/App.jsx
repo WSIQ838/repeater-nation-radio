@@ -599,7 +599,8 @@ function RadioApp({session,onSignOut}){
   const addLearned=input=>{
     const action=learnForRef.current,map=keymapRef.current||[];
     if(!action)return;
-    setLearnFor("");
+    // The page and the Windows hook can both report the same press: take the first only.
+    learnForRef.current="";setLearnFor("");
     if(map.some(b=>sameInput(b,input)&&b.action===action)){setMapNotice(`${input.label} is already mapped to ${actionLabel(action)}.`);return}
     const moved=map.find(b=>sameInput(b,input));
     updateKeymap(map.filter(b=>!sameInput(b,input)).concat({action,...input,global:defaultGlobal(input)}));
@@ -661,9 +662,17 @@ function RadioApp({session,onSignOut}){
       if(learnFor){
         // Keep Space/Enter from also pressing the focused button while a button is learned.
         e.preventDefault();
-        // With the Windows hook the native side learns the key (it also sees mouse and media buttons).
-        if(hwCaps?.global_keys)return;
-        if(e.code==="Escape")learn("");else addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return;
+        if(e.code==="Escape"){learn("");return}
+        // On Windows a key is learned by its virtual-key code, so it can later be set to
+        // "Anywhere" for the hook. The page learns it too rather than waiting on the hook:
+        // antivirus can block the keyboard hook while letting the mouse hook through, and
+        // then only mouse buttons could ever be learned. The hook still learns mouse and
+        // media buttons; whichever reports first wins (see addLearned).
+        if(hwCaps?.global_keys){
+          if(!learnForRef.current)return;
+          addLearned({kind:"key",code:String(keyVk(e)),label:keyLabel(e)});setLearning(false);return;
+        }
+        addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return;
       }
       if(typing(e))return;
       if(hookOnly.has(keyVk(e))){e.preventDefault();return}
