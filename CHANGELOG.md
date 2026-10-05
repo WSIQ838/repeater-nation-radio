@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.51 — The app only watches the keyboard when a button needs it
+
+**The radio no longer hooks the Windows keyboard and mouse unless a mapped button needs it**, after Sean reported the desktop app coming up as a virus.
+
+- Antivirus tools flag any app that hooks every keystroke as a possible keylogger. Until now the app always installed a Windows low-level keyboard and mouse hook at startup, even when nothing used it.
+- Now the hook is only on while a button is set to "Anywhere", a hand mic or F13–F24 key is mapped, a mouse button is mapped, or a new button is being learned. With the default Space and Num 0 PTT keys there is no hook at all. Changing the mapping turns it on or off right away.
+- Buttons work exactly as before.
+- Every GitHub release now opens with install steps for each platform, including what to do on Windows when "Windows protected your PC" shows or Windows Security removes the app (restore it from Protection history and add an exclusion). The text lives in `.github/release-notes.md`.
+- Each Windows release also puts its installer on the `downloads` branch, giving a direct link with no redirect for the Microsoft Store: `https://raw.githubusercontent.com/WSIQ838/repeater-nation-radio/downloads/windows/<version>/Repeater.Nation.Radio_<version>_x64-setup.exe`. 0.2.50 was added by hand.
 ## 0.2.54 — Microphone problems say what to do
 
 **"Permission denied" on PTT now says the computer is blocking the microphone and where to turn it on**, after Sean sent a screenshot of that message on the radio screen.
