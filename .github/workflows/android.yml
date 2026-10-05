@@ -107,3 +107,17 @@ jobs:
             gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes "" || \
             gh release view "$TAG" >/dev/null
           gh release upload "$TAG" out/*.apk --clobber
+
+      - name: Add the APK to the Android test release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/android-app'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Test builds from the android-app branch land on one pre-release, replacing the last.
+          TAG="android-test"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "Android test build" \
+              --notes "Test version of the Repeater Nation Radio Android app. Download the .apk on your phone and open it to install."
+          gh release view "$TAG" --json assets -q '.assets[].name' | grep '\.apk$' | while read -r old; do gh release delete-asset "$TAG" "$old" -y; done
+          gh release upload "$TAG" out/*.apk --clobber
