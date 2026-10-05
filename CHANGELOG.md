@@ -1,6 +1,6 @@
 # Repeater Nation Radio — Changelog
 
-## 0.2.55 — The app only watches the keyboard when a button needs it
+## 0.2.56 — The app only watches the keyboard when a button needs it
 
 **The radio no longer hooks the Windows keyboard and mouse unless a mapped button needs it**, after Sean reported the desktop app coming up as a virus.
 
@@ -9,8 +9,15 @@
 - Buttons work exactly as before.
 - Every GitHub release now opens with install steps for each platform, including what to do on Windows when "Windows protected your PC" shows or Windows Security removes the app (restore it from Protection history and add an exclusion). The text lives in `.github/release-notes.md`.
 - Each Windows release also puts its installer on the `downloads` branch, giving a direct link with no redirect for the Microsoft Store: `https://raw.githubusercontent.com/WSIQ838/repeater-nation-radio/downloads/windows/<version>/Repeater.Nation.Radio_<version>_x64-setup.exe`. 0.2.50 was added by hand.
-- Version set to 0.2.55 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`. 0.2.51 to 0.2.55 ship together in one release.
+- Version set to 0.2.56 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`. 0.2.51 to 0.2.56 ship together in one release.
 
+## 0.2.55 — Keyboard keys can be learned again
+
+**Settings › Buttons and PTT learns keyboard keys again, not just mouse buttons**, after Sean reported that learning only picked up his mouse buttons.
+
+- On Windows, learning a button was left entirely to the app's Windows keyboard and mouse hook. When something on the PC (usually antivirus) blocks the keyboard hook but not the mouse hook, only mouse buttons could ever be learned.
+- The app now learns keyboard keys itself as well, by the same Windows key code, so a learned key works in the app straight away and can still be set to "Anywhere". Mouse, media and hand-mic buttons are still learned through the hook, and Esc still cancels.
+- Version set to 0.2.55 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 ## 0.2.54 — Microphone problems say what to do
 
 **"Permission denied" on PTT now says the computer is blocking the microphone and where to turn it on**, after Sean sent a screenshot of that message on the radio screen.
