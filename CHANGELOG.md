@@ -7,6 +7,7 @@
 - Antivirus tools flag any app that hooks every keystroke as a possible keylogger. Until now the app always installed a Windows low-level keyboard and mouse hook at startup, even when nothing used it.
 - Now the hook is only on while a button is set to "Anywhere", a hand mic or F13–F24 key is mapped, a mouse button is mapped, or a new button is being learned. With the default Space and Num 0 PTT keys there is no hook at all. Changing the mapping turns it on or off right away.
 - Buttons work exactly as before.
+- Every GitHub release now opens with install steps for each platform, including what to do on Windows when "Windows protected your PC" shows or Windows Security removes the app (restore it from Protection history and add an exclusion). The text lives in `.github/release-notes.md`.
 - Version set to 0.2.51 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
 ## 0.2.50 — Linux and Mac downloads on the GitHub release

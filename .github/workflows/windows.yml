@@ -26,6 +26,12 @@ jobs:
       - name: Generate platform icons
         run: npx tauri icon src-tauri/icons/icon.svg
 
+      - name: Read release notes
+        id: notes
+        shell: bash
+        run: |
+          { echo 'body<<NOTES_EOF'; cat .github/release-notes.md; echo 'NOTES_EOF'; } >> "$GITHUB_OUTPUT"
+
       - name: Build Windows installer
         uses: tauri-apps/tauri-action@v0
         env:
@@ -34,6 +40,7 @@ jobs:
           projectPath: .
           tagName: radio-v__VERSION__
           releaseName: Repeater Nation Radio v__VERSION__
+          releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: false
           prerelease: false
           includeDebug: false
