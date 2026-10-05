@@ -8,6 +8,7 @@
 - Now the hook is only on while a button is set to "Anywhere", a hand mic or F13–F24 key is mapped, a mouse button is mapped, or a new button is being learned. With the default Space and Num 0 PTT keys there is no hook at all. Changing the mapping turns it on or off right away.
 - Buttons work exactly as before.
 - Every GitHub release now opens with install steps for each platform, including what to do on Windows when "Windows protected your PC" shows or Windows Security removes the app (restore it from Protection history and add an exclusion). The text lives in `.github/release-notes.md`.
+- Each Windows release also puts its installer on the `downloads` branch, giving a direct link with no redirect for the Microsoft Store: `https://raw.githubusercontent.com/WSIQ838/repeater-nation-radio/downloads/windows/<version>/Repeater.Nation.Radio_<version>_x64-setup.exe`. 0.2.50 was added by hand.
 - Version set to 0.2.51 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
 ## 0.2.50 — Linux and Mac downloads on the GitHub release

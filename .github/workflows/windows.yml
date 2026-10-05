@@ -53,3 +53,25 @@ jobs:
             src-tauri/target/release/bundle/nsis/*.exe
             src-tauri/target/release/bundle/msi/*.msi
           if-no-files-found: error
+
+      # The Microsoft Store needs a download link that doesn't redirect, which release
+      # downloads do. raw.githubusercontent.com serves files straight from a branch.
+      - name: Add the installer to the downloads branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          EXE=$(ls src-tauri/target/release/bundle/nsis/*-setup.exe | head -1)
+          NAME="Repeater.Nation.Radio_${VERSION}_x64-setup.exe"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin downloads
+          git worktree add ../downloads origin/downloads
+          mkdir -p "../downloads/windows/$VERSION"
+          cp "$EXE" "../downloads/windows/$VERSION/$NAME"
+          cd ../downloads
+          git add -A
+          git commit -m "Windows $VERSION installer for direct download" || exit 0
+          git push origin HEAD:downloads
+          echo "Store link: https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/downloads/windows/$VERSION/$NAME"
