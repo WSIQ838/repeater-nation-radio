@@ -18,6 +18,7 @@
 - On Windows, learning a button was left entirely to the app's Windows keyboard and mouse hook. When something on the PC (usually antivirus) blocks the keyboard hook but not the mouse hook, only mouse buttons could ever be learned.
 - The app now learns keyboard keys itself as well, by the same Windows key code, so a learned key works in the app straight away and can still be set to "Anywhere". Mouse, media and hand-mic buttons are still learned through the hook, and Esc still cancels.
 - Hand-mic, foot-pedal and media buttons that show up as keys (play/pause, next track, volume, F13 to F24) now also work from the app itself while it is in front, so they keep working when antivirus blocks the Windows hook. When the hook works too, the app acts on the first report only, so one press is still one step. "Anywhere" for those buttons still needs the hook.
+- Learned media keys now show the same names the Windows hook gives them ("Play/Pause key", "Volume Up key" and so on), and the app's built-in browser no longer grabs Play/Pause, Next and Previous for itself, so those presses reach the button mapping instead of pausing radio audio.
 - Version set to 0.2.55 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
 ## 0.2.54 — Microphone problems say what to do
