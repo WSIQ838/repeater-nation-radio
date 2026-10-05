@@ -1,6 +1,7 @@
 /* Phone screen (Android / iPhone app). Only applies when <html> has the "phone" class. */
+html.phone,html.phone body{background:#0b0e12}
 html.phone body{min-width:0;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
-html.phone .login-shell{padding:28px 18px;min-height:100dvh}
+html.phone .login-shell{padding:calc(env(safe-area-inset-top) + 28px) 18px calc(env(safe-area-inset-bottom) + 28px);min-height:100dvh}
 html.phone .login-shell .fine{max-width:100%}
 html.phone .login-form,html.phone .google-login{width:100%}
 .phone-settings .setting,.n7-setup .setting{flex-direction:column;gap:10px}
