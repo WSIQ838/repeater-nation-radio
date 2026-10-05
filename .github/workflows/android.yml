@@ -49,6 +49,13 @@ jobs:
           MANIFEST=src-tauri/gen/android/app/src/main/AndroidManifest.xml
           sed -i 's#<application#<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <application#' "$MANIFEST"
           cat "$MANIFEST"
+          # Our MainActivity passes a Bluetooth speaker mic's PTT (media buttons) to the page.
+          ACTIVITY=src-tauri/gen/android/app/src/main/java/com/repeaternation/radio/MainActivity.kt
+          cat "$ACTIVITY"
+          EDGE=$(grep -c enableEdgeToEdge "$ACTIVITY" || true)
+          cp src-tauri/android/MainActivity.kt "$ACTIVITY"
+          # Keep the generated screen layout: only go edge to edge if the template did.
+          [ "$EDGE" != "0" ] || sed -i '/enableEdgeToEdge/d' "$ACTIVITY"
 
       - name: Generate app icons
         run: npx tauri icon src-tauri/icons/icon.svg

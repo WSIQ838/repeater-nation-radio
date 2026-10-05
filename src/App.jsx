@@ -352,7 +352,7 @@ const GROUPS=[...new Set(ACTIONS.map(a=>a.group))];
 
 function KeyMap({keymap,caps,learnFor,notice,onLearn,onRemove,onToggleGlobal,onReset}){
   return <div className="keymap">
-    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused. Keyboard keys start as “App only” so typing elsewhere doesn't key the radio; click “App only” on a key to make it work anywhere. Bluetooth speaker mics made for Zello (Abbree and similar) key up on their own once paired with this computer: there's nothing to add.</p>
+    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused. Keyboard keys start as “App only” so typing elsewhere doesn't key the radio; click “App only” on a key to make it work anywhere. Bluetooth speaker mics made for Zello (Abbree and similar) key up on their own once paired with this computer or phone: there's nothing to add.</p>
     {notice&&<div className="keymap-notice">{notice}</div>}
     {GROUPS.map(g=><div key={g} className="keymap-group"><h4>{g}</h4>
       {ACTIONS.filter(a=>a.group===g).map(a=>{
@@ -645,7 +645,8 @@ function RadioApp({session,onSignOut}){
   // Bluetooth speaker-mics made for Zello (Abbree / KST_vHMIC010 and similar) send PTT as
   // Fast Forward on press and Rewind on release. Windows hands those to the app's media
   // controls (media_buttons.rs, arriving as a hook action); other systems give them to
-  // the page as media keys or media-session seek actions. Always PTT, nothing to learn.
+  // the page as media keys or media-session seek actions; the Android app passes them on
+  // as an "rn-mic-ptt" event (src-tauri/android/MainActivity.kt). Always PTT, nothing to learn.
   const micDownRef=useRef(false);
   const micPtt=pressed=>{if(micDownRef.current===pressed||(pressed&&learnForRef.current))return;micDownRef.current=pressed;handleRef.current({action:"ptt",pressed,global:true},"mic")};
   const micPttRef=useRef(micPtt);micPttRef.current=micPtt;
@@ -654,6 +655,10 @@ function RadioApp({session,onSignOut}){
     const set=(a,f)=>{try{ms.setActionHandler(a,f)}catch{}};
     set("seekforward",()=>micPttRef.current(true));set("seekbackward",()=>micPttRef.current(false));
     return()=>{set("seekforward",null);set("seekbackward",null)};
+  },[]);
+  useEffect(()=>{
+    const onMic=e=>micPttRef.current(!!e.detail);
+    window.addEventListener("rn-mic-ptt",onMic);return()=>window.removeEventListener("rn-mic-ptt",onMic);
   },[]);
   // A paired Bluetooth button reconnects at startup, whichever tab is open.
   const [bleStatus,setBleStatus]=useState(null);
