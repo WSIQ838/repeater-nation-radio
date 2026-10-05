@@ -4,6 +4,8 @@
 <dict>
   <key>NSMicrophoneUsageDescription</key>
   <string>Repeater Nation Radio uses the microphone to transmit when you press PTT.</string>
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>Repeater Nation Radio connects to Bluetooth PTT buttons and hand mics.</string>
   <key>UIBackgroundModes</key>
   <array>
     <string>audio</string>

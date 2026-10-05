@@ -757,6 +757,8 @@ function RadioApp({session,onSignOut}){
       <div className="setting"><span>Microphone</span><div className="prog-fields"><label><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">Phone default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label></div></div>
       <div className="setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div>
       <div className="setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={false} onTest={testFeature}/></div>
+      <div className="setting ble-setting"><span>Bluetooth PTT mic</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>
+      <div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>
       {state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}
     </>}
   />;

@@ -1,8 +1,10 @@
-// Hardware PTT keys, the Bluetooth button and the tray icon are desktop-only;
-// the Android and iPhone app is touch-only for now.
+// Bluetooth PTT buttons use btleplug on desktop and the blec plugin on phones (same
+// commands). Keyboard hooks, game controllers and the tray icon are desktop-only.
 #[cfg(desktop)]
 mod ble;
-#[cfg(desktop)]
+#[cfg(mobile)]
+#[path = "ble_mobile.rs"]
+mod ble;
 mod ptt;
 #[cfg(desktop)]
 mod tray;
@@ -47,6 +49,18 @@ pub fn run() {
                 }
                 Ok(())
             });
+    }
+
+    #[cfg(mobile)]
+    {
+        builder = match tauri_plugin_blec::try_init() {
+            Ok(plugin) => builder.plugin(plugin),
+            Err(e) => {
+                eprintln!("Bluetooth unavailable: {e}");
+                builder
+            }
+        };
+        builder = builder.invoke_handler(tauri::generate_handler![ptt::hw_set_bindings, ptt::hw_learn, ptt::hw_capabilities, ble::ble_scan, ble::ble_connect, ble::ble_disconnect]);
     }
 
     builder

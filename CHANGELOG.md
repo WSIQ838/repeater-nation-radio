@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.52 — Bluetooth PTT mics on the phone apps
+
+**The Android and iPhone apps can use a Bluetooth PTT speaker mic's button**, after Sean asked for the phone app to work with Bluetooth PTT mics.
+
+- More, then Setup, now has **Bluetooth PTT mic**. Find Bluetooth button lists nearby Bluetooth devices. Pick the mic, and the app connects to it and stays connected (it reconnects after the mic turns off and on). It works the same way as on the computer: the app listens to every button report the mic sends.
+- Below that, **Buttons and PTT** works like on the computer. Tap Add next to PTT, then press the mic's PTT button to learn it. Mics that act like a keyboard (sending a key) can be learned there too, without the Bluetooth step.
+- The first time, the phone asks for permission to find nearby Bluetooth devices.
+- Version set to 0.2.52 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.51 — Android and iPhone apps (first test versions)
 
 **The radio now builds as an Android app**, after Sean asked for a phone version for Android and iPhone and said it could look like the screen of the touch handheld.

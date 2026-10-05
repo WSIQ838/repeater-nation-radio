@@ -2,7 +2,7 @@ name: Build Repeater Nation Radio for Android
 
 on:
   push:
-    branches: [main, android-app]
+    branches: [main, android-app, ios-app]
   workflow_dispatch:
 
 jobs:
@@ -109,12 +109,12 @@ jobs:
           gh release upload "$TAG" out/*.apk --clobber
 
       - name: Add the APK to the Android test release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/android-app'
+        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Test builds from the android-app branch land on one pre-release, replacing the last.
+          # Test builds from the phone branches land on one pre-release, replacing the last.
           TAG="android-test"
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "Android test build" \
