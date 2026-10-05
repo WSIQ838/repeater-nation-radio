@@ -27,12 +27,41 @@ function client() {
   return base44Client;
 }
 
-export async function restoreSession() {
+const TOKEN_KEYS = ["base44_access_token", "token"];
+function savedToken() {
   try {
-    const member = await client().auth.me();
-    return member ? { member } : null;
+    for (const key of TOKEN_KEYS) {
+      const value = localStorage.getItem(key);
+      if (value) return value;
+    }
   } catch {
-    return null;
+    // Storage can be unavailable; then there is nothing saved to restore.
+  }
+  return "";
+}
+
+// Sign back in with the token saved on this computer or phone by the last sign-in, so
+// people stay signed in between launches. Returns { member } when the saved sign-in still
+// works, null when there is none or the server refused it, and { offline: true } when the
+// server couldn't be reached (the saved sign-in is kept so it can be tried again).
+export async function restoreSession() {
+  const token = savedToken();
+  if (!token) return null;
+  try {
+    client().auth.setToken(token);
+    let timer;
+    const member = await Promise.race([
+      client().auth.me(),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error("timeout")), 15000); }),
+    ]).finally(() => clearTimeout(timer));
+    return member ? { member } : null;
+  } catch (err) {
+    const status = err?.status ?? err?.response?.status;
+    if (status === 401 || status === 403) {
+      await clearSession();
+      return null;
+    }
+    return { offline: true };
   }
 }
 

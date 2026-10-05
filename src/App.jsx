@@ -2,7 +2,7 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import {zoneLabel} from "./lib/labels";
 import {Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
-import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
+import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
 import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
@@ -11,9 +11,10 @@ import {useDirectCalls} from "./hooks/useDirectCalls";
 import {SCAN_MAX,useScan} from "./hooks/useScan";
 import {canShareStatus,prewarmRadio,shareStatus} from "./lib/livekit";
 import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
-import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,nativeOnlyKey,sameInput,saveKeymap} from "./lib/keymap";
+import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
+import {IS_PHONE,PhoneApp} from "./components/PhoneApp";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
 import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
@@ -80,7 +81,7 @@ function Login({notice=""}){
         <LogIn size={18}/>{busy?" Signing in…":" Sign in"}
       </button>
     </form>
-    <p className="fine">Use the same Repeater Nation account you use on the website. The desktop app will not silently reuse an old session at startup, so you always have a visible sign-in screen.</p>
+    <p className="fine">Use the same Repeater Nation account you use on the website. The app will not silently reuse an old session at startup, so you always have a visible sign-in screen.</p>
   </main>
 }
 
@@ -341,7 +342,8 @@ const writePref=(key,value)=>{try{localStorage.setItem(key,value)}catch{}};
 const SIDE_VK={ShiftLeft:0xA0,ShiftRight:0xA1,ControlLeft:0xA2,ControlRight:0xA3,AltLeft:0xA4,AltRight:0xA5};
 // Number-pad digits count as Num 0–9 whether Num Lock is on or off.
 const keyVk=e=>{const pad=/^Numpad(\d)$/.exec(e.code||"");return pad?0x60+Number(pad[1]):SIDE_VK[e.code]??e.keyCode};
-const keyLabel=e=>e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,"");
+const MEDIA_LABEL={AudioVolumeMute:"Mute key",AudioVolumeDown:"Volume Down key",AudioVolumeUp:"Volume Up key",MediaTrackNext:"Next Track key",MediaTrackPrevious:"Previous Track key",MediaStop:"Stop key",MediaPlayPause:"Play/Pause key",BrowserBack:"Browser Back",BrowserForward:"Browser Forward"};
+const keyLabel=e=>MEDIA_LABEL[e.code]||(e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,""));
 
 // Whether a binding can be set to work while the app isn't focused.
 const canBeGlobal=(b,caps)=>b.kind==="pad"||b.kind==="ble"||((b.kind==="key"||b.kind==="mouse")&&!!caps?.global_keys);
@@ -599,7 +601,8 @@ function RadioApp({session,onSignOut}){
   const addLearned=input=>{
     const action=learnForRef.current,map=keymapRef.current||[];
     if(!action)return;
-    setLearnFor("");
+    // The page and the Windows hook can both report the same press: take the first only.
+    learnForRef.current="";setLearnFor("");
     if(map.some(b=>sameInput(b,input)&&b.action===action)){setMapNotice(`${input.label} is already mapped to ${actionLabel(action)}.`);return}
     const moved=map.find(b=>sameInput(b,input));
     updateKeymap(map.filter(b=>!sameInput(b,input)).concat({action,...input,global:defaultGlobal(input)}));
@@ -625,7 +628,14 @@ function RadioApp({session,onSignOut}){
     else{if(action==="home"||tab!=="radio")setTab("radio");setFaceCommand({action})}
   };
   const downRef=useRef(down),upRef=useRef(up),runRef=useRef(runAction);downRef.current=down;upRef.current=up;runRef.current=runAction;
-  const handleAction=({action,pressed,global})=>{
+  // A key the page and the Windows hook both see (hand-mic and media keys while the app is
+  // in front) arrives twice; act on the first report only. Either source alone (a blocked
+  // hook, or the app in the background) still works.
+  const lastFireRef=useRef(new Map());
+  const handleAction=({action,pressed,global},source="page")=>{
+    const id=action+(pressed?":down":":up"),now=Date.now(),last=lastFireRef.current.get(id);
+    if(last&&last.source!==source&&now-last.at<300)return;
+    lastFireRef.current.set(id,{source,at:now});
     if(action==="ptt"){pressed?downRef.current():upRef.current();return}
     if(!pressed||learnForRef.current||(!global&&!document.hasFocus()))return;
     runRef.current(action);
@@ -638,7 +648,7 @@ function RadioApp({session,onSignOut}){
     let alive=true;
     hwCapabilities().then(caps=>{if(!alive)return;const map=loadKeymap(caps.global_keys);setHwCaps(caps);setKeymap(map);setHardwareBindings(map)});
     const off=listenHardware({
-      onAction:a=>handleRef.current(a),
+      onAction:a=>handleRef.current(a,"hook"),
       onLearned:input=>addLearnedRef.current(input),
       onLearnCancel:()=>setLearnFor(""),
     });
@@ -648,12 +658,12 @@ function RadioApp({session,onSignOut}){
 
   useEffect(()=>{
     if(!keymap)return;
-    // The page reads typed keys itself while the app is in front: in-window keys, and
-    // keys learned through the Windows hook (matched by virtual-key code). Keys nobody
-    // types with (F13–F24, media and volume keys) stay with the hook, which also adds
+    // The page reads every mapped key itself while the app is in front: in-window keys,
+    // and keys learned by Windows key code. Keys nobody types with (F13–F24, media and
+    // volume keys) are also reported by the Windows hook, which handleAction de-duplicates;
+    // the page still gets them when antivirus blocks the hook. The hook alone handles
     // "Anywhere" keys while another window is in front.
-    const forPage=b=>b.kind==="webkey"||(b.kind==="key"&&!nativeOnlyKey(Number(b.code)));
-    const page=keymap.filter(forPage),hookOnly=new Set(keymap.filter(b=>b.kind==="key"&&!forPage(b)).map(b=>Number(b.code)));
+    const page=keymap.filter(b=>b.kind==="webkey"||b.kind==="key");
     const matches=e=>{const vk=keyVk(e);return page.filter(b=>b.kind==="webkey"?b.code===e.code:Number(b.code)===vk)};
     const typing=e=>/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||"")||!!e.target?.isContentEditable;
     const held=new Map();// key → actions its press fired, so the release reaches the same ones
@@ -661,12 +671,19 @@ function RadioApp({session,onSignOut}){
       if(learnFor){
         // Keep Space/Enter from also pressing the focused button while a button is learned.
         e.preventDefault();
-        // With the Windows hook the native side learns the key (it also sees mouse and media buttons).
-        if(hwCaps?.global_keys)return;
-        if(e.code==="Escape")learn("");else addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return;
+        if(e.code==="Escape"){learn("");return}
+        // On Windows a key is learned by its virtual-key code, so it can later be set to
+        // "Anywhere" for the hook. The page learns it too rather than waiting on the hook:
+        // antivirus can block the keyboard hook while letting the mouse hook through, and
+        // then only mouse buttons could ever be learned. The hook still learns mouse and
+        // media buttons; whichever reports first wins (see addLearned).
+        if(hwCaps?.global_keys){
+          if(!learnForRef.current)return;
+          addLearned({kind:"key",code:String(keyVk(e)),label:keyLabel(e)});setLearning(false);return;
+        }
+        addLearned({kind:"webkey",code:e.code,label:keyLabel(e)});return;
       }
       if(typing(e))return;
-      if(hookOnly.has(keyVk(e))){e.preventDefault();return}
       const hits=matches(e);if(!hits.length)return;
       e.preventDefault();if(e.repeat||held.has(e.code))return;
       held.set(e.code,hits);
@@ -674,7 +691,6 @@ function RadioApp({session,onSignOut}){
     };
     const keyUp=e=>{
       if(learnFor){e.preventDefault();return}
-      if(hookOnly.has(keyVk(e))){e.preventDefault();return}
       const hits=held.get(e.code);if(!hits)return;
       held.delete(e.code);e.preventDefault();
       hits.forEach(b=>handleAction({action:b.action,pressed:false,global:true}));
@@ -744,6 +760,23 @@ function RadioApp({session,onSignOut}){
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
 
+  if(IS_PHONE)return <PhoneApp
+    zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId} channelName={channelName}
+    state={state} connected={connected} error={error} connectNote={connectNote} ptt={ptt} muted={muted} onAir={onAir} participants={participants}
+    scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} lastHeard={lastHeard} onReplay={replay}
+    onPower={togglePower} onZone={selectZone} onChannel={selectChannel} onDown={down} onUp={up} onMute={()=>setMuted(!muted)} onVolume={changeVolume} onScan={connected?toggleScan:null}
+    incoming={incoming} call={call} callState={callState} callError={callError} onlineUsers={onlineUsers} onCall={startCall} onAnswer={accept} onDecline={decline} onEndCall={endCall}
+    displayName={displayName} callsign={callsign} onSignOut={logout}
+    myStatus={myStatus} onStatus={chooseStatus}
+    settingsPanel={<>
+      <div className="setting"><span>Microphone</span><div className="prog-fields"><label><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">Phone default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label></div></div>
+      <div className="setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div>
+      <div className="setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={false} onTest={testFeature}/></div>
+      <div className="setting ble-setting"><span>Bluetooth PTT mic</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>
+      <div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>
+      {state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}
+    </>}
+  />;
   if(mini)return <MiniRadio
     channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
     state={state} connected={connected} error={error} connectNote={connectNote} ptt={ptt} muted={muted} quality={quality} onAir={onAir} scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} incoming={incoming}
@@ -794,7 +827,7 @@ function RadioApp({session,onSignOut}){
 
 export default function App(){
   const [session,setSession]=useState(null),[signOutNote,setSignOutNote]=useState("");
-  const [authChecking,setAuthChecking]=useState(true);
+  const [authChecking,setAuthChecking]=useState(true),[authOffline,setAuthOffline]=useState(false);
   useEffect(()=>{
     const handler=e=>setSession(e.detail);
     window.addEventListener("rn-radio-session",handler);
@@ -822,8 +855,19 @@ export default function App(){
         }
       }catch{}
       const restored=await restoreSessionFromOAuth();
-      if(restored) setSession(restored);
-      setAuthChecking(false);
+      if(restored){setSession(restored);setAuthChecking(false);return}
+      // Use the sign-in saved on this device. If Repeater Nation can't be reached yet
+      // (no internet at startup), keep the saved sign-in and try again instead of
+      // showing the login screen.
+      for(let attempt=0;!disposed;attempt++){
+        const saved=await restoreSession();
+        if(disposed)return;
+        if(saved?.member){setSession(saved);break}
+        if(!saved?.offline)break;
+        setAuthOffline(true);
+        await new Promise(r=>setTimeout(r,Math.min(15000,2000*(attempt+1))));
+      }
+      if(!disposed){setAuthOffline(false);setAuthChecking(false)}
     })();
     return()=>{
       disposed=true;
@@ -831,6 +875,6 @@ export default function App(){
       if(unlisten) unlisten();
     };
   },[]);
-  if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Checking your sign-in…</p></main>;
+  if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">{authOffline?"Can't reach Repeater Nation yet. Trying again…":"Checking your sign-in…"}</p>{authOffline&&<button type="button" className="primary" onClick={()=>{setAuthOffline(false);setAuthChecking(false)}}>Sign in again</button>}</main>;
   return session?<RadioApp session={session} onSignOut={note=>{setSignOutNote(note||"");setSession(null)}}/>:<Login notice={signOutNote}/>;
 }

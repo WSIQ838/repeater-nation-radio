@@ -12,6 +12,11 @@
 //! hook; the hook only adds them while another window is in front (bindings set to
 //! "Anywhere"). Keys nobody types with (F13–F24, media and volume keys from hand mics)
 //! always come from the hook.
+//!
+//! The hook is only installed while something needs it: a binding set to "Anywhere", a
+//! non-typing key, a mouse button, or learning a new button. With the default Space and
+//! Num 0 PTT keys the app never hooks the keyboard at all, so antivirus tools that flag
+//! any keyboard hook as a keylogger have nothing to see.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -65,7 +70,7 @@ fn input(app: &AppHandle, kind: &str, code: String, label: String, pressed: bool
             return;
         }
         s.learning = false;
-        apply_native(&s.bindings);
+        apply_native(&s.bindings, false);
         drop(s);
         // Esc cancels learning instead of being learned.
         if kind == "key" && code == "27" {
@@ -141,7 +146,7 @@ pub fn hw_set_bindings(bindings: Vec<Binding>) {
     let mut s = state();
     s.bindings = bindings;
     s.held = None;
-    apply_native(&s.bindings);
+    apply_native(&s.bindings, s.learning);
 }
 
 #[tauri::command]
@@ -149,7 +154,7 @@ pub fn hw_learn(on: bool) {
     let mut s = state();
     s.learning = on;
     // Let bound keys through while learning so they can be learned again.
-    apply_native(if on { &[] } else { &s.bindings });
+    apply_native(if on { &[] } else { &s.bindings }, on);
 }
 
 #[derive(Serialize)]
@@ -160,7 +165,7 @@ pub struct Capabilities {
 
 #[tauri::command]
 pub fn hw_capabilities() -> Capabilities {
-    Capabilities { global_keys: cfg!(windows), gamepads: true }
+    Capabilities { global_keys: cfg!(windows), gamepads: cfg!(desktop) }
 }
 
 /// Whether this app's window is in front. Off Windows the web view filters non-global
@@ -175,12 +180,14 @@ fn app_focused() -> bool {
     win::app_focused()
 }
 
+#[cfg(desktop)]
 pub fn start(app: AppHandle) {
     #[cfg(windows)]
     win::start(app.clone());
     start_gamepads(app);
 }
 
+#[cfg(desktop)]
 fn start_gamepads(app: AppHandle) {
     std::thread::spawn(move || {
         let Ok(mut gilrs) = gilrs::Gilrs::new() else { return };
@@ -205,11 +212,23 @@ pub(crate) fn native_only(vk: u32) -> bool {
     matches!(vk, 0x7C..=0x87 | 0xA6..=0xB7)
 }
 
+/// Whether any binding needs the low-level hook: mouse buttons, keys nobody types
+/// with, and keys set to work while another window is in front.
+#[cfg(windows)]
+fn needs_hook(bindings: &[Binding]) -> bool {
+    bindings.iter().any(|b| match b.kind.as_str() {
+        "mouse" => true,
+        "key" => b.global || b.code.parse::<u32>().map_or(false, native_only),
+        _ => false,
+    })
+}
+
 #[cfg(not(windows))]
-fn apply_native(_bindings: &[Binding]) {}
+fn apply_native(_bindings: &[Binding], _learning: bool) {}
 
 #[cfg(windows)]
-fn apply_native(bindings: &[Binding]) {
+fn apply_native(bindings: &[Binding], learning: bool) {
+    win::set_hooked(learning || needs_hook(bindings));
     // Swallow only keys nobody types with: F13–F24 and the media/volume keys hand
     // mics send. Otherwise a mic's Play/Pause or Mute button would also pause music
     // or mute the PC. Normal keys (Space, letters) still reach other apps.
@@ -224,19 +243,33 @@ fn apply_native(bindings: &[Binding]) {
 
 #[cfg(windows)]
 mod win {
+    use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
     use std::sync::{mpsc, Mutex, OnceLock};
     use tauri::AppHandle;
     use windows_sys::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
     use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
-    use windows_sys::Win32::System::Threading::GetCurrentProcessId;
+    use windows_sys::Win32::System::Threading::{GetCurrentProcessId, GetCurrentThreadId};
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         CallNextHookEx, GetForegroundWindow, GetMessageW, GetWindowThreadProcessId, SetTimer, SetWindowsHookExW, UnhookWindowsHookEx, HC_ACTION,
-        HHOOK, KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT, WH_KEYBOARD_LL, WH_MOUSE_LL, WM_KEYDOWN, WM_KEYUP, WM_MBUTTONDOWN, WM_MBUTTONUP,
+        HHOOK, PeekMessageW, PostThreadMessageW, PM_NOREMOVE, WM_APP, KBDLLHOOKSTRUCT, MSG, MSLLHOOKSTRUCT, WH_KEYBOARD_LL, WH_MOUSE_LL, WM_KEYDOWN, WM_KEYUP, WM_MBUTTONDOWN, WM_MBUTTONUP,
         WM_SYSKEYDOWN, WM_SYSKEYUP, WM_TIMER, WM_XBUTTONDOWN, WM_XBUTTONUP,
     };
 
     /// Bound non-typing keys to keep from other apps: (virtual key, binding is global).
     pub static SWALLOW: Mutex<Vec<(u32, bool)>> = Mutex::new(Vec::new());
+
+    /// Whether the hooks should be installed, and the hook thread to tell when it changes.
+    static WANTED: AtomicBool = AtomicBool::new(false);
+    static HOOK_THREAD: AtomicU32 = AtomicU32::new(0);
+
+    pub fn set_hooked(on: bool) {
+        if WANTED.swap(on, Ordering::SeqCst) != on {
+            let thread = HOOK_THREAD.load(Ordering::SeqCst);
+            if thread != 0 {
+                unsafe { PostThreadMessageW(thread, WM_APP, 0, 0) };
+            }
+        }
+    }
 
     pub fn app_focused() -> bool {
         unsafe {
@@ -302,6 +335,10 @@ mod win {
             }
         });
         std::thread::spawn(|| unsafe {
+            // Create this thread's message queue before others can post to it.
+            let mut msg: MSG = std::mem::zeroed();
+            PeekMessageW(&mut msg, std::ptr::null_mut(), 0, 0, PM_NOREMOVE);
+            HOOK_THREAD.store(GetCurrentThreadId(), Ordering::SeqCst);
             let module = GetModuleHandleW(std::ptr::null());
             let mut keys: HHOOK = std::ptr::null_mut();
             let mut mice: HHOOK = std::ptr::null_mut();
@@ -311,6 +348,17 @@ mod win {
             // the old one goes, and no event can arrive in between because both
             // happen on this thread, which is what delivers them.
             let mut rehook = || {
+                if !WANTED.load(Ordering::SeqCst) {
+                    if !keys.is_null() {
+                        UnhookWindowsHookEx(keys);
+                        keys = std::ptr::null_mut();
+                    }
+                    if !mice.is_null() {
+                        UnhookWindowsHookEx(mice);
+                        mice = std::ptr::null_mut();
+                    }
+                    return;
+                }
                 let k = SetWindowsHookExW(WH_KEYBOARD_LL, Some(keyboard), module, 0);
                 if !k.is_null() {
                     if !keys.is_null() {
@@ -328,10 +376,10 @@ mod win {
             };
             rehook();
             SetTimer(std::ptr::null_mut(), 0, 20_000, None);
-            // Low-level hooks are called on this thread's message loop.
-            let mut msg: MSG = std::mem::zeroed();
+            // Low-level hooks are called on this thread's message loop. WM_APP means
+            // the bindings changed whether the hooks are wanted.
             while GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) > 0 {
-                if msg.message == WM_TIMER {
+                if msg.message == WM_TIMER || msg.message == WM_APP {
                     rehook();
                 }
             }

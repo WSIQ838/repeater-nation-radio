@@ -1,5 +1,63 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.56 — The app only watches the keyboard when a button needs it
+
+**The radio no longer hooks the Windows keyboard and mouse unless a mapped button needs it**, after Sean reported the desktop app coming up as a virus.
+
+- Antivirus tools flag any app that hooks every keystroke as a possible keylogger. Until now the app always installed a Windows low-level keyboard and mouse hook at startup, even when nothing used it.
+- Now the hook is only on while a button is set to "Anywhere", a hand mic or F13–F24 key is mapped, a mouse button is mapped, or a new button is being learned. With the default Space and Num 0 PTT keys there is no hook at all. Changing the mapping turns it on or off right away.
+- Buttons work exactly as before.
+- Every GitHub release now opens with install steps for each platform, including what to do on Windows when "Windows protected your PC" shows or Windows Security removes the app (restore it from Protection history and add an exclusion). The text lives in `.github/release-notes.md`.
+- Each Windows release also puts its installer on the `downloads` branch, giving a direct link with no redirect for the Microsoft Store: `https://raw.githubusercontent.com/WSIQ838/repeater-nation-radio/downloads/windows/<version>/Repeater.Nation.Radio_<version>_x64-setup.exe`. 0.2.50 was added by hand.
+- Version set to 0.2.56 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`. 0.2.51 to 0.2.56 ship together in one release.
+
+## 0.2.55 — Keyboard keys can be learned again
+
+**Settings › Buttons and PTT learns keyboard keys again, not just mouse buttons**, after Sean reported that learning only picked up his mouse buttons.
+
+- On Windows, learning a button was left entirely to the app's Windows keyboard and mouse hook. When something on the PC (usually antivirus) blocks the keyboard hook but not the mouse hook, only mouse buttons could ever be learned.
+- The app now learns keyboard keys itself as well, by the same Windows key code, so a learned key works in the app straight away and can still be set to "Anywhere". Mouse, media and hand-mic buttons are still learned through the hook, and Esc still cancels.
+- Hand-mic, foot-pedal and media buttons that show up as keys (play/pause, next track, volume, F13 to F24) now also work from the app itself while it is in front, so they keep working when antivirus blocks the Windows hook. When the hook works too, the app acts on the first report only, so one press is still one step. "Anywhere" for those buttons still needs the hook.
+- Learned media keys now show the same names the Windows hook gives them ("Play/Pause key", "Volume Up key" and so on), and the app's built-in browser no longer grabs Play/Pause, Next and Previous for itself, so those presses reach the button mapping instead of pausing radio audio.
+- Version set to 0.2.55 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.54 — Microphone problems say what to do
+
+**"Permission denied" on PTT now says the computer is blocking the microphone and where to turn it on**, after Sean sent a screenshot of that message on the radio screen.
+
+- "Permission denied" is the computer refusing the app the microphone (on Windows: Settings › Privacy & security › Microphone, where "Microphone access" and "Let desktop apps access your microphone" must both be on). The radio screen now says "Windows is blocking the mic: Settings › Privacy & security › Microphone" (or the Mac equivalent).
+- A missing microphone and a microphone another app has locked get their own plain messages too.
+- Applies everywhere the app opens the microphone: PTT and direct calls.
+- Version set to 0.2.54 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+## 0.2.53 — Stay signed in
+
+- The app now remembers your sign-in. Opening it again (on Windows, Mac, Linux, Android or iPhone) goes straight to the radio instead of the login screen, until you press Sign out or Repeater Nation ends the sign-in.
+- Before, the sign-in was saved on the device after logging in, but the app never looked for it when it started, so everyone had to log in every time.
+- If there's no internet when the app opens, it keeps the saved sign-in and shows "Can't reach Repeater Nation yet. Trying again…" with a "Sign in again" button, instead of throwing you back to the login screen.
+- If Repeater Nation refuses the saved sign-in (it expired or was signed out elsewhere), the app forgets it and shows the login screen.
+- Version set to 0.2.53 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` (0.2.51 and 0.2.52 are taken by the open antivirus and phone app changes).
+## 0.2.52 — Bluetooth PTT mics on the phone apps
+
+**The Android and iPhone apps can use a Bluetooth PTT speaker mic's button**, after Sean asked for the phone app to work with Bluetooth PTT mics.
+
+- More, then Setup, now has **Bluetooth PTT mic**. Find Bluetooth button lists nearby Bluetooth devices. Pick the mic, and the app connects to it and stays connected (it reconnects after the mic turns off and on). It works the same way as on the computer: the app listens to every button report the mic sends.
+- Below that, **Buttons and PTT** works like on the computer. Tap Add next to PTT, then press the mic's PTT button to learn it. Mics that act like a keyboard (sending a key) can be learned there too, without the Bluetooth step.
+- The first time, the phone asks for permission to find nearby Bluetooth devices.
+- Version set to 0.2.52 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.51 — Android and iPhone apps (first test versions)
+
+**The radio now builds as an Android app**, after Sean asked for a phone version for Android and iPhone and said it could look like the screen of the touch handheld.
+
+- Phones show the touch handheld's (APX N70) screen at full size instead of a radio face: your name and status button, the zone and channel card (signal, scan, replay, and what's happening now), the Zone / Contacts / More keys, last heard with Replay and All Recent, and your status. Tapping the zone or channel opens a list to pick from. Contacts lists members to call, and More has Who's On, Recent, My Status, radio on/off, Setup (microphone, scan list, radio features) and sign out.
+- Below the screen sits a big PTT key (hold to talk, it turns red while you transmit) and mute and volume keys. The power button is at the top right.
+- Same sign-in (email or Google), channels, PTT, calls and voice server as the desktop app. The power button at the top turns the radio on and off. The screen stays on while the radio is on.
+- A new GitHub build makes a signed Android APK on every change to `main` and adds it to the `radio-vX.Y.Z` release next to the Windows, Linux and Mac downloads. Each APK installs over the last one.
+- Hardware PTT keys, game controllers, the Bluetooth button and the tray icon stay desktop-only for now.
+- The iPhone app builds on GitHub's Mac with the same screen. Every build runs it on a simulated iPhone and takes a screenshot. It also makes a phone build, which can't go on a real iPhone until it's signed with an Apple developer account. Both go to the `ios-test` pre-release.
+- Not done yet: keeping the radio playing on Android with the phone locked or the app in the background, signing the iPhone app, and the app stores.
+- Version set to 0.2.51 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.50 — Linux and Mac downloads on the GitHub release
 
 **Every release on GitHub now carries the Linux and Mac installers next to the Windows ones**, after Sean asked for Linux and Mac on GitHub.

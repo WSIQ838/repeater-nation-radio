@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Repeater Nation Radio",
-  "version": "0.2.50",
+  "version": "0.2.56",
   "identifier": "com.repeaternation.radio",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -17,7 +17,9 @@
         "height": 760,
         "minWidth": 900,
         "minHeight": 620,
-        "resizable": true
+        "resizable": true,
+        "backgroundColor": "#0b0e12",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HardwareMediaKeyHandling"
       }
     ],
     "security": {
@@ -30,7 +32,15 @@
         "schemes": [
           "repeaternation"
         ]
-      }
+      },
+      "mobile": [
+        {
+          "scheme": [
+            "repeaternation"
+          ],
+          "appLink": false
+        }
+      ]
     }
   },
   "bundle": {
@@ -48,6 +58,14 @@
         "installMode": "currentUser",
         "displayLanguageSelector": false
       }
+    },
+    "iOS": {
+      "frameworks": [
+        "CoreBluetooth"
+      ]
+    },
+    "android": {
+      "minSdkVersion": 26
     }
   }
 }
