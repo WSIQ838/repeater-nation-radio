@@ -47,7 +47,26 @@ export async function openMicrophone(deviceId) {
   const { createLocalAudioTrack } = await livekit();
   // A plain string id makes LiveKit try that exact mic first and fall back to the closest
   // one if it was unplugged or renamed, instead of failing every PTT.
-  return createLocalAudioTrack(deviceId?{deviceId}:undefined);
+  try{return await createLocalAudioTrack(deviceId?{deviceId}:undefined)}
+  catch(err){throw micError(err)}
+}
+
+// The browser's own wording ("Permission denied", "Could not start audio source") doesn't
+// say what to do. Name the cause and the fix; the original error stays as .cause.
+export function micError(err){
+  const name=err?.name||"",raw=err?.message||"";
+  const ua=navigator.userAgent||"",mac=/Mac/i.test(navigator.platform||ua),win=/Windows/i.test(ua);
+  let text="";
+  if(name==="NotAllowedError"||name==="SecurityError"||/permission denied|not allowed/i.test(raw))
+    text=win?"Windows is blocking the mic: Settings › Privacy & security › Microphone"
+      :mac?"Mac is blocking the mic: System Settings › Privacy & Security › Microphone"
+      :"The system is blocking the mic: allow microphone access for Repeater Nation";
+  else if(name==="NotFoundError"||/requested device not found/i.test(raw))
+    text="No microphone found: plug one in or pick one in Settings";
+  else if(name==="NotReadableError"||/could not start audio source/i.test(raw))
+    text="Microphone busy or off: close other apps using it";
+  if(!text)return err;
+  return Object.assign(new Error(text),{name,cause:err});
 }
 
 // The radio server grants publish permission when it grants the floor, and that update

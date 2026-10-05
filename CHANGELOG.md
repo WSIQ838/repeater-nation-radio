@@ -1,5 +1,13 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.54 — Microphone problems say what to do
+
+**"Permission denied" on PTT now says the computer is blocking the microphone and where to turn it on**, after Sean sent a screenshot of that message on the radio screen.
+
+- "Permission denied" is the computer refusing the app the microphone (on Windows: Settings › Privacy & security › Microphone, where "Microphone access" and "Let desktop apps access your microphone" must both be on). The radio screen now says "Windows is blocking the mic: Settings › Privacy & security › Microphone" (or the Mac equivalent).
+- A missing microphone and a microphone another app has locked get their own plain messages too.
+- Applies everywhere the app opens the microphone: PTT and direct calls.
+- Version set to 0.2.54 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 ## 0.2.53 — Stay signed in
 
 - The app now remembers your sign-in. Opening it again (on Windows, Mac, Linux, Android or iPhone) goes straight to the radio instead of the login screen, until you press Sign out or Repeater Nation ends the sign-in.
