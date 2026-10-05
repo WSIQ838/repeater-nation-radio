@@ -14,6 +14,7 @@ import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,li
 import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,nativeOnlyKey,sameInput,saveKeymap} from "./lib/keymap";
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
+import {IS_PHONE,PhoneApp} from "./components/PhoneApp";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
 import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
@@ -80,7 +81,7 @@ function Login({notice=""}){
         <LogIn size={18}/>{busy?" Signing in…":" Sign in"}
       </button>
     </form>
-    <p className="fine">Use the same Repeater Nation account you use on the website. The desktop app will not silently reuse an old session at startup, so you always have a visible sign-in screen.</p>
+    <p className="fine">Use the same Repeater Nation account you use on the website. The app will not silently reuse an old session at startup, so you always have a visible sign-in screen.</p>
   </main>
 }
 
@@ -744,6 +745,23 @@ function RadioApp({session,onSignOut}){
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
 
+  if(IS_PHONE)return <PhoneApp
+    zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId} channelName={channelName}
+    state={state} connected={connected} error={error} connectNote={connectNote} ptt={ptt} muted={muted} onAir={onAir} participants={participants}
+    scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} lastHeard={lastHeard} onReplay={replay}
+    onPower={togglePower} onZone={selectZone} onChannel={selectChannel} onDown={down} onUp={up} onMute={()=>setMuted(!muted)} onVolume={changeVolume} onScan={connected?toggleScan:null}
+    incoming={incoming} call={call} callState={callState} callError={callError} onlineUsers={onlineUsers} onCall={startCall} onAnswer={accept} onDecline={decline} onEndCall={endCall}
+    displayName={displayName} callsign={callsign} onSignOut={logout}
+    myStatus={myStatus} onStatus={chooseStatus}
+    settingsPanel={<>
+      <div className="setting"><span>Microphone</span><div className="prog-fields"><label><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">Phone default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label></div></div>
+      <div className="setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div>
+      <div className="setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={false} onTest={testFeature}/></div>
+      <div className="setting ble-setting"><span>Bluetooth PTT mic</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>
+      <div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>
+      {state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}
+    </>}
+  />;
   if(mini)return <MiniRadio
     channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
     state={state} connected={connected} error={error} connectNote={connectNote} ptt={ptt} muted={muted} quality={quality} onAir={onAir} scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} incoming={incoming}

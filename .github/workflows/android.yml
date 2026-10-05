@@ -1,0 +1,126 @@
+name: Build Repeater Nation Radio for Android
+
+on:
+  push:
+    branches: [main, android-app, ios-app]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Rust for Android
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+
+      - name: Find the Android NDK
+        run: |
+          NDK="${ANDROID_NDK_LATEST_HOME:-}"
+          if [ -z "$NDK" ] || [ ! -d "$NDK" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" >/dev/null
+            NDK="$ANDROID_HOME/ndk/27.2.12479018"
+          fi
+          echo "Using NDK at $NDK"
+          echo "NDK_HOME=$NDK" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create the Android project
+        run: |
+          npx tauri android init --ci
+          # The radio needs the microphone (PTT) and to change audio routing.
+          MANIFEST=src-tauri/gen/android/app/src/main/AndroidManifest.xml
+          sed -i 's#<application#<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <application#' "$MANIFEST"
+          cat "$MANIFEST"
+
+      - name: Generate app icons
+        run: npx tauri icon src-tauri/icons/icon.svg
+
+      - name: Build the APK
+        run: npx tauri android build --apk --target aarch64 armv7 x86_64 --ci
+
+      - name: Sign the APK
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD_TOOLS=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          # A real signing key can be added later as repository secrets (needed for the
+          # Play Store). Until then the committed test key signs every build, so each
+          # new APK installs over the last one.
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > signing.jks
+            PASS="$KEYSTORE_PASSWORD"; ALIAS="$KEY_ALIAS"
+          else
+            cp src-tauri/android/test-signing.jks signing.jks
+            PASS=repeaternation; ALIAS=radio
+          fi
+          UNSIGNED=$(find src-tauri/gen/android/app/build/outputs/apk -name '*-unsigned.apk' | head -1)
+          echo "Unsigned APK: $UNSIGNED"
+          mkdir -p out
+          "$BUILD_TOOLS/zipalign" -f -p 4 "$UNSIGNED" aligned.apk
+          "$BUILD_TOOLS/apksigner" sign --ks signing.jks --ks-pass "pass:$PASS" --ks-key-alias "$ALIAS" --out "out/Repeater-Nation-Radio-$VERSION.apk" aligned.apk
+          "$BUILD_TOOLS/apksigner" verify "out/Repeater-Nation-Radio-$VERSION.apk"
+          rm -f signing.jks
+          ls -la out
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: repeater-nation-radio-android
+          path: out/*.apk
+          if-no-files-found: error
+
+      - name: Add the APK to the GitHub release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="radio-v$VERSION"
+          # The Windows workflow creates this release; wait for it so the two don't race.
+          for i in $(seq 1 40); do
+            gh release view "$TAG" >/dev/null 2>&1 && break
+            sleep 30
+          done
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes "" || \
+            gh release view "$TAG" >/dev/null
+          gh release upload "$TAG" out/*.apk --clobber
+
+      - name: Add the APK to the Android test release
+        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Test builds from the phone branches land on one pre-release, replacing the last.
+          TAG="android-test"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "Android test build" \
+              --notes "Test version of the Repeater Nation Radio Android app. Download the .apk on your phone and open it to install."
+          # Remove the last test APK (a new version has a new file name).
+          for old in $(gh release view "$TAG" --json assets -q '.assets[].name | select(endswith(".apk"))'); do
+            gh release delete-asset "$TAG" "$old" -y
+          done
+          gh release upload "$TAG" out/*.apk --clobber

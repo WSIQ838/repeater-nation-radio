@@ -160,7 +160,7 @@ pub struct Capabilities {
 
 #[tauri::command]
 pub fn hw_capabilities() -> Capabilities {
-    Capabilities { global_keys: cfg!(windows), gamepads: true }
+    Capabilities { global_keys: cfg!(windows), gamepads: cfg!(desktop) }
 }
 
 /// Whether this app's window is in front. Off Windows the web view filters non-global
@@ -175,12 +175,14 @@ fn app_focused() -> bool {
     win::app_focused()
 }
 
+#[cfg(desktop)]
 pub fn start(app: AppHandle) {
     #[cfg(windows)]
     win::start(app.clone());
     start_gamepads(app);
 }
 
+#[cfg(desktop)]
 fn start_gamepads(app: AppHandle) {
     std::thread::spawn(move || {
         let Ok(mut gilrs) = gilrs::Gilrs::new() else { return };

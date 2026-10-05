@@ -1,5 +1,27 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.52 — Bluetooth PTT mics on the phone apps
+
+**The Android and iPhone apps can use a Bluetooth PTT speaker mic's button**, after Sean asked for the phone app to work with Bluetooth PTT mics.
+
+- More, then Setup, now has **Bluetooth PTT mic**. Find Bluetooth button lists nearby Bluetooth devices. Pick the mic, and the app connects to it and stays connected (it reconnects after the mic turns off and on). It works the same way as on the computer: the app listens to every button report the mic sends.
+- Below that, **Buttons and PTT** works like on the computer. Tap Add next to PTT, then press the mic's PTT button to learn it. Mics that act like a keyboard (sending a key) can be learned there too, without the Bluetooth step.
+- The first time, the phone asks for permission to find nearby Bluetooth devices.
+- Version set to 0.2.52 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.51 — Android and iPhone apps (first test versions)
+
+**The radio now builds as an Android app**, after Sean asked for a phone version for Android and iPhone and said it could look like the screen of the touch handheld.
+
+- Phones show the touch handheld's (APX N70) screen at full size instead of a radio face: your name and status button, the zone and channel card (signal, scan, replay, and what's happening now), the Zone / Contacts / More keys, last heard with Replay and All Recent, and your status. Tapping the zone or channel opens a list to pick from. Contacts lists members to call, and More has Who's On, Recent, My Status, radio on/off, Setup (microphone, scan list, radio features) and sign out.
+- Below the screen sits a big PTT key (hold to talk, it turns red while you transmit) and mute and volume keys. The power button is at the top right.
+- Same sign-in (email or Google), channels, PTT, calls and voice server as the desktop app. The power button at the top turns the radio on and off. The screen stays on while the radio is on.
+- A new GitHub build makes a signed Android APK on every change to `main` and adds it to the `radio-vX.Y.Z` release next to the Windows, Linux and Mac downloads. Each APK installs over the last one.
+- Hardware PTT keys, game controllers, the Bluetooth button and the tray icon stay desktop-only for now.
+- The iPhone app builds on GitHub's Mac with the same screen. Every build runs it on a simulated iPhone and takes a screenshot. It also makes a phone build, which can't go on a real iPhone until it's signed with an Apple developer account. Both go to the `ios-test` pre-release.
+- Not done yet: keeping the radio playing on Android with the phone locked or the app in the background, signing the iPhone app, and the app stores.
+- Version set to 0.2.51 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.50 — Linux and Mac downloads on the GitHub release
 
 **Every release on GitHub now carries the Linux and Mac installers next to the Windows ones**, after Sean asked for Linux and Mac on GitHub.

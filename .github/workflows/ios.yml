@@ -1,0 +1,96 @@
+name: Build Repeater Nation Radio for iPhone
+
+on:
+  push:
+    branches: [main, ios-app]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Rust for iOS
+        run: rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create the iPhone project
+        run: |
+          npx tauri ios init --ci
+          npx tauri icon src-tauri/icons/icon.svg
+          ls -la src-tauri/gen/apple
+
+      # A simulator build needs no Apple account. It proves the app builds and gives
+      # a screenshot of the app running on an iPhone.
+      - name: Build for the iPhone simulator
+        run: npx tauri ios build --target aarch64-sim --debug --ci
+
+      - name: Screenshot in the iPhone simulator
+        continue-on-error: true
+        run: |
+          APP=$(find src-tauri/gen/apple/build -name '*.app' -path '*simulator*' | head -1)
+          [ -n "$APP" ] || APP=$(find src-tauri/gen/apple/build -name '*.app' | head -1)
+          echo "App: $APP"
+          DEVICE=$(xcrun simctl list devices available -j | node -e 'const d=JSON.parse(require("fs").readFileSync(0)).devices;for(const k of Object.keys(d).filter(k=>k.includes("iOS")).sort().reverse())for(const x of d[k])if(/^iPhone \d+( Pro)?$/.test(x.name)){console.log(x.udid);process.exit(0)}')
+          echo "Simulator: $DEVICE"
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" "$APP"
+          ID=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$APP/Info.plist")
+          xcrun simctl launch "$DEVICE" "$ID"
+          sleep 25
+          mkdir -p out
+          xcrun simctl io "$DEVICE" screenshot out/iphone-simulator.png
+
+      # Without an Apple developer account the phone build can't be signed. Build it
+      # unsigned anyway so the moment an account is added only signing is left.
+      - name: Build for iPhone (unsigned)
+        continue-on-error: true
+        run: |
+          PBX=$(find src-tauri/gen/apple -name project.pbxproj | head -1)
+          sed -i '' 's/buildSettings = {/buildSettings = {\n\t\t\t\tCODE_SIGNING_ALLOWED = NO;\n\t\t\t\tCODE_SIGNING_REQUIRED = NO;\n\t\t\t\tCODE_SIGN_IDENTITY = "";/' "$PBX"
+          npx tauri ios build --target aarch64 --ci || true
+          find src-tauri/gen/apple/build -maxdepth 4 | head -50
+          APP=$(find src-tauri/gen/apple/build -name '*.app' -path '*iphoneos*' | head -1)
+          [ -n "$APP" ] || APP=$(find src-tauri/gen/apple/build -name '*.xcarchive' -exec find {} -name '*.app' \; | head -1)
+          echo "Device app: $APP"
+          [ -n "$APP" ] || exit 1
+          VERSION=$(node -p "require('./package.json').version")
+          rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/
+          mkdir -p out && zip -qr "out/Repeater-Nation-Radio-$VERSION-unsigned.ipa" Payload
+          ls -la out
+
+      - name: Upload the iPhone build
+        uses: actions/upload-artifact@v4
+        with:
+          name: repeater-nation-radio-ios
+          path: out/*
+          if-no-files-found: warn
+
+      - name: Add the iPhone files to the iPhone test release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/ios-app'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="ios-test"
+          gh release view "$TAG" >/dev/null 2>&1 || \
+            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "iPhone test build" --notes-file docs/ios-install.md
+          # Keep the install steps on the page up to date.
+          gh release edit "$TAG" --notes-file docs/ios-install.md
+          for old in $(gh release view "$TAG" --json assets -q '.assets[].name'); do
+            gh release delete-asset "$TAG" "$old" -y
+          done
+          ls out/* >/dev/null 2>&1 && gh release upload "$TAG" out/* --clobber || echo "Nothing to upload"
