@@ -1,5 +1,16 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.51 — Android app (first test version)
+
+**The radio now builds as an Android app**, after Sean asked for a phone version for Android and iPhone and said it doesn't have to look like the radios.
+
+- Phones get a simple screen instead of the radio faces: zone and channel pickers with arrows, a status line (Radio off, Listening, Receiving · name, Transmitting), one big push-to-talk button, sound, volume and scan buttons, and Last heard with replay. Tabs at the bottom open Who's On (with your status buttons), Calls and Settings (microphone, scan list, radio features, sign out).
+- Same sign-in (email or Google), channels, PTT, calls and voice server as the desktop app. The power button at the top turns the radio on and off. The screen stays on while the radio is on.
+- A new GitHub build makes a signed Android APK on every change to `main` and adds it to the `radio-vX.Y.Z` release next to the Windows, Linux and Mac downloads. Each APK installs over the last one.
+- Hardware PTT keys, game controllers, the Bluetooth button and the tray icon stay desktop-only for now.
+- Not done yet: keeping the radio playing with the phone locked or the app in the background, the iPhone version, and the app stores.
+- Version set to 0.2.51 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.50 — Linux and Mac downloads on the GitHub release
 
 **Every release on GitHub now carries the Linux and Mac installers next to the Windows ones**, after Sean asked for Linux and Mac on GitHub.
