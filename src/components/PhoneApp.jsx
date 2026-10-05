@@ -1,13 +1,17 @@
-import {useEffect,useMemo,useRef,useState} from "react";
-import {Radio,Users,Phone,Settings,Power,ChevronLeft,ChevronRight,Volume2,VolumeX,Minus,Plus,PhoneCall,PhoneOff,RefreshCw,ScanLine} from "lucide-react";
-import {zoneLabel,chanLabel} from "../lib/labels";
-import {statusClass} from "../lib/status";
+import {useEffect,useRef,useState} from "react";
+import {ChevronLeft,ListChecks,Power,RefreshCw,UserRound,Users,Volume2,VolumeX,Minus,Plus,PhoneCall,PhoneOff,LogOut} from "lucide-react";
+import {ChanLine} from "./ChanLine";
+import {zoneLabel} from "../lib/labels";
+import {STATUSES,statusClass} from "../lib/status";
 
-// The Android and iPhone app (and a phone-sized browser) gets a simple phone screen instead
-// of the radio faces: zone and channel, one big PTT button, who's on, calls and settings.
+// The Android and iPhone app (and a phone-sized browser) gets one full-screen version of
+// the touch handheld's (APX N70) display instead of the radio faces, plus a big PTT key.
 // __MOBILE__ is set when Tauri builds for Android or iOS.
 export const IS_PHONE=(typeof __MOBILE__!=="undefined"&&__MOBILE__)||(typeof navigator!=="undefined"&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||""));
 
+const hhmm=t=>new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+const clock=t=>{const d=new Date(t);return (d.getHours()%12||12)+":"+String(d.getMinutes()).padStart(2,"0")};
+const secs=ms=>Math.max(1,Math.round(ms/1000))+"s";
 const memberInfo=p=>{try{return p?.metadata?JSON.parse(p.metadata):{}}catch{return {}}};
 const memberName=p=>{const i=memberInfo(p);return i.callsign||i.displayName||p?.name||p?.identity||"Member"};
 
@@ -28,91 +32,114 @@ function PttButton({ptt,connected,state,onDown,onUp}){
   const release=e=>{e?.preventDefault?.();if(!held.current)return;held.current=false;onUp()};
   useEffect(()=>{const off=()=>release();document.addEventListener("visibilitychange",off);return()=>document.removeEventListener("visibilitychange",off)},[]);
   const tx=state==="transmitting";
-  return <button type="button" className={"phone-ptt"+(tx?" tx":ptt?" pending":"")+(connected?"":" off")}
+  return <button type="button" className={"n7-ptt"+(tx?" tx":ptt?" pending":"")+(connected?"":" off")}
     aria-label="Push to talk" onPointerDown={press} onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release} onContextMenu={e=>e.preventDefault()}>
-    <span>{tx?"TALKING":ptt?"WAIT…":"PUSH TO TALK"}</span>
+    {tx?"TALKING":ptt?"WAIT…":"PTT"}<small>{tx?"Let go to stop":connected?"Hold to talk":"Radio off"}</small>
   </button>;
 }
 
 export function PhoneApp(p){
-  const [tab,setTab]=useState("radio"),[notice,setNotice]=useState("");
+  const {zones,zoneId,visibleChannels,channelId,channelName,state,connected,error,connectNote,ptt,muted,onAir,participants=[],
+    scanning,scanActive,volume,lastHeard=[],incoming,call,callState,onlineUsers=[],displayName,callsign,myStatus=""}=p;
+  const [screen,setScreen]=useState("home"),[notice,setNotice]=useState(""),[now,setNow]=useState(()=>Date.now());
+  useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),15000);return()=>clearInterval(id)},[]);
   useEffect(()=>{if(!p.flash?.text)return;setNotice(p.flash.text);const id=setTimeout(()=>setNotice(""),1600);return()=>clearTimeout(id)},[p.flash]);
-  useScreenAwake(p.connected||p.state==="connecting"||p.state==="reconnecting");
-  // An incoming call opens the Calls tab.
-  useEffect(()=>{if(p.incoming)setTab("calls")},[p.incoming?.id]);
-  const zone=p.zones.find(z=>z.id===p.zoneId);
-  const others=useMemo(()=>p.participants||[],[p.participants]);
-  const line=p.state==="transmitting"?"Transmitting":p.onAir?.name?"Receiving · "+p.onAir.name
-    :p.connected?(p.scanning?(p.scanActive?"Scan · "+p.scanActive:"Scanning"):"Listening")
-    :p.state==="connecting"?"Connecting…":p.state==="reconnecting"?"Reconnecting…":p.state==="error"?(p.error||"Can't connect"):"Radio off";
-  const lineClass=p.state==="transmitting"?"tx":p.onAir?.name?"rx":p.connected?"on":p.state==="error"?"err":"";
-  const step=(list,cur,dir)=>{if(!list.length)return null;const at=list.findIndex(x=>x.id===cur);return list[((at<0?0:at)+dir+list.length)%list.length]};
+  useScreenAwake(connected||state==="connecting"||state==="reconnecting");
+  // An incoming call shows on the home screen, where Answer and Decline are.
+  useEffect(()=>{if(incoming)setScreen("home")},[incoming?.id]);
+  const zone=zones.find(z=>z.id===zoneId),chan=visibleChannels.find(c=>c.id===channelId),last=lastHeard[0];
+  const tx=state==="transmitting",rx=!tx&&!!onAir?.name;
+  const tone=tx?"tx":rx?"rx":incoming||call?"call":connected?"listen":state==="error"?"warn":state==="connecting"||state==="reconnecting"?"warn":"idle";
+  const activity=tx?"Transmitting":rx?"Receiving · "+onAir.name
+    :connected?(scanning?(scanActive?"Scan · "+scanActive:"Scanning"):"Listening · "+participants.length+" on channel")
+    :state==="connecting"?"Connecting…":state==="reconnecting"?"Reconnecting…":state==="error"?(error||"Can't connect"):"Radio off · press power";
+  const bars=connected?4:state==="reconnecting"||state==="connecting"?1:0;
+  const go=s=>setScreen(s);
+  const list=(title,items)=><div className="n7-list"><button type="button" className="n7-back" onClick={()=>go("home")}><ChevronLeft size={20}/>{title}</button><div className="n7-items">{items}</div></div>;
 
-  return <div className="phone-shell">
-    <header className="phone-top">
-      <div className="brand"><div className="brand-mark small"><Radio size={18}/></div><div><strong>Repeater Nation</strong><span>RADIO</span></div></div>
-      <button type="button" className={"phone-power"+(p.connected?" on":p.state==="connecting"||p.state==="reconnecting"?" busy":"")} onClick={p.onPower} aria-label={p.connected?"Turn radio off":"Turn radio on"}><Power size={22}/></button>
-    </header>
-    {notice&&<div className="phone-flash">{notice}</div>}
-    <main className="phone-main">
-      {tab==="radio"&&<>
-        <section className="phone-card phone-tuner">
-          <div className="phone-row">
-            <button type="button" className="phone-step" aria-label="Previous zone" onClick={()=>{const z=step(p.zones,p.zoneId,-1);if(z)p.onZone(z.id)}}><ChevronLeft/></button>
-            <select aria-label="Zone" value={p.zoneId} onChange={e=>p.onZone(e.target.value)} disabled={!p.zones.length}>{p.zones.map(z=><option key={z.id} value={z.id}>{zoneLabel(z.name)}</option>)}</select>
-            <button type="button" className="phone-step" aria-label="Next zone" onClick={()=>{const z=step(p.zones,p.zoneId,1);if(z)p.onZone(z.id)}}><ChevronRight/></button>
-          </div>
-          <div className="phone-row big">
-            <button type="button" className="phone-step" aria-label="Previous channel" onClick={()=>{const c=step(p.visibleChannels,p.channelId,-1);if(c)p.onChannel(c.id)}}><ChevronLeft/></button>
-            <select aria-label="Channel" value={p.channelId} onChange={e=>p.onChannel(e.target.value)} disabled={!p.visibleChannels.length}>
-              {!p.visibleChannels.length&&<option value={p.channelId}>{p.channelName||"Loading channels…"}</option>}
-              {p.visibleChannels.map(c=><option key={c.id} value={c.id}>{chanLabel(c.number,c.name)}</option>)}
-            </select>
-            <button type="button" className="phone-step" aria-label="Next channel" onClick={()=>{const c=step(p.visibleChannels,p.channelId,1);if(c)p.onChannel(c.id)}}><ChevronRight/></button>
-          </div>
-          <div className={"phone-line "+lineClass}>{line}</div>
-          {p.connectNote&&!p.connected&&<div className="phone-note">{p.connectNote}</div>}
-          <div className="phone-meta"><span>{zoneLabel(zone?.name||"")}</span><span>{p.connected?(others.length+" on channel"):"Off the air"}</span></div>
-        </section>
-        <PttButton ptt={p.ptt} connected={p.connected} state={p.state} onDown={p.onDown} onUp={p.onUp}/>
-        <section className="phone-controls">
-          <button type="button" onClick={p.onMute} className={p.muted?"on":""} aria-label={p.muted?"Unmute":"Mute"}>{p.muted?<VolumeX size={20}/>:<Volume2 size={20}/>}<small>{p.muted?"Muted":"Sound"}</small></button>
-          <button type="button" onClick={()=>p.onVolume(-1)} aria-label="Volume down"><Minus size={20}/><small>Vol</small></button>
-          <div className="phone-vol"><strong>{p.volume}</strong><small>Volume</small></div>
-          <button type="button" onClick={()=>p.onVolume(1)} aria-label="Volume up"><Plus size={20}/><small>Vol</small></button>
-          <button type="button" onClick={p.onScan||undefined} disabled={!p.onScan} className={p.scanning?"on":""} aria-label="Scan"><ScanLine size={20}/><small>Scan</small></button>
-        </section>
-        <section className="phone-card">
-          <div className="phone-title"><RefreshCw size={16}/> Last heard</div>
-          {p.lastHeard.length?p.lastHeard.slice(0,8).map(x=><div className="phone-item" key={x.id}><div><strong>{x.name}</strong><span>{new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})} · {Math.max(1,Math.round(x.ms/1000))} s</span></div><button type="button" onClick={()=>p.onReplay(x.id)} disabled={!x.url}>Replay</button></div>)
-            :<div className="phone-empty">Transmissions you hear show up here.</div>}
-        </section>
+  let body;
+  if(screen==="zones")body=list("Zone",zones.length?zones.map(z=><button type="button" key={z.id} className={"n7-item"+(z.id===zoneId?" on":"")} onClick={()=>{p.onZone(z.id);go("home")}}>{zoneLabel(z.name)}</button>):<div className="n7-dim">No zones yet</div>);
+  else if(screen==="channels")body=list(zoneLabel(zone?.name||""),visibleChannels.length?visibleChannels.map(c=><button type="button" key={c.id} className={"n7-item"+(c.id===channelId?" on":"")} onClick={()=>{p.onChannel(c.id);go("home")}}><small>{c.number}</small>{c.name}</button>):<div className="n7-dim">No channels yet</div>);
+  else if(screen==="who")body=list("Who's On",participants.length?participants.map(m=>{const st=m?.attributes?.status||"",talking=onAir?.identity===m.identity;return <div className="n7-item" key={m.identity}><UserRound size={18}/><span className="n7-grow">{memberName(m)}{talking&&<small className="n7-talk">Talking</small>}</span>{st&&<em className={"status-chip "+statusClass(st)}>{st}</em>}</div>}):<div className="n7-dim">{connected?"Nobody else on this channel":"Turn the radio on to see who's on"}</div>);
+  else if(screen==="recent")body=list("Recent",lastHeard.length?lastHeard.slice(0,12).map(x=><button type="button" className="n7-item" key={x.id} onClick={()=>p.onReplay(x.id)} disabled={!x.url}><span className="n7-grow">{x.name}</span><small>{hhmm(x.at)} · {secs(x.ms)}</small></button>):<div className="n7-dim">Nothing heard yet</div>);
+  else if(screen==="status")body=list("My Status",STATUSES.map(s=><button type="button" key={s} className={"n7-item "+(s===myStatus?"on ":"")+statusClass(s)} onClick={()=>{p.onStatus(s===myStatus?"":s);go("home")}}>{s}</button>));
+  else if(screen==="contacts")body=list("Contacts",<>
+    {call&&!incoming&&<div className="n7-item n7-callrow"><span className="n7-grow"><b>{callState==="calling"?"Calling…":callState==="reconnecting"?"Reconnecting…":"Call connected"}</b><small>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</small></span><button type="button" className="n7-pill stop" onClick={p.onEndCall}><PhoneOff size={16}/>End</button></div>}
+    {onlineUsers.length?onlineUsers.map(u=><div className="n7-item" key={u.userId}><UserRound size={18}/><span className="n7-grow">{u.callsign||u.displayName}<small>{u.channelId?"On radio":"Available"}</small></span><button type="button" className="n7-pill" onClick={()=>p.onCall(u)} disabled={callState!=="idle"}><PhoneCall size={16}/>Call</button></div>):<div className="n7-dim">No other members are online right now</div>}
+    {p.callError&&<div className="n7-dim err">{p.callError}</div>}
+  </>);
+  else if(screen==="more")body=list("More",<>
+    <button type="button" className="n7-item" onClick={()=>go("who")}><Users size={18}/>Who's On ({participants.length})</button>
+    <button type="button" className="n7-item" onClick={()=>go("recent")}><RefreshCw size={18}/>Recent</button>
+    <button type="button" className="n7-item" onClick={()=>go("status")}><UserRound size={18}/>My Status</button>
+    <button type="button" className="n7-item" onClick={()=>{p.onPower();go("home")}}><Power size={18}/>{connected||state==="connecting"||state==="reconnecting"?"Radio off":"Radio on"}</button>
+    <button type="button" className="n7-item" onClick={()=>go("settings")}><ListChecks size={18}/>Setup</button>
+    <button type="button" className="n7-item" onClick={p.onSignOut}><LogOut size={18}/>Sign out / switch account</button>
+    <div className="n7-dim">Build v{String(__APP_VERSION__)}</div>
+  </>);
+  else if(screen==="settings")body=<div className="n7-list"><button type="button" className="n7-back" onClick={()=>go("more")}><ChevronLeft size={20}/>Setup</button><div className="n7-setup">{p.settingsPanel}</div></div>;
+  else body=<>
+    <div className="n7-card n7-head"><span className="n7-name">{displayName||callsign||"Member"}</span><button type="button" className="n7-profile" onClick={()=>go("status")} aria-label="My status"><UserRound size={18} strokeWidth={2.6}/></button></div>
+    <div className="n7-card n7-zonecard">
+      <i className={"n7-strip "+tone}/>
+      <div className="n7-icons">
+        <span className="n7-bars" title={connected?"Signal":"No signal"}>{[1,2,3,4].map(n=><i key={n} className={n<=bars?"on":""}/>)}</span>
+        {muted?<VolumeX size={14} strokeWidth={3}/>:<Volume2 size={14} strokeWidth={3}/>}
+        <b className={scanning?"":"off"}>Z</b><b className={connected?"":"off"}>{tx?"TX":"H"}</b>
+        <Users size={14} strokeWidth={3}/><b>{participants.length}</b>
+      </div>
+      <button type="button" className="n7-zone" onClick={()=>go("zones")}>{zoneLabel(zone?.name||"")}</button>
+      <button type="button" className="n7-chan" onClick={()=>go("channels")}><ChanLine number={chan?.number} name={channelName}/></button>
+      <span className={"n7-activity "+tone}>{activity}</span>
+      {connectNote&&!connected&&<span className="n7-activity warn">{connectNote}</span>}
+      <div className="n7-side">
+        <button type="button" className={"n7-ico n7-scan"+(scanning?" on":"")} onClick={p.onScan||undefined} disabled={!p.onScan} aria-label="Scan"><svg viewBox="0 0 12 12"><rect x="1" y="2" width="10" height="3" rx="1.5"/><rect x="1" y="7" width="10" height="3" rx="1.5"/><circle cx={scanning?8.6:3.4} cy="3.5" r="2.2"/><circle cx={scanning?3.4:8.6} cy="8.5" r="2.2"/></svg></button>
+        <button type="button" className="n7-ico" onClick={()=>last&&p.onReplay(last.id)} disabled={!last?.url} aria-label="Replay last"><svg viewBox="0 0 12 12"><rect x="1" y="3" width="10" height="8" rx="1.6"/><path d="M4 2.6 5.2 1h1.6L8 2.6"/><path d="M3.6 7.4a2.4 2.4 0 1 0 1-2" fill="none" strokeWidth="1.1"/><path d="M3 4.2v1.8h1.8" fill="none" strokeWidth="1.1"/></svg></button>
+      </div>
+    </div>
+    <div className="n7-card n7-tabs">
+      <button type="button" onClick={()=>go("zones")}><svg viewBox="0 0 14 11"><path d="M0 1.2Q0 0 1.2 0h3.6l1.4 1.6h6.6Q14 1.6 14 2.8v7Q14 11 12.8 11H1.2Q0 11 0 9.8Z"/></svg>Zone</button>
+      <button type="button" onClick={()=>go("contacts")}><svg viewBox="0 0 16 11"><circle cx="5" cy="2.6" r="2.4"/><circle cx="11" cy="2.6" r="2.4"/><path d="M0 11V8.2Q0 5.8 2.6 5.8h4.8Q10 5.8 10 8.2V11Z"/><path d="M8.6 5.8h4.8Q16 5.8 16 8.2V11h-5.2"/></svg>Contacts</button>
+      <button type="button" onClick={()=>go("more")}><svg className="dots" viewBox="0 0 14 4"><circle cx="2" cy="2" r="1.7"/><circle cx="7" cy="2" r="1.7"/><circle cx="12" cy="2" r="1.7"/></svg>More</button>
+    </div>
+    <div className="n7-card n7-msg">
+      {incoming?<>
+        <div className="n7-msg-top"><span className="n7-msg-name call">Call from {incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><span className="n7-msg-text">Incoming private call</span></div>
+        <div className="n7-msg-btns"><button type="button" className="go" onClick={p.onAnswer}><PhoneCall size={18}/>Answer</button><button type="button" className="stop" onClick={p.onDecline}><PhoneOff size={18}/>Decline</button></div>
+      </>:call?<>
+        <div className="n7-msg-top"><span className="n7-msg-name call">{callState==="calling"?"Calling…":callState==="reconnecting"?"Reconnecting…":"Call connected"}</span><span className="n7-msg-text">{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span></div>
+        <div className="n7-msg-btns"><button type="button" className="stop" onClick={p.onEndCall}><PhoneOff size={18}/>End Call</button></div>
+      </>:<>
+        <div className="n7-msg-top check"><i className={"n7-check"+(last?"":" off")}/><span className="n7-msg-name">{last?last.name:"No recent traffic"}</span><span className="n7-msg-text">{last?`Heard ${hhmm(last.at)} · ${secs(last.ms)}`:"Transmissions you hear show up here"}</span></div>
+        <div className="n7-msg-btns">
+          <button type="button" onClick={()=>last&&p.onReplay(last.id)} disabled={!last?.url}><svg viewBox="0 0 12 10"><rect x=".5" y=".5" width="11" height="7.6" rx="1.2"/><path d="M2.5 10V7.6h2.4"/><path d="M3 4.4h3.6M3 2.6h5.6" stroke="#fff" strokeWidth=".9"/><circle cx="9.4" cy="6" r="2.2" stroke="#fff" strokeWidth=".6"/></svg>Replay</button>
+          <button type="button" onClick={()=>go("recent")}><svg viewBox="0 0 12 10"><path d="M.5 1.5Q.5.5 1.5.5h9q1 0 1 1v5.6q0 1-1 1H4L1.8 10V8.1H1.5q-1 0-1-1Z"/><path d="M3 2.8h6M3 4.6h6" stroke="#fff" strokeWidth=".9"/></svg>All Recent</button>
+        </div>
       </>}
-      {tab==="members"&&<>
-        <section className="phone-card">
-          <div className="phone-title"><Users size={16}/> Who's on {p.channelName}</div>
-          {others.length?others.map(m=>{const st=m?.attributes?.status||"";const talking=p.onAir?.identity===m.identity;return <div className="phone-item" key={m.identity}><div><strong>{memberName(m)}</strong><span className={talking?"talking":""}>{talking?"Transmitting":memberInfo(m).displayName||"Connected"}</span></div>{st&&<em className={"status-chip "+statusClass(st)}>{st}</em>}</div>})
-            :<div className="phone-empty">{p.connected?"Nobody else is on this channel right now.":"Turn the radio on to see who's on."}</div>}
-        </section>
-        <section className="phone-card"><div className="phone-title">My status</div>{p.statusPanel}</section>
-      </>}
-      {tab==="calls"&&<section className="phone-card">
-        <div className="phone-title"><Phone size={16}/> Calls</div>
-        {p.incoming&&<div className="phone-call"><strong>Incoming call</strong><span>{p.incoming.caller_display_name||p.incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={p.onAnswer}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={p.onDecline}><PhoneOff size={16}/> Decline</button></div></div>}
-        {p.call&&!p.incoming&&<div className="phone-call"><strong>{p.callState==="calling"?"Calling…":p.callState==="reconnecting"?"Call reconnecting…":"Call connected"}</strong><span>{p.call.recipient_display_name||p.call.recipient_callsign||p.call.caller_display_name||"Member"}</span><div><button className="danger" onClick={p.onEndCall}><PhoneOff size={16}/> End call</button></div></div>}
-        {p.onlineUsers.length?p.onlineUsers.map(u=><div className="phone-item" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button type="button" className="primary" onClick={()=>p.onCall(u)} disabled={p.callState!=="idle"}><PhoneCall size={15}/> Call</button></div>)
-          :<div className="phone-empty">No other members are online right now.</div>}
-        {p.callError&&<div className="error">{p.callError}</div>}
-      </section>}
-      {tab==="settings"&&<section className="phone-card phone-settings">
-        <div className="phone-title"><Settings size={16}/> Settings</div>
-        <div className="phone-account"><strong>{p.displayName}</strong><span>{p.callsign||""}</span></div>
-        {p.settingsPanel}
-        <div className="phone-version">Build v{String(__APP_VERSION__)}</div>
-        <button type="button" className="danger" onClick={p.onSignOut}><RefreshCw size={16}/> Sign out / switch account</button>
-      </section>}
-    </main>
-    <nav className="phone-tabs">{[["radio","Radio",Radio],["members","Who's On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=>
-      <button type="button" key={id} className={tab===id?"active":""} onClick={()=>setTab(id)}><Icon size={21}/><span>{label}</span>{id==="calls"&&p.incoming&&<i className="phone-dot"/>}</button>)}</nav>
+    </div>
+    <button type="button" className="n7-card n7-loc" onClick={()=>go("status")}>
+      <svg className="n7-pin" viewBox="0 0 10 14"><path d="M5 0a5 5 0 0 1 5 5c0 3.6-5 9-5 9S0 8.6 0 5a5 5 0 0 1 5-5Z"/><circle cx="5" cy="5" r="2" fill="#fff"/></svg>
+      <span className="n7-loc-text"><span className={myStatus?statusClass(myStatus):""}>{myStatus?"Status: "+myStatus:"No status set"}</span><span>{callsign||"No callsign"} · {participants.length} on channel</span></span>
+    </button>
+  </>;
+
+  return <div className="n7-shell">
+    <div className="n7-statusbar">
+      <span className="n7-brand">REPEATER NATION</span>
+      {tx?<em className="tx">TX</em>:rx?<em className="rx">RX</em>:null}
+      <span className="n7-batt"/><span className="n7-time">{clock(now)}</span>
+      <button type="button" className={"n7-power"+(connected?" on":state==="connecting"||state==="reconnecting"?" busy":"")} onClick={p.onPower} aria-label={connected?"Turn radio off":"Turn radio on"}><Power size={18}/></button>
+    </div>
+    {notice&&<div className="n7-flash">{notice}</div>}
+    <div className="n7-screen">{body}</div>
+    <div className="n7-keys">
+      <PttButton ptt={ptt} connected={connected} state={state} onDown={p.onDown} onUp={p.onUp}/>
+      <div className="n7-vol">
+        <button type="button" onClick={p.onMute} className={muted?"on":""} aria-label={muted?"Unmute":"Mute"}>{muted?<VolumeX size={20}/>:<Volume2 size={20}/>}</button>
+        <button type="button" onClick={()=>p.onVolume(-1)} aria-label="Volume down"><Minus size={20}/></button>
+        <span>Vol {volume}</span>
+        <button type="button" onClick={()=>p.onVolume(1)} aria-label="Volume up"><Plus size={20}/></button>
+      </div>
+    </div>
   </div>;
 }

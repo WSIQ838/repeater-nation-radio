@@ -29,12 +29,20 @@ jobs:
       - name: Setup Rust for Android
         run: rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
 
+      - name: Find the Android NDK
+        run: |
+          NDK="${ANDROID_NDK_LATEST_HOME:-}"
+          if [ -z "$NDK" ] || [ ! -d "$NDK" ]; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" >/dev/null
+            NDK="$ANDROID_HOME/ndk/27.2.12479018"
+          fi
+          echo "Using NDK at $NDK"
+          echo "NDK_HOME=$NDK" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: npm install
 
       - name: Create the Android project
-        env:
-          NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
         run: |
           npx tauri android init --ci
           # The radio needs the microphone (PTT) and to change audio routing.
@@ -46,8 +54,6 @@ jobs:
         run: npx tauri icon src-tauri/icons/icon.svg
 
       - name: Build the APK
-        env:
-          NDK_HOME: ${{ env.ANDROID_NDK_LATEST_HOME }}
         run: npx tauri android build --apk --target aarch64 armv7 x86_64 --ci
 
       - name: Sign the APK

@@ -752,7 +752,7 @@ function RadioApp({session,onSignOut}){
     onPower={togglePower} onZone={selectZone} onChannel={selectChannel} onDown={down} onUp={up} onMute={()=>setMuted(!muted)} onVolume={changeVolume} onScan={connected?toggleScan:null}
     incoming={incoming} call={call} callState={callState} callError={callError} onlineUsers={onlineUsers} onCall={startCall} onAnswer={accept} onDecline={decline} onEndCall={endCall}
     displayName={displayName} callsign={callsign} onSignOut={logout}
-    statusPanel={<StatusButtons status={myStatus} onStatus={chooseStatus} shared={statusShared} connected={connected}/>}
+    myStatus={myStatus} onStatus={chooseStatus}
     settingsPanel={<>
       <div className="setting"><span>Microphone</span><div className="prog-fields"><label><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">Phone default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label></div></div>
       <div className="setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div>

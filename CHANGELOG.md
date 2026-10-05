@@ -2,9 +2,10 @@
 
 ## 0.2.51 — Android app (first test version)
 
-**The radio now builds as an Android app**, after Sean asked for a phone version for Android and iPhone and said it doesn't have to look like the radios.
+**The radio now builds as an Android app**, after Sean asked for a phone version for Android and iPhone and said it could look like the screen of the touch handheld.
 
-- Phones get a simple screen instead of the radio faces: zone and channel pickers with arrows, a status line (Radio off, Listening, Receiving · name, Transmitting), one big push-to-talk button, sound, volume and scan buttons, and Last heard with replay. Tabs at the bottom open Who's On (with your status buttons), Calls and Settings (microphone, scan list, radio features, sign out).
+- Phones show the touch handheld's (APX N70) screen at full size instead of a radio face: your name and status button, the zone and channel card (signal, scan, replay, and what's happening now), the Zone / Contacts / More keys, last heard with Replay and All Recent, and your status. Tapping the zone or channel opens a list to pick from. Contacts lists members to call, and More has Who's On, Recent, My Status, radio on/off, Setup (microphone, scan list, radio features) and sign out.
+- Below the screen sits a big PTT key (hold to talk, it turns red while you transmit) and mute and volume keys. The power button is at the top right.
 - Same sign-in (email or Google), channels, PTT, calls and voice server as the desktop app. The power button at the top turns the radio on and off. The screen stays on while the radio is on.
 - A new GitHub build makes a signed Android APK on every change to `main` and adds it to the `radio-vX.Y.Z` release next to the Windows, Linux and Mac downloads. Each APK installs over the last one.
 - Hardware PTT keys, game controllers, the Bluetooth button and the tray icon stay desktop-only for now.
