@@ -57,6 +57,11 @@
         "installMode": "currentUser",
         "displayLanguageSelector": false
       }
+    },
+    "iOS": {
+      "frameworks": [
+        "CoreBluetooth"
+      ]
     }
   }
 }
