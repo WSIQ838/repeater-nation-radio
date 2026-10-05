@@ -10,7 +10,7 @@ import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 import {SCAN_MAX,useScan} from "./hooks/useScan";
 import {canShareStatus,prewarmRadio,shareStatus} from "./lib/livekit";
-import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
+import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning,setMicButtons} from "./lib/ptt";
 import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
@@ -342,6 +342,7 @@ const writePref=(key,value)=>{try{localStorage.setItem(key,value)}catch{}};
 const SIDE_VK={ShiftLeft:0xA0,ShiftRight:0xA1,ControlLeft:0xA2,ControlRight:0xA3,AltLeft:0xA4,AltRight:0xA5};
 // Number-pad digits count as Num 0–9 whether Num Lock is on or off.
 const keyVk=e=>{const pad=/^Numpad(\d)$/.exec(e.code||"");return pad?0x60+Number(pad[1]):SIDE_VK[e.code]??e.keyCode};
+const MIC_PTT={MediaFastForward:true,MediaRewind:false};// speaker-mic PTT down / up (see micPtt)
 const MEDIA_LABEL={AudioVolumeMute:"Mute key",AudioVolumeDown:"Volume Down key",AudioVolumeUp:"Volume Up key",MediaTrackNext:"Next Track key",MediaTrackPrevious:"Previous Track key",MediaStop:"Stop key",MediaPlayPause:"Play/Pause key",BrowserBack:"Browser Back",BrowserForward:"Browser Forward"};
 const keyLabel=e=>MEDIA_LABEL[e.code]||(e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,""));
 
@@ -351,7 +352,7 @@ const GROUPS=[...new Set(ACTIONS.map(a=>a.group))];
 
 function KeyMap({keymap,caps,learnFor,notice,onLearn,onRemove,onToggleGlobal,onReset}){
   return <div className="keymap">
-    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused. Keyboard keys start as “App only” so typing elsewhere doesn't key the radio; click “App only” on a key to make it work anywhere.</p>
+    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused. Keyboard keys start as “App only” so typing elsewhere doesn't key the radio; click “App only” on a key to make it work anywhere. Bluetooth speaker mics made for Zello (Abbree and similar) key up on their own once paired with this computer: there's nothing to add.</p>
     {notice&&<div className="keymap-notice">{notice}</div>}
     {GROUPS.map(g=><div key={g} className="keymap-group"><h4>{g}</h4>
       {ACTIONS.filter(a=>a.group===g).map(a=>{
@@ -641,6 +642,19 @@ function RadioApp({session,onSignOut}){
     runRef.current(action);
   };
   const handleRef=useRef(handleAction);handleRef.current=handleAction;
+  // Bluetooth speaker-mics made for Zello (Abbree / KST_vHMIC010 and similar) send PTT as
+  // Fast Forward on press and Rewind on release. Windows hands those to the app's media
+  // controls (media_buttons.rs, arriving as a hook action); other systems give them to
+  // the page as media keys or media-session seek actions. Always PTT, nothing to learn.
+  const micDownRef=useRef(false);
+  const micPtt=pressed=>{if(micDownRef.current===pressed||(pressed&&learnForRef.current))return;micDownRef.current=pressed;handleRef.current({action:"ptt",pressed,global:true},"mic")};
+  const micPttRef=useRef(micPtt);micPttRef.current=micPtt;
+  useEffect(()=>{
+    const ms=navigator.mediaSession;if(!ms?.setActionHandler)return;
+    const set=(a,f)=>{try{ms.setActionHandler(a,f)}catch{}};
+    set("seekforward",()=>micPttRef.current(true));set("seekbackward",()=>micPttRef.current(false));
+    return()=>{set("seekforward",null);set("seekbackward",null)};
+  },[]);
   // A paired Bluetooth button reconnects at startup, whichever tab is open.
   const [bleStatus,setBleStatus]=useState(null);
   useEffect(()=>{const off=listenBle(setBleStatus);const saved=loadBleDevice();if(saved)bleConnect(saved);return off},[]);
@@ -668,6 +682,7 @@ function RadioApp({session,onSignOut}){
     const typing=e=>/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||"")||!!e.target?.isContentEditable;
     const held=new Map();// key → actions its press fired, so the release reaches the same ones
     const keyDown=e=>{
+      if(e.code in MIC_PTT){e.preventDefault();if(!e.repeat)micPttRef.current(MIC_PTT[e.code]);return}
       if(learnFor){
         // Keep Space/Enter from also pressing the focused button while a button is learned.
         e.preventDefault();
@@ -690,6 +705,7 @@ function RadioApp({session,onSignOut}){
       hits.forEach(b=>handleAction({action:b.action,pressed:true,global:true}));
     };
     const keyUp=e=>{
+      if(e.code in MIC_PTT){e.preventDefault();return}
       if(learnFor){e.preventDefault();return}
       const hits=held.get(e.code);if(!hits)return;
       held.delete(e.code);e.preventDefault();
@@ -712,6 +728,8 @@ function RadioApp({session,onSignOut}){
     if(readPref("rn-mic")===null){const d=pick("audioinput");if(d)setMicDeviceId(d.deviceId)}
     if(readPref("rn-speaker")===null){const d=pick("audiooutput");if(d)setSpeakerId(d.deviceId)}
   },[devices]);
+  const speakerMic=devices.some(d=>d.kind==="audioinput"&&HAND_MIC.test(d.label||""));
+  useEffect(()=>{setMicButtons(speakerMic)},[speakerMic]);
   const pttBindings=(keymap||[]).filter(b=>b.action==="ptt"),pttName=pttBindings.map(b=>b.label||b.code).join(" / ");
   const keymapProps={keymap:keymap||[],caps:hwCaps,learnFor,notice:mapNotice,onLearn:learn,onRemove:i=>updateKeymap(keymap.filter((_,k)=>k!==i)),onToggleGlobal:i=>updateKeymap(keymap.map((b,k)=>k===i?{...b,global:!b.global}:b)),onReset:()=>{updateKeymap(defaultBindings(!!hwCaps?.global_keys));setMapNotice("Button mapping reset to defaults.")}};
 

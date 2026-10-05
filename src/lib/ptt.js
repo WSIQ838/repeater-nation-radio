@@ -11,6 +11,11 @@ export async function setHardwareBindings(bindings){
   if(!inTauri())return;
   try{const [{invoke}]=await api();await invoke("hw_set_bindings",{bindings:bindings.filter(b=>b.kind!=="webkey")})}catch{}
 }
+// Windows: hold the media session that receives a speaker-mic's PTT (media_buttons.rs).
+export async function setMicButtons(on){
+  if(!inTauri())return;
+  try{const [{invoke}]=await api();await invoke("hw_mic_buttons",{on})}catch{}
+}
 export async function setLearning(on){
   if(!inTauri())return;
   try{const [{invoke}]=await api();await invoke("hw_learn",{on})}catch{}

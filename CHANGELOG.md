@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.57 — Abbree Bluetooth mics key up with nothing to set up
+
+**Abbree Bluetooth speaker mics (they show up as KST_vHMIC010) and similar mics made for Zello now work as push to talk on their own**, after Sean asked how to make his Abbree's PTT work in the app.
+
+- These mics don't send their PTT as a key, so the button mapping could never learn it. They pair as a headset and send a headset's Fast Forward when the button goes down and Rewind when it comes up.
+- On Windows those commands only reach the app that holds the system media controls, so the app now holds them, but only while a speaker mic is paired. A keyboard's Play/Pause still goes to music apps the rest of the time. On Mac and Linux the app reads the same commands as media keys or media-session seek actions.
+- Pressing the mic's PTT while a button is being learned does nothing. Settings › Buttons and PTT now says these mics need nothing added.
+- Version set to 0.2.57 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.56 — The app only watches the keyboard when a button needs it
 
 **The radio no longer hooks the Windows keyboard and mouse unless a mapped button needs it**, after Sean reported the desktop app coming up as a virus.
