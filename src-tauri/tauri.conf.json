@@ -62,6 +62,9 @@
       "frameworks": [
         "CoreBluetooth"
       ]
+    },
+    "android": {
+      "minSdkVersion": 26
     }
   }
 }
