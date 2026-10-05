@@ -87,8 +87,9 @@ jobs:
         run: |
           TAG="ios-test"
           gh release view "$TAG" >/dev/null 2>&1 || \
-            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "iPhone test build" \
-              --notes "Test build of the Repeater Nation Radio iPhone app. It needs an Apple developer account to be signed before it can go on a phone."
+            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "iPhone test build" --notes-file docs/ios-install.md
+          # Keep the install steps on the page up to date.
+          gh release edit "$TAG" --notes-file docs/ios-install.md
           for old in $(gh release view "$TAG" --json assets -q '.assets[].name'); do
             gh release delete-asset "$TAG" "$old" -y
           done
