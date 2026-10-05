@@ -2,7 +2,7 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import {zoneLabel} from "./lib/labels";
 import {Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
-import {loginWithPassword,loginWithGoogle,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
+import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
 import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
@@ -794,7 +794,7 @@ function RadioApp({session,onSignOut}){
 
 export default function App(){
   const [session,setSession]=useState(null),[signOutNote,setSignOutNote]=useState("");
-  const [authChecking,setAuthChecking]=useState(true);
+  const [authChecking,setAuthChecking]=useState(true),[authOffline,setAuthOffline]=useState(false);
   useEffect(()=>{
     const handler=e=>setSession(e.detail);
     window.addEventListener("rn-radio-session",handler);
@@ -822,8 +822,19 @@ export default function App(){
         }
       }catch{}
       const restored=await restoreSessionFromOAuth();
-      if(restored) setSession(restored);
-      setAuthChecking(false);
+      if(restored){setSession(restored);setAuthChecking(false);return}
+      // Use the sign-in saved on this device. If Repeater Nation can't be reached yet
+      // (no internet at startup), keep the saved sign-in and try again instead of
+      // showing the login screen.
+      for(let attempt=0;!disposed;attempt++){
+        const saved=await restoreSession();
+        if(disposed)return;
+        if(saved?.member){setSession(saved);break}
+        if(!saved?.offline)break;
+        setAuthOffline(true);
+        await new Promise(r=>setTimeout(r,Math.min(15000,2000*(attempt+1))));
+      }
+      if(!disposed){setAuthOffline(false);setAuthChecking(false)}
     })();
     return()=>{
       disposed=true;
@@ -831,6 +842,6 @@ export default function App(){
       if(unlisten) unlisten();
     };
   },[]);
-  if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">Checking your sign-in…</p></main>;
+  if(authChecking)return <main className="login-shell"><div className="brand-mark"><Radio size={30}/></div><h1>Repeater Nation Radio</h1><p className="muted">{authOffline?"Can't reach Repeater Nation yet. Trying again…":"Checking your sign-in…"}</p>{authOffline&&<button type="button" className="primary" onClick={()=>{setAuthOffline(false);setAuthChecking(false)}}>Sign in again</button>}</main>;
   return session?<RadioApp session={session} onSignOut={note=>{setSignOutNote(note||"");setSession(null)}}/>:<Login notice={signOutNote}/>;
 }

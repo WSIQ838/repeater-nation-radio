@@ -1,5 +1,13 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.53 — Stay signed in
+
+- The app now remembers your sign-in. Opening it again (on Windows, Mac, Linux, Android or iPhone) goes straight to the radio instead of the login screen, until you press Sign out or Repeater Nation ends the sign-in.
+- Before, the sign-in was saved on the device after logging in, but the app never looked for it when it started, so everyone had to log in every time.
+- If there's no internet when the app opens, it keeps the saved sign-in and shows "Can't reach Repeater Nation yet. Trying again…" with a "Sign in again" button, instead of throwing you back to the login screen.
+- If Repeater Nation refuses the saved sign-in (it expired or was signed out elsewhere), the app forgets it and shows the login screen.
+- Version set to 0.2.53 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` (0.2.51 and 0.2.52 are taken by the open antivirus and phone app changes).
+
 ## 0.2.50 — Linux and Mac downloads on the GitHub release
 
 **Every release on GitHub now carries the Linux and Mac installers next to the Windows ones**, after Sean asked for Linux and Mac on GitHub.
