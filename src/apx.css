@@ -1099,3 +1099,28 @@ button.fal-key:active{transform:translateY(1px);box-shadow:0 0 0 1.4px #131410,i
 .chan-line{display:block;width:100%}
 .chan-line .chn{font-size:.82em;letter-spacing:0}
 .apx-main .apx-channel{align-self:stretch}
+/* Settings › Plugins and the panels plugins add under the radio */
+.plugins{display:flex;flex-direction:column;gap:10px;flex:1;max-width:520px;font-size:13px;color:#d8dde3}
+.plugins p{margin:0;font-size:12px;line-height:1.5}
+.plugin-add{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.plugins .primary{padding:7px 12px;font-size:12px}
+.plugins select{background:#0b0f14;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 6px}
+.plugins button:not(.primary):not(.danger){background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer}
+.plugins .danger{padding:5px 9px;font-size:12px}
+.plugin-review{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid #f28a25;border-radius:9px;background:#14110c}
+.plugin-review small,.plugin-head small{color:#7e8995}
+.plugin-actions{display:flex;align-items:center;gap:8px}
+.plugin-note{font-size:12px;color:#e4b98c}
+.plugin-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.plugin-list>li{padding:10px 12px;border:1px solid #2a3139;border-radius:9px;background:#0c1116;display:flex;flex-direction:column;gap:6px}
+.plugin-list>li.off{opacity:.65}
+.plugin-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.plugin-toggle{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
+.plugin-toggle input{accent-color:#f28a25}
+.plugin-perms small{color:#7e8995}
+.plugin-perms ul{margin:4px 0 0;padding-left:18px;font-size:12px;color:#aeb7c1}
+.plugin-panels{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.plugin-panel{min-height:0}
+.plugin-line{font-size:12px;color:#c6ced6;padding:6px 2px;border-bottom:1px solid #1a2027}
+.plugin-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.plugin-buttons button{background:#1b232c;color:#dce3ea;border:1px solid #2a3139;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer}
