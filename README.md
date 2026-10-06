@@ -15,6 +15,10 @@ Standalone desktop radio client for Repeater Nation.
 - Uses the same verified-callsign transmit authorization as the website.
 - Does not create a second member/account system.
 
+## Plugins
+
+Anyone can write a plugin (one `.js` file) and install it from Settings › Plugins. See [docs/plugins.md](docs/plugins.md) and the examples in `plugins/examples`.
+
 ## Development
 
 ```bash

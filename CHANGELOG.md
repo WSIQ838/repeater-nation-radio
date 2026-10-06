@@ -1,5 +1,17 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.59 — Plugins
+
+**People can now make plugins for the radio, and anyone can install them from Settings › Plugins**, after Sean asked whether people could make plugins.
+
+- A plugin is one small file. Settings › Plugins › Install plugin from file… shows what the plugin wants to do in plain words (for example "Play beeps and add roger beeps" or "See who is talking on the channel") and installs it only after you press Install. Each installed plugin has an On switch and a Remove button.
+- Plugins can: add roger beeps to Settings › Radio features and play beeps, show short messages on the radio's screen, add a small panel with buttons under the radio, react to channel changes, the radio turning on or off, your own transmissions, who is talking and incoming calls, and press channel, zone, volume, mute and scan for you. Each of these has to be asked for and agreed to when installing.
+- Plugins can never key up the radio, use the microphone, see the sign-in, read recordings or settings, or change anything else in the app. Each one runs walled off in its own invisible frame, and can't use the internet unless it asked to.
+- Two examples are built in under "Try an example…": **Roger beep pack** (three extra roger beeps) and **Net check-in counter** (a panel under the radio that counts who has checked in, for running a net). Their files are in `plugins/examples`.
+- How to write a plugin: `docs/plugins.md`.
+- Desktop app only for now (Windows, Mac, Linux); the phone apps don't run plugins yet.
+- Version set to 0.2.59 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml` (0.2.57 and 0.2.58 are taken by the open Abbree mic changes).
+
 ## 0.2.56 — The app only watches the keyboard when a button needs it
 
 **The radio no longer hooks the Windows keyboard and mouse unless a mapped button needs it**, after Sean reported the desktop app coming up as a virus.
