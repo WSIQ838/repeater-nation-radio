@@ -86,7 +86,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Add the iPhone files to the iPhone test release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/ios-app'
+        if: github.ref != 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,11 +1,12 @@
 # Repeater Nation Radio — Changelog
 
-## 0.2.58 — Abbree Bluetooth mics key up on the phone app too
+## 0.2.58 — Abbree Bluetooth mics key up on the phone apps too
 
-**On Android, an Abbree speaker mic (KST_vHMIC010) or a similar Zello mic now keys the radio with its PTT button**, after Sean asked for the mic to work on the phone as well as the desktop.
+**On Android and iPhone, an Abbree speaker mic (KST_vHMIC010) or a similar Zello mic now keys the radio with its PTT button**, after Sean asked for the mic to work on the phone as well as the desktop.
 
 - Android only hands the mic's Fast Forward (PTT down) and Rewind (PTT up) to the app on screen or to an app's media controls. The Android app now holds media controls and passes both to the radio. PTT works with the app open, and should also work with the screen off or another app open while the radio is playing audio. Not yet tested with the real mic.
-- On iPhone the app listens for the same presses through the page's media controls. That only reaches the app while it is playing radio audio and is untested with the real mic.
+- On iPhone the mic's presses arrive as seek forward / seek back remote commands, which the app now passes to the radio the same way (`src-tauri/ios/MicPtt.m`, copied in by `ios.yml`). iOS only sends them while the app is playing audio, such as while the radio is on. Untested with the real mic.
+- iPhone and Android test builds started by hand from a branch now go to the test releases.
 - Nothing to set up: pair the mic with the phone in Bluetooth settings and press PTT.
 - Version set to 0.2.58 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
