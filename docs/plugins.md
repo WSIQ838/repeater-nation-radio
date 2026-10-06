@@ -2,8 +2,21 @@
 
 A plugin is **one `.js` file**. People install it in the desktop app from
 **Settings › Plugins › Install plugin from file…**, and can turn it off or remove it there.
-Two examples are in [`plugins/examples`](../plugins/examples) and can be tried from the
+Three examples are in [`plugins/examples`](../plugins/examples) and can be tried from the
 "Try an example…" list in the same place.
+
+## Your first plugin in 5 steps
+
+1. Copy [`plugins/examples/starter.js`](../plugins/examples/starter.js) and save it as `my-plugin.js`.
+   It shows every part of a plugin with notes beside each line.
+2. Open it in any text editor (Notepad works). Change `@id`, `@name` and `@author` at the top.
+3. Change what it does, using the `rn` list below. Delete what you don't need, and remove those
+   words from `@permissions`.
+4. In the radio app: **Settings › Plugins › Install plugin from file…**, pick your file, press
+   **Install**. Its panel shows under the radio on the Radio page.
+5. Changed the file? Install it again: the same `@id` replaces the old one.
+
+If something's wrong, Settings › Plugins shows "Plugin problem: …" under it with what went wrong.
 
 ## The header
 
