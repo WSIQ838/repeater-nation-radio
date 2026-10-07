@@ -98,6 +98,69 @@ html.phone .login-form,html.phone .google-login{width:100%}
 .n7-shell .n7-vol button.on{color:#f0a020}
 .n7-vol span{text-align:center;color:#c4c6c8;font:700 15px/1 Arial,sans-serif}
 .n7-flash{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 52px);transform:translateX(-50%);z-index:20;background:#0d0c0f;color:#fff;border-radius:20px;padding:8px 16px;font:700 14px/1 Arial,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4)}
-/* A desktop radio face picked under More › Radio, shrunk to fit above the PTT key. */
-.n7-facefit{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#15171a}
-.n7-faceinner{flex:none;width:max-content;transform-origin:center center}
+/* Phone-only looks picked under More › Radio (PhoneFaces.jsx). Each colours the PTT and volume keys too. */
+.pf{flex:1;display:flex;flex-direction:column;gap:12px;padding:12px 16px}
+.pf button{border:0;font:inherit;color:inherit;cursor:pointer;background:none}
+.pf button:disabled{opacity:.45}
+
+.n7-shell.face-lcd .n7-screen{background:#1a1b1d}
+.pf-badge{text-align:center;font:800 12px Arial;letter-spacing:3px;color:#8d9096}
+.pf-lcdscreen{background:linear-gradient(#f2b54a,#e09a26);border-radius:10px;padding:12px 16px;color:#3a2203;box-shadow:inset 0 0 0 4px #2a2a2c,inset 0 0 22px rgba(80,40,0,.35);font-family:"Courier New",monospace;display:flex;flex-direction:column;align-items:flex-start}
+.pf-lcd .pf-row{display:flex;justify-content:space-between;width:100%;font-weight:700;font-size:14px}
+.pf-lcd .pf-big{font:700 clamp(56px,19vw,84px)/1 "Courier New",monospace!important;letter-spacing:-2px;margin:6px 0 2px;text-align:left}
+.pf-lcd .pf-name{font:700 24px "Courier New",monospace!important;letter-spacing:1px;text-align:left;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-lcd .pf-act{font-weight:700;font-size:15px;margin-top:6px}
+.pf-soft{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pf-soft button{background:linear-gradient(#4a4c50,#2c2e31)!important;border-radius:10px;padding:14px 0;font:700 15px Arial!important;color:#e8e8e8!important;box-shadow:inset 0 2px 0 #6a6c70}
+.pf-soft button.on{color:#f2b54a!important}
+.pf-rock{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-rock button{background:#2a2c2f!important;border-radius:12px;padding:16px 0;font:700 18px Arial!important;color:#f2b54a!important;border:2px solid #3a3c40!important}
+.n7-shell.face-lcd .n7-keys{background:#1a1b1d}
+
+.n7-shell.face-glove .n7-screen,.n7-shell.face-glove .n7-keys,.n7-shell.face-glove .n7-statusbar{background:#000}
+.pf-glove .pf-ch{background:#111!important;border:3px solid #ffd400!important;border-radius:18px;padding:14px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.pf-glove .pf-ch small{font:700 17px Arial;color:#ffd400;letter-spacing:2px}
+.pf-glove .pf-ch strong{font:900 clamp(30px,10vw,44px)/1.1 Arial;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-glove .pf-ch span{font:700 17px Arial;color:#3ce06a}.pf-glove .pf-ch span.tx{color:#ff5a4f}.pf-glove .pf-ch span.idle,.pf-glove .pf-ch span.warn{color:#ffd400}
+.pf-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pf-pair button{background:#ffd400!important;color:#000!important;border-radius:18px;font:900 28px Arial!important;padding:22px 0}
+.pf-pair.alt button{background:#222!important;color:#ffd400!important;border:3px solid #ffd400!important;padding:18px 0}
+.pf-pair.alt button.on{background:#ffd400!important;color:#000!important}
+.n7-shell.face-glove .n7-ptt{height:clamp(150px,28vh,260px);background:radial-gradient(circle at 50% 35%,#ff5a4f,#c4161c);box-shadow:inset 0 -8px 0 rgba(0,0,0,.25);font-size:60px;border-radius:28px}
+.n7-shell.face-glove .n7-ptt small{color:#fff}
+.n7-shell.face-glove .n7-vol button{background:#222;box-shadow:none;border:2px solid #ffd400;color:#ffd400}
+.n7-shell.face-glove .n7-vol span{color:#ffd400}
+
+.n7-shell.face-night,.n7-shell.face-night .n7-screen,.n7-shell.face-night .n7-keys,.n7-shell.face-night .n7-statusbar{background:#050000;color:#ff3b30}
+.n7-shell.face-night .n7-brand,.n7-shell.face-night .n7-time{color:#ff3b30}.n7-shell.face-night .n7-batt,.n7-shell.face-night .n7-batt:before{background:#ff3b30}
+.n7-shell.face-night .n7-power{background:#1a0302;color:#ff3b30}
+.pf-night{color:#ff3b30;gap:14px;padding:16px 20px}
+.pf-night .pf-z{font:600 19px Arial!important;opacity:.75;text-align:left}
+.pf-night .pf-n{font:800 clamp(34px,12vw,50px)/1 Arial!important;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf-who{display:flex;justify-content:space-between;font:600 17px Arial}.pf-who.dim{opacity:.7}
+.pf-meter{display:flex;gap:4px;height:24px;align-items:flex-end}.pf-meter i{flex:1;background:#3a0806;border-radius:2px}.pf-meter i.on{background:#ff3b30}
+.pf-line{height:1px;background:#3a0a08}
+.pf-keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:auto}
+.pf-keys button{border:2px solid #5a0e0b!important;border-radius:12px;padding:14px 0;font:700 14px Arial!important;color:#ff3b30!important}
+.pf-keys button.on{background:#3a0806!important}
+.n7-shell.face-night .n7-ptt{background:#050000;border:3px solid #ff3b30;box-shadow:none;color:#ff3b30}
+.n7-shell.face-night .n7-ptt small{color:#ff3b30}
+.n7-shell.face-night .n7-ptt.tx{background:#3a0806}
+.n7-shell.face-night .n7-vol button{background:#050000;border:2px solid #5a0e0b;box-shadow:none;color:#ff3b30}
+.n7-shell.face-night .n7-vol span{color:#ff3b30}
+
+.n7-shell.face-scanner .n7-screen,.n7-shell.face-scanner .n7-keys{background:#0e1621}
+.pf-scan{gap:8px;padding:10px 14px;color:#e6edf5}
+.pf-scan .pf-h{font:700 14px Arial!important;color:#7d8ea3!important;letter-spacing:2px;margin:4px 4px 2px;text-align:left}
+.pf-list{display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto}
+.pf-r{display:flex;align-items:center;gap:12px;background:#152234!important;border-radius:14px;padding:12px 14px!important;text-align:left;flex:none}
+.pf-r.sel{outline:3px solid #2f8cff}.pf-r.live{background:#123a24!important}
+.pf-num{font:800 19px Arial;width:30px;color:#7d8ea3}
+.pf-g{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pf-g b{font:700 17px Arial;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pf-g small{font:13px Arial;color:#8fa2b8}
+.pf-bars{display:flex;gap:3px;align-items:flex-end;height:22px}.pf-bars i{width:5px;background:#2b3c52;border-radius:2px}.pf-bars i.on{background:#3ce06a}
+.pf-empty{color:#7d8ea3;text-align:center;padding:24px}
+.pf-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-foot button{background:#152234!important;border-radius:12px;padding:12px 0;font:700 15px Arial!important;color:#cfe0f5!important}
+.pf-foot button.on{background:#2f8cff!important;color:#fff!important}
+.n7-shell.face-scanner .n7-ptt{background:linear-gradient(#2f8cff,#1661c9);box-shadow:inset 0 3px 0 #6fb0ff}
+.n7-shell.face-scanner .n7-vol button{background:#152234;box-shadow:none;color:#cfe0f5}

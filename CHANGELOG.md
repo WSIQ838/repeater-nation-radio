@@ -1,12 +1,12 @@
 # Repeater Nation Radio — Changelog
 
-## 0.2.59 — Pick any radio on the phone app
+## 0.2.59 — New radio screens on the phone app
 
-**The Android and iPhone apps can now show any of the desktop radios instead of the phone screen**, after Sean asked for the phone app to change radios like the desktop app.
+**The Android and iPhone apps now have four more radio screens to pick from**, after Sean asked for the phone app to change radios like the desktop app, then for phone-only looks in place of the desktop radios.
 
-- More › Radio lists Phone screen (the touch-screen look made for the phone, still the default) and every desktop radio. The pick is remembered on the phone, separately from the desktop's.
-- A desktop radio is shrunk to fit above the big PTT key and volume keys, and its buttons work the same as on the desktop. The radio's menu keys open the phone's own lists (Setup, Who's On, Contacts, Recent).
-- With a desktop radio showing, a menu button in the top bar opens More.
+- More › Radio lists Phone screen (still the default) plus Classic LCD (amber screen, big channel number, softkeys and a channel rocker), Glove mode (huge yellow buttons and a giant red PTT), Night mode (red on black) and Scanner list (every channel in the zone, lit green when someone talks; tap one to switch).
+- Each look also colours the PTT and volume keys. The pick is remembered on the phone, separately from the desktop's radio.
+- The desktop radios stay on the desktop app only.
 - Version set to 0.2.59 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
 ## 0.2.58 — Abbree Bluetooth mics key up on the phone apps too

@@ -405,7 +405,7 @@ function RadioApp({session,onSignOut}){
   // Which radio is drawn (control head, handheld, mobile). All of them work the same.
   const [face,setFace]=useState(loadFace);
   const chooseFace=v=>{setFace(v);saveFace(v)};
-  const [phoneFace,setPhoneFace]=useState(()=>loadPhoneFace(FACES.map(f=>f.id)));
+  const [phoneFace,setPhoneFace]=useState(loadPhoneFace);
   const choosePhoneFace=v=>{setPhoneFace(v);savePhoneFace(v)};
   const tone=(name,steps=null)=>playTone(name,featuresRef.current.toneVolume*Math.max(0.3,volumeRef.current/10),steps);
   // Test buttons in Settings: hear the roger beep, the voice filter or the announce voice.
@@ -797,7 +797,7 @@ function RadioApp({session,onSignOut}){
     scanning:scanOn,scanActive,onScan:connected?toggleScan:null,onNuisance:nuisance};
 
   if(IS_PHONE)return <PhoneApp
-    face={phoneFace} faces={FACES} onFace={choosePhoneFace} renderFace={onTab=><RadioFace face={phoneFace} {...faceProps} onTab={onTab}/>}
+    face={phoneFace} onFace={choosePhoneFace}
     zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId} channelName={channelName}
     state={state} connected={connected} error={error} connectNote={connectNote} ptt={ptt} muted={muted} onAir={onAir} participants={participants}
     scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} lastHeard={lastHeard} onReplay={replay}
