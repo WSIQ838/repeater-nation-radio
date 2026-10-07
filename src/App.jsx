@@ -14,7 +14,7 @@ import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,li
 import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
-import {IS_PHONE,PhoneApp} from "./components/PhoneApp";
+import {IS_PHONE,PhoneApp,loadPhoneFace,savePhoneFace} from "./components/PhoneApp";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
 import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
@@ -405,6 +405,8 @@ function RadioApp({session,onSignOut}){
   // Which radio is drawn (control head, handheld, mobile). All of them work the same.
   const [face,setFace]=useState(loadFace);
   const chooseFace=v=>{setFace(v);saveFace(v)};
+  const [phoneFace,setPhoneFace]=useState(()=>loadPhoneFace(FACES.map(f=>f.id)));
+  const choosePhoneFace=v=>{setPhoneFace(v);savePhoneFace(v)};
   const tone=(name,steps=null)=>playTone(name,featuresRef.current.toneVolume*Math.max(0.3,volumeRef.current/10),steps);
   // Test buttons in Settings: hear the roger beep, the voice filter or the announce voice.
   const testFeature=what=>{
@@ -783,7 +785,19 @@ function RadioApp({session,onSignOut}){
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
 
+  // Everything a radio face draws and does; the desktop radio page and the phone's radio picker share it.
+  const faceProps={onPttDown:down,onPttUp:up,myStatus,onStatus:chooseStatus,
+    channelName,channelNumber:currentChannel?.number,zoneName:currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name,
+    zones,zoneId,visibleChannels,channelId,
+    state,connected,ptt,muted,error,callsign:radioSession?.callsign||callsign,displayName,participants,
+    incoming,call,callState,
+    onPower:togglePower,connectNote,onMute:()=>setMuted(!muted),onChannel:selectChannel,onZone:selectZone,
+    onAnswer:accept,onDecline:decline,onEndCall:endCall,command:faceCommand,
+    quality,onAir,volume,onVolume:changeVolume,lastHeard,onReplay:replay,flash,
+    scanning:scanOn,scanActive,onScan:connected?toggleScan:null,onNuisance:nuisance};
+
   if(IS_PHONE)return <PhoneApp
+    face={phoneFace} faces={FACES} onFace={choosePhoneFace} renderFace={onTab=><RadioFace face={phoneFace} {...faceProps} onTab={onTab}/>}
     zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId} channelName={channelName}
     state={state} connected={connected} error={error} connectNote={connectNote} ptt={ptt} muted={muted} onAir={onAir} participants={participants}
     scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} lastHeard={lastHeard} onReplay={replay}
@@ -817,16 +831,7 @@ function RadioApp({session,onSignOut}){
         {tab==="radio"&&<>
           <section className="hero apx-hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div></section>
           <section className={"apx-stage face-"+face}>
-            <RadioFace face={face} onPttDown={down} onPttUp={up} myStatus={myStatus} onStatus={chooseStatus}
-              channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
-              zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId}
-              state={state} connected={connected} ptt={ptt} muted={muted} error={error} callsign={radioSession?.callsign||callsign} displayName={displayName} participants={participants}
-              incoming={incoming} call={call} callState={callState}
-              onPower={togglePower} connectNote={connectNote} onMute={()=>setMuted(!muted)} onChannel={selectChannel} onZone={selectZone} onTab={setTab}
-              onAnswer={accept} onDecline={decline} onEndCall={endCall} command={faceCommand}
-              quality={quality} onAir={onAir} volume={volume} onVolume={changeVolume} lastHeard={lastHeard} onReplay={replay} flash={flash}
-              scanning={scanOn} scanActive={scanActive} onScan={connected?toggleScan:null} onNuisance={nuisance}
-            />
+            <RadioFace face={face} {...faceProps} onTab={setTab}/>
             <div className="apx-side">
               <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up} pttName={pttName}/>
             </div>

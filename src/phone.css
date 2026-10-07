@@ -98,3 +98,6 @@ html.phone .login-form,html.phone .google-login{width:100%}
 .n7-shell .n7-vol button.on{color:#f0a020}
 .n7-vol span{text-align:center;color:#c4c6c8;font:700 15px/1 Arial,sans-serif}
 .n7-flash{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 52px);transform:translateX(-50%);z-index:20;background:#0d0c0f;color:#fff;border-radius:20px;padding:8px 16px;font:700 14px/1 Arial,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+/* A desktop radio face picked under More › Radio, shrunk to fit above the PTT key. */
+.n7-facefit{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#15171a}
+.n7-faceinner{flex:none;width:max-content;transform-origin:center center}
