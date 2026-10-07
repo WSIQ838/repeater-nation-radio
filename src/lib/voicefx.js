@@ -19,14 +19,41 @@ const shaper=(ac,k,steps=0)=>{const w=ac.createWaveShaper();w.curve=curve(k,step
 const comp=(ac,threshold=-24,ratio=4)=>{const c=ac.createDynamicsCompressor();c.threshold.value=threshold;c.ratio.value=ratio;c.attack.value=0.004;c.release.value=0.15;return c};
 const level=(ac,v)=>{const g=ac.createGain();g.gain.value=v;return g};
 
+// "Digital P25" rebuilds the voice the way a P25 radio's voice coder does (p25-worklet.js).
+// The worklet loads once per audio context; until it has, or where a webview can't run
+// one, P25 falls back to a filter-only imitation.
+const p25Ready=new WeakMap();
+function loadP25(ac){
+  if(!p25Ready.has(ac)){
+    const p=ac.audioWorklet?ac.audioWorklet.addModule(new URL("./p25-worklet.js",import.meta.url)).then(()=>true,()=>false):Promise.resolve(false);
+    p25Ready.set(ac,p);p.then(ok=>{p25Ready.set(ac,ok);if(ok&&current==="p25")live.forEach(wire)});
+  }
+  return Promise.resolve(p25Ready.get(ac));
+}
+function p25Chain(ac){
+  if(p25Ready.get(ac)!==true){loadP25(ac);return null}
+  try{
+    const coder=new AudioWorkletNode(ac,"p25-voice",{numberOfInputs:1,numberOfOutputs:1,outputChannelCount:[1],channelCount:1,channelCountMode:"explicit"});
+    // Band-limit to the radio's 8 kHz audio on the way in, smooth it on the way out,
+    // then the small speaker's low cut and a little presence.
+    return [biquad(ac,"highpass",200,0.7),biquad(ac,"lowpass",3500,0.7),biquad(ac,"lowpass",3500,0.7),coder,
+      biquad(ac,"lowpass",3700,0.7),biquad(ac,"lowpass",3700,0.7),biquad(ac,"highpass",300,0.7),biquad(ac,"peaking",2000,1,2),comp(ac,-24,4),level(ac,2)];
+  }catch{return null}
+}
+
 // Each preset is a chain of nodes, wired in order.
 function build(ac,id){
+  if(id==="p25"){const chain=p25Chain(ac);if(chain)return chain}
   if(id==="fm")return [biquad(ac,"highpass",300),biquad(ac,"lowpass",3000),biquad(ac,"peaking",2200,1,2),shaper(ac,2),comp(ac,-26,3),level(ac,0.9)];
   if(id==="p25")return [biquad(ac,"highpass",420,0.9),biquad(ac,"lowpass",3100,0.9),biquad(ac,"peaking",1700,1.2,4),shaper(ac,1.5,9),comp(ac,-30,6),level(ac,0.85)];
   if(id==="am")return [biquad(ac,"highpass",550,1),biquad(ac,"lowpass",2300,1.1),biquad(ac,"peaking",1200,0.8,5),shaper(ac,8),comp(ac,-20,8),level(ac,0.7)];
   if(id==="scanner")return [biquad(ac,"highpass",650,1.2),biquad(ac,"lowpass",2800,1.4),biquad(ac,"peaking",1900,2,7),shaper(ac,4),comp(ac,-28,10),level(ac,0.75)];
   return [];
 }
+
+// For rendering samples offline (scripts/voicefx-samples): the chain for one preset,
+// waiting for the P25 coder to load first.
+export async function voiceChain(ac,id){if(id==="p25")await loadP25(ac);return build(ac,id)}
 
 const KEY="rn-voice-fx";
 let current=(()=>{try{const v=localStorage.getItem(KEY);return VOICE_FX.some(f=>f.id===v)?v:"clean"}catch{return "clean"}})();
@@ -71,6 +98,7 @@ export function attachVoice(track){
 
 // Switch every playing stream to another filter straight away.
 export function setVoiceFx(id){
+  if(id==="p25"){const ac=audio();if(ac)loadP25(ac)}
   if(!VOICE_FX.some(f=>f.id===id))return;
   current=id;try{localStorage.setItem(KEY,id)}catch{}
   live.forEach(wire);
@@ -78,8 +106,9 @@ export function setVoiceFx(id){
 
 // A short test: a voice-like buzz through the chosen filter, so it can be heard
 // without anyone talking.
-export function previewVoiceFx(id,volume=0.6){
+export async function previewVoiceFx(id,volume=0.6){
   const ac=audio();if(!ac)return;
+  if(id==="p25")await loadP25(ac);
   const t=ac.currentTime+0.02,d=1.2;
   const osc=ac.createOscillator();osc.type="sawtooth";
   osc.frequency.setValueAtTime(140,t);osc.frequency.linearRampToValueAtTime(190,t+0.4);osc.frequency.linearRampToValueAtTime(120,t+0.9);osc.frequency.linearRampToValueAtTime(160,t+d);

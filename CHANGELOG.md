@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.60 — Digital P25 voice sounds like a real P25 radio
+
+**The Digital P25 voice filter now rebuilds what you hear the way a P25 radio's voice coder does, so it has the robotic, slightly watery sound of real P25**, after Sean said it didn't sound like P25.
+
+- Before, P25 was only a band filter plus a little distortion, so it sounded like a muffled analog radio.
+- Now the received voice goes through a small voice coder modelled on P25's IMBE coder (`src/lib/p25-worklet.js`). Every 20 ms the voice is reduced to a pitch, the loudness of each harmonic and a voiced/unvoiced flag per band, then rebuilt from tones and shaped noise on 8 kHz audio. Pitch moves in small steps, the spectrum is smoothed and stepped, upper harmonics get random phase and the background between words is dropped, as on a real P25 radio.
+- It runs in an AudioWorklet, the same on the desktop app and the Android and iPhone apps. Where one can't run, P25 falls back to the old filter.
+- The Settings preview plays through the new sound too.
+- Version set to 0.2.60 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.59 — New radio screens on the phone app
 
 **The Android and iPhone apps now have four more radio screens to pick from**, after Sean asked for the phone app to change radios like the desktop app, then for phone-only looks in place of the desktop radios.
