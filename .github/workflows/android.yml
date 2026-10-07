@@ -89,7 +89,7 @@ jobs:
           "$BUILD_TOOLS/apksigner" sign --ks signing.jks --ks-pass "pass:$PASS" --ks-key-alias "$ALIAS" --out "out/Repeater-Nation-Radio-$VERSION.apk" aligned.apk
           "$BUILD_TOOLS/apksigner" verify "out/Repeater-Nation-Radio-$VERSION.apk"
           # Google Play takes the .aab, signed with the upload key. The committed test key is
-          # public, so a bundle is only kept when the real key (the secrets) signed it.
+          # public, so it never signs the bundle.
           BUNDLE=$(find src-tauri/gen/android/app/build/outputs/bundle -name '*.aab' | head -1)
           echo "Bundle: $BUNDLE"
           if [ -n "${REAL_KEY:-}" ] && [ -n "$BUNDLE" ]; then
@@ -97,8 +97,10 @@ jobs:
             jarsigner -keystore signing.jks -storepass "$PASS" -sigalg SHA256withRSA -digestalg SHA-256 \
               "out/Repeater-Nation-Radio-$VERSION.aab" "$ALIAS"
             jarsigner -verify "out/Repeater-Nation-Radio-$VERSION.aab" | tail -1
-          else
-            echo "::notice::No upload key in the repository secrets, so no Play Store bundle was published."
+          elif [ -n "$BUNDLE" ]; then
+            # Without the key in secrets, publish the bundle unsigned; it is signed with the
+            # upload key outside GitHub before it goes to Play.
+            cp "$BUNDLE" "out/Repeater-Nation-Radio-$VERSION-unsigned.aab"
           fi
           rm -f signing.jks
           ls -la out
