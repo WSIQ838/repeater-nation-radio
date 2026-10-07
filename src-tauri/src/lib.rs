@@ -5,6 +5,8 @@ mod ble;
 #[cfg(mobile)]
 #[path = "ble_mobile.rs"]
 mod ble;
+#[cfg(desktop)]
+mod media_buttons;
 mod ptt;
 #[cfg(desktop)]
 mod tray;
@@ -34,9 +36,10 @@ pub fn run() {
     {
         builder = builder
             .on_window_event(tray::on_window_event)
-            .invoke_handler(tauri::generate_handler![ptt::hw_set_bindings, ptt::hw_learn, ptt::hw_capabilities, ble::ble_scan, ble::ble_connect, ble::ble_disconnect, tray::tray_set])
+            .invoke_handler(tauri::generate_handler![ptt::hw_set_bindings, ptt::hw_learn, ptt::hw_capabilities, media_buttons::hw_mic_buttons, ble::ble_scan, ble::ble_connect, ble::ble_disconnect, tray::tray_set])
             .setup(|_app| {
                 ptt::start(_app.handle().clone());
+                media_buttons::start(_app.handle());
                 if let Err(e) = tray::start(_app.handle()) {
                     eprintln!("tray icon unavailable: {e}");
                 }

@@ -114,6 +114,23 @@ fn input(app: &AppHandle, kind: &str, code: String, label: String, pressed: bool
     }
 }
 
+/// PTT from a Bluetooth speaker-mic's remote-control commands (`media_buttons.rs`). It
+/// is always push to talk and needs no binding; presses while learning are ignored so
+/// the mic doesn't key up in Settings.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub(crate) fn mic_ptt(app: &AppHandle, pressed: bool) {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static DOWN: AtomicBool = AtomicBool::new(false);
+    if pressed && state().learning {
+        return;
+    }
+    // Only a release that follows a press, and one press per hold.
+    if DOWN.swap(pressed, Ordering::SeqCst) == pressed {
+        return;
+    }
+    let _ = app.emit("hw-action", Action { action: "ptt".into(), pressed, global: true });
+}
+
 /// A notification from a Bluetooth LE button. A learned press is a characteristic plus
 /// the value it sends on press; any other value on that characteristic releases it.
 pub(crate) fn input_ble(app: &AppHandle, device: &str, characteristic: &str, value: &[u8]) {

@@ -1,13 +1,21 @@
 import {useEffect,useRef,useState} from "react";
-import {ChevronLeft,ListChecks,Power,RefreshCw,UserRound,Users,Volume2,VolumeX,Minus,Plus,PhoneCall,PhoneOff,LogOut} from "lucide-react";
+import {ChevronLeft,ListChecks,Power,Radio,RefreshCw,UserRound,Users,Volume2,VolumeX,Minus,Plus,PhoneCall,PhoneOff,LogOut} from "lucide-react";
 import {ChanLine} from "./ChanLine";
+import {PHONE_FACES,PhoneFaceBody} from "./PhoneFaces";
 import {zoneLabel} from "../lib/labels";
 import {STATUSES,statusClass} from "../lib/status";
 
-// The Android and iPhone app (and a phone-sized browser) gets one full-screen version of
-// the touch handheld's (APX N70) display instead of the radio faces, plus a big PTT key.
+// The Android and iPhone app (and a phone-sized browser) starts on a full-screen version of
+// the touch handheld's (APX N70) display, plus a big PTT key. More › Radio switches to one of
+// the phone-only looks in PhoneFaces.jsx (the desktop radio faces stay on the desktop).
 // __MOBILE__ is set when Tauri builds for Android or iOS.
 export const IS_PHONE=(typeof __MOBILE__!=="undefined"&&__MOBILE__)||(typeof navigator!=="undefined"&&/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||""));
+
+// The phone's own screen, then the phone-only looks. Remembered apart from the desktop pick.
+export const PHONE_SCREEN="phone";
+const PHONE_FACE_KEY="rn-phone-face";
+export const loadPhoneFace=()=>{try{const v=localStorage.getItem(PHONE_FACE_KEY);return PHONE_FACES.some(f=>f.id===v)?v:PHONE_SCREEN}catch{return PHONE_SCREEN}};
+export const savePhoneFace=v=>{try{localStorage.setItem(PHONE_FACE_KEY,v)}catch{}};
 
 const hhmm=t=>new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
 const clock=t=>{const d=new Date(t);return (d.getHours()%12||12)+":"+String(d.getMinutes()).padStart(2,"0")};
@@ -41,6 +49,7 @@ function PttButton({ptt,connected,state,onDown,onUp}){
 export function PhoneApp(p){
   const {zones,zoneId,visibleChannels,channelId,channelName,state,connected,error,connectNote,ptt,muted,onAir,participants=[],
     scanning,scanActive,volume,lastHeard=[],incoming,call,callState,onlineUsers=[],displayName,callsign,myStatus=""}=p;
+  const face=p.face||PHONE_SCREEN;
   const [screen,setScreen]=useState("home"),[notice,setNotice]=useState(""),[now,setNow]=useState(()=>Date.now());
   useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),15000);return()=>clearInterval(id)},[]);
   useEffect(()=>{if(!p.flash?.text)return;setNotice(p.flash.text);const id=setTimeout(()=>setNotice(""),1600);return()=>clearTimeout(id)},[p.flash]);
@@ -55,6 +64,8 @@ export function PhoneApp(p){
     :state==="connecting"?"Connecting…":state==="reconnecting"?"Reconnecting…":state==="error"?(error||"Can't connect"):"Radio off · press power";
   const bars=connected?4:state==="reconnecting"||state==="connecting"?1:0;
   const go=s=>setScreen(s);
+  // Next or previous channel in the zone, wrapping round (the phone looks' channel rocker).
+  const step=d=>{const n=visibleChannels.length;if(!n)return;const i=visibleChannels.findIndex(c=>c.id===channelId);p.onChannel(visibleChannels[((i<0?0:i)+d+n)%n].id)};
   const list=(title,items)=><div className="n7-list"><button type="button" className="n7-back" onClick={()=>go("home")}><ChevronLeft size={20}/>{title}</button><div className="n7-items">{items}</div></div>;
 
   let body;
@@ -68,7 +79,9 @@ export function PhoneApp(p){
     {onlineUsers.length?onlineUsers.map(u=><div className="n7-item" key={u.userId}><UserRound size={18}/><span className="n7-grow">{u.callsign||u.displayName}<small>{u.channelId?"On radio":"Available"}</small></span><button type="button" className="n7-pill" onClick={()=>p.onCall(u)} disabled={callState!=="idle"}><PhoneCall size={16}/>Call</button></div>):<div className="n7-dim">No other members are online right now</div>}
     {p.callError&&<div className="n7-dim err">{p.callError}</div>}
   </>);
+  else if(screen==="faces")body=list("Radio",[{id:PHONE_SCREEN,label:"Phone screen",note:"Touch screen made for the phone"},...PHONE_FACES].map(f=><button type="button" key={f.id} className={"n7-item"+(f.id===face?" on":"")} onClick={()=>{p.onFace(f.id);go("home")}}><span className="n7-grow">{f.label}<small>{f.note}</small></span></button>));
   else if(screen==="more")body=list("More",<>
+    {p.onFace&&<button type="button" className="n7-item" onClick={()=>go("faces")}><Radio size={18}/>Radio</button>}
     <button type="button" className="n7-item" onClick={()=>go("who")}><Users size={18}/>Who's On ({participants.length})</button>
     <button type="button" className="n7-item" onClick={()=>go("recent")}><RefreshCw size={18}/>Recent</button>
     <button type="button" className="n7-item" onClick={()=>go("status")}><UserRound size={18}/>My Status</button>
@@ -78,6 +91,7 @@ export function PhoneApp(p){
     <div className="n7-dim">Build v{String(__APP_VERSION__)}</div>
   </>);
   else if(screen==="settings")body=<div className="n7-list"><button type="button" className="n7-back" onClick={()=>go("more")}><ChevronLeft size={20}/>Setup</button><div className="n7-setup">{p.settingsPanel}</div></div>;
+  else if(face!==PHONE_SCREEN)body=<PhoneFaceBody face={face} c={{p,zone,chan,activity,tone,tx,rx,last,step,go}}/>;
   else body=<>
     <div className="n7-card n7-head"><span className="n7-name">{displayName||callsign||"Member"}</span><button type="button" className="n7-profile" onClick={()=>go("status")} aria-label="My status"><UserRound size={18} strokeWidth={2.6}/></button></div>
     <div className="n7-card n7-zonecard">
@@ -123,7 +137,7 @@ export function PhoneApp(p){
     </button>
   </>;
 
-  return <div className="n7-shell">
+  return <div className={"n7-shell face-"+face}>
     <div className="n7-statusbar">
       <span className="n7-brand">REPEATER NATION</span>
       {tx?<em className="tx">TX</em>:rx?<em className="rx">RX</em>:null}

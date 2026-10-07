@@ -29,6 +29,12 @@ jobs:
       - name: Create the iPhone project
         run: |
           npx tauri ios init --ci
+          # PTT from Bluetooth speaker-mics (Abbree and similar) arrives as remote commands,
+          # which only native code receives: add MicPtt.m next to main.mm and regenerate.
+          MAIN=$(find src-tauri/gen/apple/Sources -name main.mm | head -1)
+          cp src-tauri/ios/MicPtt.m "$(dirname "$MAIN")/MicPtt.m"
+          command -v xcodegen >/dev/null || brew install xcodegen
+          (cd src-tauri/gen/apple && xcodegen generate)
           npx tauri icon src-tauri/icons/icon.svg
           ls -la src-tauri/gen/apple
 
@@ -80,7 +86,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Add the iPhone files to the iPhone test release
-        if: github.event_name == 'push' && github.ref == 'refs/heads/ios-app'
+        if: github.ref != 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

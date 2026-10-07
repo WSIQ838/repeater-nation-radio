@@ -49,14 +49,21 @@ jobs:
           MANIFEST=src-tauri/gen/android/app/src/main/AndroidManifest.xml
           sed -i 's#<application#<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />\n    <application#' "$MANIFEST"
           cat "$MANIFEST"
+          # Our MainActivity passes a Bluetooth speaker mic's PTT (media buttons) to the page.
+          ACTIVITY=src-tauri/gen/android/app/src/main/java/com/repeaternation/radio/MainActivity.kt
+          cat "$ACTIVITY"
+          EDGE=$(grep -c enableEdgeToEdge "$ACTIVITY" || true)
+          cp src-tauri/android/MainActivity.kt "$ACTIVITY"
+          # Keep the generated screen layout: only go edge to edge if the template did.
+          [ "$EDGE" != "0" ] || sed -i '/enableEdgeToEdge/d' "$ACTIVITY"
 
       - name: Generate app icons
         run: npx tauri icon src-tauri/icons/icon.svg
 
-      - name: Build the APK
-        run: npx tauri android build --apk --target aarch64 armv7 x86_64 --ci
+      - name: Build the APK and the Play Store bundle
+        run: npx tauri android build --apk --aab --target aarch64 armv7 x86_64 --ci
 
-      - name: Sign the APK
+      - name: Sign the APK and the bundle
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -70,6 +77,7 @@ jobs:
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > signing.jks
             PASS="$KEYSTORE_PASSWORD"; ALIAS="$KEY_ALIAS"
+            REAL_KEY=1
           else
             cp src-tauri/android/test-signing.jks signing.jks
             PASS=repeaternation; ALIAS=radio
@@ -80,6 +88,20 @@ jobs:
           "$BUILD_TOOLS/zipalign" -f -p 4 "$UNSIGNED" aligned.apk
           "$BUILD_TOOLS/apksigner" sign --ks signing.jks --ks-pass "pass:$PASS" --ks-key-alias "$ALIAS" --out "out/Repeater-Nation-Radio-$VERSION.apk" aligned.apk
           "$BUILD_TOOLS/apksigner" verify "out/Repeater-Nation-Radio-$VERSION.apk"
+          # Google Play takes the .aab, signed with the upload key. The committed test key is
+          # public, so it never signs the bundle.
+          BUNDLE=$(find src-tauri/gen/android/app/build/outputs/bundle -name '*.aab' | head -1)
+          echo "Bundle: $BUNDLE"
+          if [ -n "${REAL_KEY:-}" ] && [ -n "$BUNDLE" ]; then
+            cp "$BUNDLE" "out/Repeater-Nation-Radio-$VERSION.aab"
+            jarsigner -keystore signing.jks -storepass "$PASS" -sigalg SHA256withRSA -digestalg SHA-256 \
+              "out/Repeater-Nation-Radio-$VERSION.aab" "$ALIAS"
+            jarsigner -verify "out/Repeater-Nation-Radio-$VERSION.aab" | tail -1
+          elif [ -n "$BUNDLE" ]; then
+            # Without the key in secrets, publish the bundle unsigned; it is signed with the
+            # upload key outside GitHub before it goes to Play.
+            cp "$BUNDLE" "out/Repeater-Nation-Radio-$VERSION-unsigned.aab"
+          fi
           rm -f signing.jks
           ls -la out
 
@@ -87,7 +109,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: repeater-nation-radio-android
-          path: out/*.apk
+          path: out/*
           if-no-files-found: error
 
       - name: Add the APK to the GitHub release
@@ -106,10 +128,10 @@ jobs:
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes-file .github/release-notes.md || \
             gh release view "$TAG" >/dev/null
-          gh release upload "$TAG" out/*.apk --clobber
+          gh release upload "$TAG" out/* --clobber
 
       - name: Add the APK to the Android test release
-        if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+        if: github.ref != 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -119,8 +141,8 @@ jobs:
           gh release view "$TAG" >/dev/null 2>&1 || \
             gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "Android test build" \
               --notes "Test version of the Repeater Nation Radio Android app. Download the .apk on your phone and open it to install."
-          # Remove the last test APK (a new version has a new file name).
-          for old in $(gh release view "$TAG" --json assets -q '.assets[].name | select(endswith(".apk"))'); do
+          # Remove the last test APK and bundle (a new version has a new file name).
+          for old in $(gh release view "$TAG" --json assets -q '.assets[].name | select(endswith(".apk") or endswith(".aab"))'); do
             gh release delete-asset "$TAG" "$old" -y
           done
-          gh release upload "$TAG" out/*.apk --clobber
+          gh release upload "$TAG" out/* --clobber

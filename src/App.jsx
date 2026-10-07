@@ -10,11 +10,11 @@ import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
 import {SCAN_MAX,useScan} from "./hooks/useScan";
 import {canShareStatus,prewarmRadio,shareStatus} from "./lib/livekit";
-import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning} from "./lib/ptt";
+import {HAND_MIC,bleConnect,bleDisconnect,bleScan,hwCapabilities,inDesktopApp,listenBle,listenHardware,loadBleDevice,saveBleDevice,setHardwareBindings,setLearning,setMicButtons} from "./lib/ptt";
 import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,saveKeymap} from "./lib/keymap";
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
-import {IS_PHONE,PhoneApp} from "./components/PhoneApp";
+import {IS_PHONE,PhoneApp,loadPhoneFace,savePhoneFace} from "./components/PhoneApp";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
 import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
@@ -342,6 +342,7 @@ const writePref=(key,value)=>{try{localStorage.setItem(key,value)}catch{}};
 const SIDE_VK={ShiftLeft:0xA0,ShiftRight:0xA1,ControlLeft:0xA2,ControlRight:0xA3,AltLeft:0xA4,AltRight:0xA5};
 // Number-pad digits count as Num 0–9 whether Num Lock is on or off.
 const keyVk=e=>{const pad=/^Numpad(\d)$/.exec(e.code||"");return pad?0x60+Number(pad[1]):SIDE_VK[e.code]??e.keyCode};
+const MIC_PTT={MediaFastForward:true,MediaRewind:false};// speaker-mic PTT down / up (see micPtt)
 const MEDIA_LABEL={AudioVolumeMute:"Mute key",AudioVolumeDown:"Volume Down key",AudioVolumeUp:"Volume Up key",MediaTrackNext:"Next Track key",MediaTrackPrevious:"Previous Track key",MediaStop:"Stop key",MediaPlayPause:"Play/Pause key",BrowserBack:"Browser Back",BrowserForward:"Browser Forward"};
 const keyLabel=e=>MEDIA_LABEL[e.code]||(e.code==="Space"?"Space":e.key&&e.key.length===1?e.key.toUpperCase():e.code.replace(/^Key|^Digit/,""));
 
@@ -351,7 +352,7 @@ const GROUPS=[...new Set(ACTIONS.map(a=>a.group))];
 
 function KeyMap({keymap,caps,learnFor,notice,onLearn,onRemove,onToggleGlobal,onReset}){
   return <div className="keymap">
-    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused. Keyboard keys start as “App only” so typing elsewhere doesn't key the radio; click “App only” on a key to make it work anywhere.</p>
+    <p className="muted">Map any radio action to buttons on a keyboard, USB or Bluetooth hand mic, foot switch, mouse or gamepad. Click Add, then press the button. An action can have several buttons. “Anywhere” buttons work even when the app isn't focused. Keyboard keys start as “App only” so typing elsewhere doesn't key the radio; click “App only” on a key to make it work anywhere. Bluetooth speaker mics made for Zello (Abbree and similar) key up on their own once paired with this computer or phone: there's nothing to add.</p>
     {notice&&<div className="keymap-notice">{notice}</div>}
     {GROUPS.map(g=><div key={g} className="keymap-group"><h4>{g}</h4>
       {ACTIONS.filter(a=>a.group===g).map(a=>{
@@ -404,6 +405,8 @@ function RadioApp({session,onSignOut}){
   // Which radio is drawn (control head, handheld, mobile). All of them work the same.
   const [face,setFace]=useState(loadFace);
   const chooseFace=v=>{setFace(v);saveFace(v)};
+  const [phoneFace,setPhoneFace]=useState(loadPhoneFace);
+  const choosePhoneFace=v=>{setPhoneFace(v);savePhoneFace(v)};
   const tone=(name,steps=null)=>playTone(name,featuresRef.current.toneVolume*Math.max(0.3,volumeRef.current/10),steps);
   // Test buttons in Settings: hear the roger beep, the voice filter or the announce voice.
   const testFeature=what=>{
@@ -641,6 +644,24 @@ function RadioApp({session,onSignOut}){
     runRef.current(action);
   };
   const handleRef=useRef(handleAction);handleRef.current=handleAction;
+  // Bluetooth speaker-mics made for Zello (Abbree / KST_vHMIC010 and similar) send PTT as
+  // Fast Forward on press and Rewind on release. Windows hands those to the app's media
+  // controls (media_buttons.rs, arriving as a hook action); other systems give them to
+  // the page as media keys or media-session seek actions; the Android app passes them on
+  // as an "rn-mic-ptt" event (src-tauri/android/MainActivity.kt). Always PTT, nothing to learn.
+  const micDownRef=useRef(false);
+  const micPtt=pressed=>{if(micDownRef.current===pressed||(pressed&&learnForRef.current))return;micDownRef.current=pressed;handleRef.current({action:"ptt",pressed,global:true},"mic")};
+  const micPttRef=useRef(micPtt);micPttRef.current=micPtt;
+  useEffect(()=>{
+    const ms=navigator.mediaSession;if(!ms?.setActionHandler)return;
+    const set=(a,f)=>{try{ms.setActionHandler(a,f)}catch{}};
+    set("seekforward",()=>micPttRef.current(true));set("seekbackward",()=>micPttRef.current(false));
+    return()=>{set("seekforward",null);set("seekbackward",null)};
+  },[]);
+  useEffect(()=>{
+    const onMic=e=>micPttRef.current(!!e.detail);
+    window.addEventListener("rn-mic-ptt",onMic);return()=>window.removeEventListener("rn-mic-ptt",onMic);
+  },[]);
   // A paired Bluetooth button reconnects at startup, whichever tab is open.
   const [bleStatus,setBleStatus]=useState(null);
   useEffect(()=>{const off=listenBle(setBleStatus);const saved=loadBleDevice();if(saved)bleConnect(saved);return off},[]);
@@ -668,6 +689,7 @@ function RadioApp({session,onSignOut}){
     const typing=e=>/^(INPUT|TEXTAREA|SELECT)$/.test(e.target?.tagName||"")||!!e.target?.isContentEditable;
     const held=new Map();// key → actions its press fired, so the release reaches the same ones
     const keyDown=e=>{
+      if(e.code in MIC_PTT){e.preventDefault();if(!e.repeat)micPttRef.current(MIC_PTT[e.code]);return}
       if(learnFor){
         // Keep Space/Enter from also pressing the focused button while a button is learned.
         e.preventDefault();
@@ -690,6 +712,7 @@ function RadioApp({session,onSignOut}){
       hits.forEach(b=>handleAction({action:b.action,pressed:true,global:true}));
     };
     const keyUp=e=>{
+      if(e.code in MIC_PTT){e.preventDefault();return}
       if(learnFor){e.preventDefault();return}
       const hits=held.get(e.code);if(!hits)return;
       held.delete(e.code);e.preventDefault();
@@ -712,6 +735,8 @@ function RadioApp({session,onSignOut}){
     if(readPref("rn-mic")===null){const d=pick("audioinput");if(d)setMicDeviceId(d.deviceId)}
     if(readPref("rn-speaker")===null){const d=pick("audiooutput");if(d)setSpeakerId(d.deviceId)}
   },[devices]);
+  const speakerMic=devices.some(d=>d.kind==="audioinput"&&HAND_MIC.test(d.label||""));
+  useEffect(()=>{setMicButtons(speakerMic)},[speakerMic]);
   const pttBindings=(keymap||[]).filter(b=>b.action==="ptt"),pttName=pttBindings.map(b=>b.label||b.code).join(" / ");
   const keymapProps={keymap:keymap||[],caps:hwCaps,learnFor,notice:mapNotice,onLearn:learn,onRemove:i=>updateKeymap(keymap.filter((_,k)=>k!==i)),onToggleGlobal:i=>updateKeymap(keymap.map((b,k)=>k===i?{...b,global:!b.global}:b)),onReset:()=>{updateKeymap(defaultBindings(!!hwCaps?.global_keys));setMapNotice("Button mapping reset to defaults.")}};
 
@@ -760,7 +785,19 @@ function RadioApp({session,onSignOut}){
   const displayName=radioSession?.displayName||session.member?.full_name||session.member?.email||"Member";
   const callsign=radioSession?.callsign||session.member?.callsign||"";
 
+  // Everything a radio face draws and does; the desktop radio page and the phone's radio picker share it.
+  const faceProps={onPttDown:down,onPttUp:up,myStatus,onStatus:chooseStatus,
+    channelName,channelNumber:currentChannel?.number,zoneName:currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name,
+    zones,zoneId,visibleChannels,channelId,
+    state,connected,ptt,muted,error,callsign:radioSession?.callsign||callsign,displayName,participants,
+    incoming,call,callState,
+    onPower:togglePower,connectNote,onMute:()=>setMuted(!muted),onChannel:selectChannel,onZone:selectZone,
+    onAnswer:accept,onDecline:decline,onEndCall:endCall,command:faceCommand,
+    quality,onAir,volume,onVolume:changeVolume,lastHeard,onReplay:replay,flash,
+    scanning:scanOn,scanActive,onScan:connected?toggleScan:null,onNuisance:nuisance};
+
   if(IS_PHONE)return <PhoneApp
+    face={phoneFace} onFace={choosePhoneFace}
     zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId} channelName={channelName}
     state={state} connected={connected} error={error} connectNote={connectNote} ptt={ptt} muted={muted} onAir={onAir} participants={participants}
     scanning={scanOn} scanActive={scanActive} flash={flash} volume={volume} lastHeard={lastHeard} onReplay={replay}
@@ -794,16 +831,7 @@ function RadioApp({session,onSignOut}){
         {tab==="radio"&&<>
           <section className="hero apx-hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div></section>
           <section className={"apx-stage face-"+face}>
-            <RadioFace face={face} onPttDown={down} onPttUp={up} myStatus={myStatus} onStatus={chooseStatus}
-              channelName={channelName} channelNumber={currentChannel?.number} zoneName={currentChannel?.zoneName||zones.find(z=>z.id===zoneId)?.name}
-              zones={zones} zoneId={zoneId} visibleChannels={visibleChannels} channelId={channelId}
-              state={state} connected={connected} ptt={ptt} muted={muted} error={error} callsign={radioSession?.callsign||callsign} displayName={displayName} participants={participants}
-              incoming={incoming} call={call} callState={callState}
-              onPower={togglePower} connectNote={connectNote} onMute={()=>setMuted(!muted)} onChannel={selectChannel} onZone={selectZone} onTab={setTab}
-              onAnswer={accept} onDecline={decline} onEndCall={endCall} command={faceCommand}
-              quality={quality} onAir={onAir} volume={volume} onVolume={changeVolume} lastHeard={lastHeard} onReplay={replay} flash={flash}
-              scanning={scanOn} scanActive={scanActive} onScan={connected?toggleScan:null} onNuisance={nuisance}
-            />
+            <RadioFace face={face} {...faceProps} onTab={setTab}/>
             <div className="apx-side">
               <PalmMic ptt={ptt} connected={connected} onDown={down} onUp={up} pttName={pttName}/>
             </div>
