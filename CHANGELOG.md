@@ -7,6 +7,7 @@
 - Android only hands the mic's Fast Forward (PTT down) and Rewind (PTT up) to the app on screen or to an app's media controls. The Android app now holds media controls and passes both to the radio. PTT works with the app open, and should also work with the screen off or another app open while the radio is playing audio. Not yet tested with the real mic.
 - On iPhone the mic's presses arrive as seek forward / seek back remote commands, which the app now passes to the radio the same way (`src-tauri/ios/MicPtt.m`, copied in by `ios.yml`). iOS only sends them while the app is playing audio, such as while the radio is on. Untested with the real mic.
 - iPhone and Android test builds started by hand from a branch now go to the test releases.
+- The Android build also makes the Google Play upload file (.aab), for Sean's new Play Console app (package name `com.repeaternation.radio`). It is only published once the Play upload key is in the repository secrets, since the test key is public.
 - Nothing to set up: pair the mic with the phone in Bluetooth settings and press PTT.
 - Version set to 0.2.58 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
 
