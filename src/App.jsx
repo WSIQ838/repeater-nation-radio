@@ -21,7 +21,7 @@ import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/des
 import {clearTraffic,deleteTraffic,getAudio,listTraffic,loadTrafficSettings,onTrafficChange,prune,recordTrack,saveTrafficSettings,saveTransmission} from "./lib/traffic";
 import {setSink} from "./hooks/useRadio";
 import {DEFAULT_VOLUME,volumeGain,announce,canAnnounce,GOOGLE_VOICES,isGoogleVoice,listVoices,loadFeatures,loadVolumes,playTone,ROGER_TONES,rogerSteps,saveFeatures,saveVolumes} from "./lib/tones";
-import {VOICE_FX,previewVoiceFx,setVoiceFx,voiceFx} from "./lib/voicefx";
+import {VOICE_FX,micTestVoiceFx,previewVoiceFx,setVoiceFx,voiceFx} from "./lib/voicefx";
 import "./apx.css";
 
 const AUTO_CONNECT_SETTLE_MS=350;
@@ -150,6 +150,15 @@ function UpdateStatus(){
 function RadioFeatures({features,setFeature,hasTray,onTest}){
   const [voices,setVoices]=useState([]),[voiceNote,setVoiceNote]=useState("");
   useEffect(()=>listVoices(setVoices),[]);
+  // "Test with my mic": record a few seconds of your own voice, then hear it through the filter.
+  const [micTest,setMicTest]=useState(""),stopMicTest=useRef(null);
+  const testMic=()=>{
+    if(stopMicTest.current){stopMicTest.current();return}
+    setMicTest("starting");
+    stopMicTest.current=onTest("fxmic",st=>{setMicTest(st);if(st!=="recording"&&st!=="playing"&&st!=="starting")stopMicTest.current=null});
+  };
+  useEffect(()=>()=>stopMicTest.current?.(),[]);
+  const micBusy=micTest==="starting"||micTest==="recording"||micTest==="playing";
   const google=isGoogleVoice(features.announceVoice);
   const testVoice=async()=>{setVoiceNote("");const how=await onTest("announce");if(how==="fallback")setVoiceNote("Google's voice didn't answer (no internet?), so the computer's voice was used.");else if(!how)setVoiceNote("This voice couldn't play.")};
   return <div className="features">
@@ -160,7 +169,9 @@ function RadioFeatures({features,setFeature,hasTray,onTest}){
       <button type="button" className="feature-test" onClick={()=>onTest("roger")} disabled={!features.rogerBeep||features.rogerTone==="off"}>Test</button></span></label>
     <label>Voice filter (how received voices sound)<span className="feature-pick">
       <select aria-label="Voice filter" value={features.voiceFx||"clean"} onChange={e=>setFeature("voiceFx",e.target.value)}>{VOICE_FX.map(t=><option key={t.id} value={t.id}>{t.label}</option>)}</select>
-      <button type="button" className="feature-test" onClick={()=>onTest("fx")}>Test</button></span></label>
+      <button type="button" className="feature-test" onClick={()=>onTest("fx")}>Test</button>
+      <button type="button" className="feature-test" onClick={testMic}>{micTest==="recording"?"Stop and play back":micTest==="playing"?"Stop":"Test with my mic"}</button></span></label>
+    {(micBusy||(micTest&&micTest!=="done"))&&<small className="feature-note">{micTest==="recording"?"Recording… talk now (up to 6 seconds), then you'll hear yourself through this filter.":micTest==="playing"?"Playing back through the filter.":micTest==="starting"?"Opening the microphone…":micTest}</small>}
     <label>Time-out timer<select value={features.tot} onChange={e=>setFeature("tot",Number(e.target.value))}>{[[0,"Off"],[30,"30 s"],[60,"60 s"],[120,"2 min"],[180,"3 min"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
     <label>Tone volume<input type="range" min="0" max="1" step="0.1" value={features.toneVolume} onChange={e=>setFeature("toneVolume",Number(e.target.value))}/></label>
     <label>Keypad tones (a beep when you press a key on the radio)<span className="feature-pick">
@@ -409,11 +420,12 @@ function RadioApp({session,onSignOut}){
   const choosePhoneFace=v=>{setPhoneFace(v);savePhoneFace(v)};
   const tone=(name,steps=null)=>playTone(name,featuresRef.current.toneVolume*Math.max(0.3,volumeRef.current/10),steps);
   // Test buttons in Settings: hear the roger beep, the voice filter or the announce voice.
-  const testFeature=what=>{
+  const testFeature=(what,arg)=>{
     const f=featuresRef.current;
     if(what==="roger")tone("roger",rogerSteps(f.rogerTone));
     else if(what==="key")playTone("key",f.keyToneVolume??0.5);
     else if(what==="fx")previewVoiceFx(f.voiceFx||"clean",Math.max(0.3,volumeGain(volumeRef.current)));
+    else if(what==="fxmic")return micTestVoiceFx(f.voiceFx||"clean",micDeviceId,Math.max(0.3,volumeGain(volumeRef.current)),arg);
     else if(what==="announce"){const c=currentChannelRef.current;return announce(c?announceText(c):"Zone one, channel one, Nation Wide",{voice:f.announceVoice,rate:f.announceRate,pitch:f.announcePitch})}
   };
   // Keypad tones: a short Motorola-style beep when any key on a radio face, the palm mic or the

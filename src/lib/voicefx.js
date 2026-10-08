@@ -3,6 +3,7 @@
 // (band-pass, saturation, compression) into a stream that the same audio element
 // plays, so the volume, mute and speaker choice keep working as before.
 import {audio} from "./tones";
+import {micError} from "./livekit";
 
 export const VOICE_FX=[
   {id:"clean",label:"Clean (no filter)"},
@@ -122,4 +123,41 @@ export async function previewVoiceFx(id,volume=0.6){
   const nodes=build(ac,id);let at=mix;for(const n of nodes){at.connect(n);at=n}at.connect(env).connect(ac.destination);
   osc.start(t);osc.stop(t+d+0.05);
   osc.onended=()=>{[osc,f1,f2,mix,env,...nodes].forEach(n=>{try{n.disconnect()}catch{}})};
+}
+
+// Test with your own voice: record up to `seconds` from the mic, then play it back
+// through the chosen filter. It plays afterwards rather than live, so speakers can't
+// feed back into the mic. onState gets "recording", "playing", "done" or an error text.
+// Returns stop(): while recording it ends the recording and plays it back.
+export function micTestVoiceFx(id,deviceId,volume,onState,seconds=6){
+  let rec=null,stream=null,timer=null,src=null,cancelled=false;
+  const finish=msg=>{clearTimeout(timer);stream?.getTracks().forEach(t=>t.stop());onState(msg)};
+  (async()=>{
+    const ac=audio();
+    if(!ac||!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==="undefined")return finish("Testing with the mic isn't possible here.");
+    try{stream=await navigator.mediaDevices.getUserMedia({audio:{...(deviceId?{deviceId:{ideal:deviceId}}:{}),echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}
+    catch(err){return finish(micError(err)?.message||"The microphone couldn't open.")}
+    if(cancelled)return finish("done");
+    const parts=[];rec=new MediaRecorder(stream);
+    rec.ondataavailable=e=>{if(e.data?.size)parts.push(e.data)};
+    rec.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());clearTimeout(timer);
+      if(cancelled||!parts.length)return onState("done");
+      try{
+        const buf=await ac.decodeAudioData(await new Blob(parts,{type:rec.mimeType}).arrayBuffer());
+        if(cancelled)return onState("done");
+        src=ac.createBufferSource();src.buffer=buf;
+        const out=level(ac,volume),nodes=await voiceChain(ac,id);
+        let at=src;for(const n of nodes){at.connect(n);at=n}at.connect(out).connect(ac.destination);
+        src.onended=()=>{[src,out,...nodes].forEach(n=>{try{n.disconnect()}catch{}});onState("done")};
+        onState("playing");src.start();
+      }catch{onState("The recording couldn't be played back.")}
+    };
+    rec.start();onState("recording");
+    timer=setTimeout(()=>{if(rec?.state==="recording")rec.stop()},seconds*1000);
+  })();
+  return ()=>{
+    if(rec?.state==="recording"){rec.stop();return}
+    cancelled=true;try{src?.stop()}catch{}finish("done");
+  };
 }
