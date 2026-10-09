@@ -506,6 +506,24 @@ function RadioApp({session,onSignOut}){
     return()=>{active=false;clearTimeout(timer);window.removeEventListener("online",online)};
   },[]);
 
+  // Dispatch (or an admin) can add, rename, move or remove channels and zones while the radio is
+  // open. Look again every minute and when the window comes back to the front, and update the
+  // list without retuning a radio that is already on a channel.
+  useEffect(()=>{
+    let alive=true,busy=false;
+    const refreshList=async()=>{
+      if(busy||document.visibilityState==="hidden")return;
+      busy=true;
+      try{
+        const list=await listRadioChannels();
+        if(alive&&list.length)setChannels(prev=>JSON.stringify(prev)===JSON.stringify(list)?prev:list);
+      }catch{}finally{busy=false}
+    };
+    const timer=setInterval(refreshList,60000);
+    window.addEventListener("focus",refreshList);document.addEventListener("visibilitychange",refreshList);
+    return()=>{alive=false;clearInterval(timer);window.removeEventListener("focus",refreshList);document.removeEventListener("visibilitychange",refreshList)};
+  },[]);
+
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
 
   const connected=state==="listening"||state==="transmitting";
