@@ -1,5 +1,13 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.60 — Dispatch can move your radio; optional location sharing
+
+**The radio now works with the new Repeater Nation Dispatch console.**
+
+- When dispatch moves your radio to another channel, it switches there on its own. Only the radio server can send this, so members can't move each other.
+- New setting, off by default: **Share my location with dispatch** (desktop Settings, and phone Setup). While it is on and the radio is connected, your position is sent to dispatch about every 15 seconds, and removed when you turn it off or disconnect. Only dispatch accounts can see it.
+- Version set to 0.2.60 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.59 — New radio screens on the phone app
 
 **The Android and iPhone apps now have four more radio screens to pick from**, after Sean asked for the phone app to change radios like the desktop app, then for phone-only looks in place of the desktop radios.
