@@ -27,6 +27,7 @@ export async function connectRadio(token, livekitUrl=config.livekitUrl, callback
   room.on(RoomEvent.TrackUnmuted,(pub,participant)=>{if(participant!==room.localParticipant)callbacks.onTrackUnmuted?.(pub,participant)});
   room.on(RoomEvent.ParticipantAttributesChanged,(changed,participant)=>{if(participant!==room.localParticipant)callbacks.onAttributes?.(changed,participant)});
   room.on(RoomEvent.ConnectionQualityChanged,(quality,participant)=>{if(participant===room.localParticipant)callbacks.onQuality?.(quality)});
+  room.on(RoomEvent.DataReceived,(payload,participant,kind,topic)=>callbacks.onData?.(payload,participant,topic));
   room.on(RoomEvent.Disconnected,reason=>callbacks.onDisconnected?.(reason));
   // Only a full reconnect stops audio; a signal-only reconnect keeps media flowing.
   room.on(RoomEvent.Reconnecting,()=>callbacks.onReconnecting?.());
