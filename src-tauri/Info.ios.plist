@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Repeater Nation Radio shares your position with dispatch only while you have "Share my location with dispatch" switched on.</string>
   <key>NSMicrophoneUsageDescription</key>
   <string>Repeater Nation Radio uses the microphone to transmit when you press PTT.</string>
   <key>NSBluetoothAlwaysUsageDescription</key>

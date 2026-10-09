@@ -528,19 +528,22 @@ function RadioApp({session,onSignOut}){
 
   const connected=state==="listening"||state==="transmitting";
   // Share this radio's position with dispatch, only while switched on and connected.
-  const [shareLoc,setShareLocState]=useState(()=>readPref("rn-share-location")==="1");
+  const [shareLoc,setShareLocState]=useState(()=>readPref("rn-share-location")==="1"),[locNote,setLocNote]=useState("");
   const setShareLoc=v=>{setShareLocState(v);writePref("rn-share-location",v?"1":"0")};
   useEffect(()=>{
-    if(!shareLoc||!connected||typeof navigator==="undefined"||!navigator.geolocation)return;
+    if(!shareLoc){setLocNote("");return}
+    if(typeof navigator==="undefined"||!navigator.geolocation){setLocNote("This device can't give a location.");return}
+    if(!connected){setLocNote("Waiting for the radio to connect.");return}
+    setLocNote("Looking for a location…");
     let last=0;
     const id=navigator.geolocation.watchPosition(pos=>{
       const now=Date.now();if(now-last<15000)return;last=now;
       const c=pos.coords;
-      reportLocation({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,heading:c.heading,channel_id:channelIdRef.current}).catch(()=>{});
-    },()=>{},{enableHighAccuracy:true,maximumAge:10000});
+      reportLocation({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,heading:c.heading,channel_id:channelIdRef.current}).then(()=>setLocNote("Sharing. Last sent "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+".")).catch(()=>setLocNote("Got a location but couldn't send it to dispatch."));
+    },err=>setLocNote(err?.code===1?"Location is blocked for this app. Allow location in the system settings, then switch this off and on.":"Couldn't get a location yet."),{enableHighAccuracy:true,maximumAge:10000});
     return()=>{navigator.geolocation.clearWatch(id);stopLocation().catch(()=>{})};
   },[shareLoc,connected]);
-  const locationSetting=<label className="setting"><span>Share my location with dispatch</span><input type="checkbox" checked={shareLoc} onChange={e=>setShareLoc(e.target.checked)}/></label>;
+  const locationSetting=<label className="setting"><span>Share my location with dispatch{shareLoc&&locNote?<small style={{display:"block",opacity:.75}}>{locNote}</small>:null}</span><input type="checkbox" checked={shareLoc} onChange={e=>setShareLoc(e.target.checked)}/></label>;
   const stateRef=useRef(state);stateRef.current=state;
   // Power turns the radio on, or off from any other state, including cancelling a
   // connect still in progress or a reconnect.

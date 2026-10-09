@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.62 — Location sharing works on phones, and says what it is doing
+
+**Sharing your location with dispatch now has the permissions it needs on Android, iPhone and Mac, and the setting shows what is happening**, after Sean asked whether the radios give dispatch a GPS location.
+
+- Android now asks for location (only when you switch "Share my location with dispatch" on). iPhone and Mac now have the text their location prompt needs.
+- Under the setting, the radio says what it is doing: waiting for the radio to connect, looking for a location, sharing (and when it last sent), or that location is blocked for the app.
+- Still off by default, and only sent while the radio is connected.
+- Untested on a real phone: if no prompt appears or it says location is blocked, allow location for the app in the phone's settings.
+- Version set to 0.2.62 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.61 — New channels and zones show up without restarting the radio
 
 **Channels and zones added, renamed or removed in the dispatch console (or by an admin) now appear on the radio within a minute**, after Sean reported that they didn't update the radio.
