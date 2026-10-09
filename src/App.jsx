@@ -2,7 +2,7 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import {zoneLabel} from "./lib/labels";
 import {Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
-import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels} from "./lib/auth";
+import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels,reportLocation,stopLocation} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
 import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
@@ -456,7 +456,10 @@ function RadioApp({session,onSignOut}){
   const setTrafficSettings=v=>{setTrafficSettingsState(v);saveTrafficSettings(v);prune(v).catch(()=>{})};
   const saveRecording=e=>{if(trafficRef.current.enabled)saveTransmission(e).catch(err=>console.warn("[traffic] save failed",err))};
   const ownRecRef=useRef(null);
+  const selectChannelRef=useRef(null);
   const radioEvents={
+    // Dispatch moved this radio to another channel.
+    onDispatchMove:m=>{if(m?.channel_id)selectChannelRef.current?.(m.channel_id)},
     // The server dropped our channel hold or the connection went down mid-transmission.
     onFloorLost:()=>{setPttState(false);if(featuresRef.current.busyTone)tone("error")},
     onTalkEnd:e=>{const f=featuresRef.current;if(f.rogerBeep&&f.rogerTone!=="off"&&e.ms>300&&!mutedRef.current)tone("roger",rogerSteps(f.rogerTone))},
@@ -506,6 +509,20 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
 
   const connected=state==="listening"||state==="transmitting";
+  // Share this radio's position with dispatch, only while switched on and connected.
+  const [shareLoc,setShareLocState]=useState(()=>readPref("rn-share-location")==="1");
+  const setShareLoc=v=>{setShareLocState(v);writePref("rn-share-location",v?"1":"0")};
+  useEffect(()=>{
+    if(!shareLoc||!connected||typeof navigator==="undefined"||!navigator.geolocation)return;
+    let last=0;
+    const id=navigator.geolocation.watchPosition(pos=>{
+      const now=Date.now();if(now-last<15000)return;last=now;
+      const c=pos.coords;
+      reportLocation({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,heading:c.heading,channel_id:channelIdRef.current}).catch(()=>{});
+    },()=>{},{enableHighAccuracy:true,maximumAge:10000});
+    return()=>{navigator.geolocation.clearWatch(id);stopLocation().catch(()=>{})};
+  },[shareLoc,connected]);
+  const locationSetting=<label className="setting"><span>Share my location with dispatch</span><input type="checkbox" checked={shareLoc} onChange={e=>setShareLoc(e.target.checked)}/></label>;
   const stateRef=useRef(state);stateRef.current=state;
   // Power turns the radio on, or off from any other state, including cancelling a
   // connect still in progress or a reconnect.
@@ -558,6 +575,7 @@ function RadioApp({session,onSignOut}){
     if(c?.zoneId)setZoneId(c.zoneId);
     setTuneSeq(n=>n+1);
   };
+  selectChannelRef.current=selectChannel;
   // Picking a zone or channel tunes the radio there: after a short settle (so spinning
   // a knob does not join every channel it passes) connect to the new channel.
   const [tuneSeq,setTuneSeq]=useState(0),connectRef=useRef(connect);
@@ -819,6 +837,7 @@ function RadioApp({session,onSignOut}){
     myStatus={myStatus} onStatus={chooseStatus}
     settingsPanel={<>
       <div className="setting"><span>Microphone</span><div className="prog-fields"><label><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">Phone default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label></div></div>
+      {locationSetting}
       <div className="setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div>
       <div className="setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={false} onTest={testFeature}/></div>
       <div className="setting ble-setting"><span>Bluetooth PTT mic</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>
@@ -859,7 +878,7 @@ function RadioApp({session,onSignOut}){
         {tab==="log"&&<TrafficLog channels={channels} settings={trafficSettings} setSettings={setTrafficSettings} speakerId={speakerId} volume={volumeGain(volume)}/>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":callState==="reconnecting"?"Call reconnecting…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="settings-group label">PROGRAMMING</div><div className="setting keymap-setting"><span>Radio</span><div className="face-picker">{FACES.map(x=><label key={x.id} className={face===x.id?"on":""}><input type="radio" name="face" value={x.id} checked={face===x.id} onChange={()=>chooseFace(x.id)}/><strong>{x.label}</strong><small>{x.note}</small></label>)}</div></div><div className="setting keymap-setting"><span>Zone and channel</span><div className="prog-fields"><label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><small>{connected?participants.length+" on channel":"Not connected"}</small></div></div><div className="setting keymap-setting"><span>Microphone and speaker</span><div className="prog-fields"><label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label><label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label><small>{muted?"Speaker muted":"Speaker on"}</small></div></div><div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray} onTest={testFeature}/></div><div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="settings-group label">ACCOUNT AND APP</div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||lastUrl||config.livekitUrl}</code></div>{state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}<UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="settings-group label">PROGRAMMING</div><div className="setting keymap-setting"><span>Radio</span><div className="face-picker">{FACES.map(x=><label key={x.id} className={face===x.id?"on":""}><input type="radio" name="face" value={x.id} checked={face===x.id} onChange={()=>chooseFace(x.id)}/><strong>{x.label}</strong><small>{x.note}</small></label>)}</div></div><div className="setting keymap-setting"><span>Zone and channel</span><div className="prog-fields"><label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><small>{connected?participants.length+" on channel":"Not connected"}</small></div></div><div className="setting keymap-setting"><span>Microphone and speaker</span><div className="prog-fields"><label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label><label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label><small>{muted?"Speaker muted":"Speaker on"}</small></div></div>{locationSetting}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray} onTest={testFeature}/></div><div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="settings-group label">ACCOUNT AND APP</div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||lastUrl||config.livekitUrl}</code></div>{state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}<UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>

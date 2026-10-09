@@ -283,6 +283,12 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
           onTrackMuted:(pub,participant)=>{if(pub?.kind==="audio")txEnd(participant)},
           onTrackUnmuted:(pub,participant)=>{if(pub?.track)txStart(pub.track,participant)},
           onParticipantDisconnected:participant=>txEnd(participant),
+          // Dispatch moves this radio to another channel. Only the server can send data on a
+          // channel (the participant is empty), so a member can't send this to someone else.
+          onData:(payload,participant,topic)=>{
+            if(roomRef.current!==room||participant||topic!=="dispatch-move")return;
+            try{const m=JSON.parse(new TextDecoder().decode(payload));if(m?.channel_id)eventsRef.current.onDispatchMove?.(m)}catch{}
+          },
           onQuality:q=>{if(roomRef.current===room)setQuality(q)},
           onAttributes:()=>{if(roomRef.current===room)refresh()},
           onReconnecting:()=>{

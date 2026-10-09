@@ -211,6 +211,10 @@ export const issueRadioPTT = (channelId, action, zoneId="", channelNumber=null, 
 
 export const radioPresence = () => invoke("radio-presence", {});
 
+// Location sharing is opt-in: a position is only sent while the member has it switched on.
+export const reportLocation = (fix) => invoke("radio-location", { action: "report", ...fix });
+export const stopLocation = () => invoke("radio-location", { action: "stop" });
+
 export const directCall = (action, payload = {}) =>
   invoke("radio-direct-call", { action, ...payload });
 
