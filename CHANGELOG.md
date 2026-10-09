@@ -1,5 +1,13 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.61 — New channels and zones show up without restarting the radio
+
+**Channels and zones added, renamed or removed in the dispatch console (or by an admin) now appear on the radio within a minute**, after Sean reported that they didn't update the radio.
+
+- The radio used to load the channel list once when it opened. It now checks again every minute and whenever the window comes back to the front.
+- A radio that is already on a channel stays on it; only the list of channels changes.
+- Version set to 0.2.61 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.60 — Digital P25 voice sounds like a real P25 radio, and you can test filters with your mic
 
 **The Digital P25 voice filter now rebuilds what you hear the way a P25 radio's voice coder does, so it has the robotic, slightly watery sound of real P25**, after Sean said it didn't sound like P25.
