@@ -1,0 +1,39 @@
+name: Build Repeater Nation Stream Deck plugin
+
+# Manual only: run it from the Actions tab when the plugin changes.
+# It tests the plugin, packs it, and publishes a release (streamdeck-v<version>) with the installer attached.
+on:
+  workflow_dispatch:
+
+jobs:
+  build-plugin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: streamdeck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run icons
+      - run: npm run build
+      - run: npm test
+      - run: npm run validate
+      - run: npm run pack
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="streamdeck-v$VERSION"
+          FILE=dist/com.repeaternation.radio.streamDeckPlugin
+          NOTES="Stream Deck plugin for the Repeater Nation radio and dispatch console. Download \`com.repeaternation.radio.streamDeckPlugin\` and double-click it to install. Then switch on \"Stream Deck\" in the app's Settings. See streamdeck/README.md for the list of actions."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$FILE" --clobber
+          else
+            gh release create "$TAG" "$FILE" --title "Repeater Nation Stream Deck plugin v$VERSION" --notes "$NOTES"
+          fi
