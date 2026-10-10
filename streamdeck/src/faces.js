@@ -27,7 +27,7 @@ export function tile({ bg = "#14416b", fg = "#ffffff", title = "", sub = "", edg
   return "data:image/svg+xml;charset=utf8," + encodeURIComponent(svg);
 }
 
-const shortName = (def) => def.name.replace(/^(Radio|Dispatch): /, "").replace(/\s*\(.*\)/, "");
+const shortName = (def) => def.name.replace(/^(Radio|Control): /, "").replace(/\s*\(.*\)/, "");
 const GREY = "#3a424c", NAVY = "#14416b", RED = "#c8262f", GREEN = "#2e8b57", AMBER = "#b8860b", WHITE = "#f4f6f8", DARK = "#111111";
 
 function radioFace(def, s, settings) {
