@@ -1,11 +1,11 @@
 # Repeater Nation Stream Deck plugin
 
-Controls the **Repeater Nation radio** (desktop app) and the **dispatch console** from an Elgato Stream Deck, and shows live state on the keys (channel, who is talking, your status, channel on/off).
+Controls the **Repeater Nation radio** (desktop app) and the **control console** from an Elgato Stream Deck, and shows live state on the keys (channel, who is talking, your status, channel on/off).
 
 ## Install
 
 1. Download `com.repeaternation.radio.streamDeckPlugin` from the latest **streamdeck-v…** release and double-click it. The Stream Deck app installs it. Needs Stream Deck 6.9 or newer.
-2. In the radio app: **Settings › Stream Deck** on. In the dispatch console: **Settings › Stream Deck** on.
+2. In the radio app: **Settings › Stream Deck** on. In the control console: **Settings › Stream Deck** on.
 3. In the Stream Deck app, open the **Repeater Nation** category and drag actions onto keys.
 
 The apps connect to the plugin on this computer only (`127.0.0.1:34580`). Stream Deck is off by default in both apps.
@@ -13,7 +13,7 @@ The apps connect to the plugin on this computer only (`127.0.0.1:34580`). Stream
 ## Radio actions
 Push to talk (hold), channel up/down, zone up/down, one-touch channels P1–P5, power, mute, volume up/down, scan, replay, status (Available, En Route, At Scene, Busy, Returning, Out of Service), answer / decline / end call. The push-to-talk key turns red while you transmit and white while someone is talking; the status keys light up for your current status.
 
-## Dispatch actions
+## Control actions
 - **Channel listen on / off** and **Channel push to talk (hold)**: set the key's **channel number** in the Stream Deck inspector. Number 1 is the first channel in the console, in zone order. The key shows that channel's name, on/off, who is talking, and turns red when you transmit.
 - **General transmit (hold)**, **Send tone** (tone number), **Play recorded message** (message number), **Alerts on / off**.
 

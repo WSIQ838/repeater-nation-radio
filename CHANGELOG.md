@@ -1,6 +1,6 @@
 # Repeater Nation Radio — Changelog
 
-## 0.2.68 — One-click updates
+## 0.2.69 — One-click updates
 
 **"Update now" installs the new version and restarts the radio, instead of opening the download page.**
 
@@ -8,7 +8,11 @@
 - On Mac this also avoids the "damaged" message for updates, because the app replaces itself instead of being downloaded again.
 - Where there's nothing to install in place (phones, a .deb or .rpm install, or a release built without the signing key), it opens the download as before.
 - Builds sign the update packages with the `TAURI_SIGNING_PRIVATE_KEY` repository secret and publish a small feed per platform on the `radio-updates` pre-release (never marked latest). Without the secret, builds work exactly as before.
-- Version set to 0.2.68 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+- Version set to 0.2.69 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
+## 0.2.68 — "Dispatch" is now "Control"
+
+- The Stream Deck plugin (1.0.1) and the control-head radio face now say Control instead of Dispatch.
 
 ## 0.2.67 — Update pop-up, automatic update checks and a new icon
 

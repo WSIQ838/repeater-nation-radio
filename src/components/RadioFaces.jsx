@@ -13,7 +13,7 @@ import {CordHead} from "./CordHead";
 // photos; each draws the same radio through useFace/FaceDisplay (ControlHead.jsx),
 // so a new radio needs only its layout and an entry in FACES.
 export const FACES=[
-  {id:"control-head",label:"Dispatch control head",note:"Full keypad, ten softkeys, P1–P5"},
+  {id:"control-head",label:"Control head",note:"Full keypad, ten softkeys, P1–P5"},
   {id:"dash-head",label:"Dash mount head",note:"Keypad, four softkeys, knob and nav diamond"},
   {id:"slim-head",label:"Slim mobile head",note:"Two knobs, five softkeys, P key"},
   {id:"touch-handheld",label:"Touchscreen handheld",note:"Touch screen, two top knobs, P1–P6"},

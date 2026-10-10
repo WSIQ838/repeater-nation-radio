@@ -32,9 +32,9 @@ const actions = ACTIONS.map((d) => {
 const manifest = {
   $schema: "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   Name: "Repeater Nation",
-  Version: "1.0.0.0",
+  Version: "1.0.1.0",
   Author: "Repeater Nation",
-  Description: "Control the Repeater Nation radio and the dispatch console from a Stream Deck: push to talk, channels, status, tones and live channel state on the keys.",
+  Description: "Control the Repeater Nation radio and the control console from a Stream Deck: push to talk, channels, status, tones and live channel state on the keys.",
   UUID: PLUGIN_UUID,
   Icon: "imgs/plugin",
   Category: "Repeater Nation",
