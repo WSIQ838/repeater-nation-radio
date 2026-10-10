@@ -1,6 +1,6 @@
 [package]
 name = "repeater-nation-radio"
-version = "0.2.67"
+version = "0.2.68"
 description = "Repeater Nation desktop radio"
 authors = ["Repeater Nation"]
 edition = "2021"
@@ -41,6 +41,9 @@ libc = "0.2"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+# One-click updates: download, install and restart (desktop only; phones update from their store or the release page).
+tauri-plugin-updater = "2.13"
+tauri-plugin-process = "2.4"
 
 [features]
 custom-protocol = ["tauri/custom-protocol"]

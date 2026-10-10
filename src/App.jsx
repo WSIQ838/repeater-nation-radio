@@ -3,7 +3,7 @@ import {zoneLabel,controllerLabel} from "./lib/labels";
 import {MapPin,Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels,reportLocation,stopLocation} from "./lib/auth";
-import {CAN_INSTALL_UPDATES,UPDATE_EVERY,checkForUpdates,loadUpdateEvery,openRelease,saveUpdateEvery,skipVersion,skippedVersion,useAutoUpdateCheck,useUpdateState} from "./lib/updates";
+import {CAN_INSTALL_UPDATES,UPDATE_EVERY,checkForUpdates,installUpdate,loadUpdateEvery,saveUpdateEvery,skipVersion,skippedVersion,useAutoUpdateCheck,useUpdateState} from "./lib/updates";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
@@ -90,13 +90,14 @@ function Login({notice=""}){
 function UpdateStatus(){
   const {status,release,failure}=useUpdateState();
   const [every,setEvery]=useState(loadUpdateEvery);
+  const [progress,setProgress]=useState("");
   // Opening Settings checks now unless a check already has an answer.
   useEffect(()=>{if(status==="idle")checkForUpdates()},[]);// eslint-disable-line react-hooks/exhaustive-deps
   const check=()=>checkForUpdates();
   const icon=<RefreshCw size={18}/>;
   const schedule=CAN_INSTALL_UPDATES&&<label className="update-every">Check for updates automatically<select value={every} onChange={e=>{setEvery(e.target.value);saveUpdateEvery(e.target.value)}}>{UPDATE_EVERY.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></label>;
   if(status==="checking"||status==="idle")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Checking for updates…</h3></div></div><span className="status-pill">CHECKING</span></div><div className="update-display"><div><strong>Repeater Nation Radio</strong><small>Checking the latest published release</small></div></div>{schedule}</div>;
-  if(status==="available")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Update available</h3></div></div><span className="status-pill">READY</span></div><div className="update-display"><div><strong>Version {release.version}</strong><small>A newer Repeater Nation Radio release is ready.</small></div><span className="rx-dot"/></div><div className="update-actions"><button className="primary" onClick={()=>openRelease(release)}>Install update</button><button onClick={check}>Check again</button></div>{schedule}</div>;
+  if(status==="available")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Update available</h3></div></div><span className="status-pill">READY</span></div><div className="update-display"><div><strong>Version {release.version}</strong><small>A newer Repeater Nation Radio release is ready.</small></div><span className="rx-dot"/></div><div className="update-actions"><button className="primary" disabled={!!progress} onClick={()=>installUpdate(release,setProgress)}>{progress||"Install update"}</button><button onClick={check}>Check again</button></div>{schedule}</div>;
   if(status==="error")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>{failure?.title||"Update check failed"}</h3></div></div><span className="status-pill warn">{failure?.pill||"ERROR"}</span></div><div className="update-display"><div><strong>Version {String(__APP_VERSION__)}</strong><small>{failure?.detail||"Try again later."}</small></div></div><div className="update-actions"><button onClick={check}>Check again</button></div>{schedule}</div>;
   return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date · {String(__APP_VERSION__)}</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div>{schedule}</div>;
 }
@@ -107,14 +108,15 @@ function UpdateStatus(){
 function UpdatePopup(){
   const {status,release,seq,auto}=useUpdateState();
   const [dismissed,setDismissed]=useState(0);
+  const [progress,setProgress]=useState("");
   if(!CAN_INSTALL_UPDATES||!auto||status!=="available"||!release||seq<=dismissed||release.version===skippedVersion())return null;
   const close=()=>setDismissed(seq);
   return <div className="locnotice update-popup" role="dialog" aria-modal="true" aria-label="Update available">
     <div className="locbox">
       <h2>Update available</h2>
       <p>Repeater Nation Radio <b>{release.version}</b> is out. You have {String(__APP_VERSION__)}.</p>
-      <p className="muted">Download and run the installer; it replaces this version and keeps your sign-in and settings.</p>
-      <div className="locbtns"><button type="button" className="primary" onClick={()=>{openRelease(release);close()}}>Download update</button><button type="button" onClick={close}>Later</button><button type="button" onClick={()=>{skipVersion(release.version);close()}}>Skip this version</button></div>
+      <p className="muted">It installs and restarts the radio, keeping your sign-in and settings. Where it can't install here, it opens the download page instead.</p>
+      <div className="locbtns"><button type="button" className="primary" disabled={!!progress} onClick={async()=>{if(await installUpdate(release,setProgress)==="opened")close()}}>{progress||"Update now"}</button><button type="button" onClick={close}>Later</button><button type="button" onClick={()=>{skipVersion(release.version);close()}}>Skip this version</button></div>
     </div>
   </div>;
 }

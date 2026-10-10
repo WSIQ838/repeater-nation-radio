@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.68 — One-click updates
+
+**"Update now" installs the new version and restarts the radio, instead of opening the download page.**
+
+- The update pop-up and Settings › Radio update download the signed update for this computer, install it and restart. Windows runs the installer in a small progress window; Mac and Linux (AppImage) restart straight into the new version. The button shows the download progress.
+- On Mac this also avoids the "damaged" message for updates, because the app replaces itself instead of being downloaded again.
+- Where there's nothing to install in place (phones, a .deb or .rpm install, or a release built without the signing key), it opens the download as before.
+- Builds sign the update packages with the `TAURI_SIGNING_PRIVATE_KEY` repository secret and publish a small feed per platform on the `radio-updates` pre-release (never marked latest). Without the secret, builds work exactly as before.
+- Version set to 0.2.68 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.67 — Update pop-up, automatic update checks and a new icon
 
 **The radio now tells you when a new version is out, without opening Settings.**

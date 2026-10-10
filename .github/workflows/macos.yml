@@ -19,6 +19,11 @@ jobs:
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
+    env:
+      # Signs the one-click update packages. Without this secret the build still works,
+      # and the apps fall back to opening the download page.
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -36,7 +41,10 @@ jobs:
         run: npx tauri icon src-tauri/icons/icon.svg
 
       - name: Build macOS app and DMG
-        run: npm run tauri build -- --bundles app,dmg
+        shell: bash
+        run: |
+          EXTRA=""; [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && EXTRA="--config src-tauri/updater.conf.json"
+          npm run tauri build -- --bundles app,dmg $EXTRA
 
       - name: Upload macOS installers
         uses: actions/upload-artifact@v4
@@ -63,3 +71,18 @@ jobs:
             gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes-file .github/release-notes.md || \
             gh release view "$TAG" >/dev/null
           gh release upload "$TAG" src-tauri/target/release/bundle/dmg/*.dmg --clobber
+
+      - name: Publish the macOS update feed
+        if: ${{ env.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="radio-v$VERSION"
+          ARCH=${{ matrix.arch == 'arm64' && 'aarch64' || 'x86_64' }}
+          # Both Macs build "Repeater Nation Radio.app.tar.gz": give each its own name on the release.
+          NAME="Repeater.Nation.Radio_${VERSION}_${ARCH}.app.tar.gz"
+          cp "src-tauri/target/release/bundle/macos/Repeater Nation Radio.app.tar.gz" "$NAME"
+          gh release upload "$TAG" "$NAME" --clobber
+          .github/scripts/update-feed.sh "darwin-$ARCH" "src-tauri/target/release/bundle/macos/Repeater Nation Radio.app.tar.gz.sig" "https://github.com/${GITHUB_REPOSITORY}/releases/download/$TAG/$NAME"

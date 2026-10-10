@@ -24,6 +24,10 @@ pub fn run() {
         builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             tray::show_main(app);
         }));
+        // One-click updates: the update pop-up downloads the signed update, installs it and restarts.
+        builder = builder
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_process::init());
     }
 
     builder = builder

@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
+    env:
+      # Signs the one-click update packages. Without this secret the build still works,
+      # and the apps fall back to opening the download page.
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -47,7 +52,9 @@ jobs:
           rsvg-convert -w 512 -h 512 src-tauri/icons/icon.svg -o src-tauri/icons/icon.png
 
       - name: Build Linux packages
-        run: npm run tauri build -- --bundles appimage,deb,rpm
+        run: |
+          EXTRA=""; [ -n "$TAURI_SIGNING_PRIVATE_KEY" ] && EXTRA="--config src-tauri/updater.conf.json"
+          npm run tauri build -- --bundles appimage,deb,rpm $EXTRA
 
       - name: Upload Linux installers
         uses: actions/upload-artifact@v4
@@ -75,3 +82,15 @@ jobs:
             gh release create "$TAG" --title "Repeater Nation Radio v$VERSION" --notes-file .github/release-notes.md || \
             gh release view "$TAG" >/dev/null
           gh release upload "$TAG" src-tauri/target/release/bundle/appimage/*.AppImage src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/rpm/*.rpm --clobber
+
+      # The updater replaces the AppImage; .deb and .rpm installs update from the release page.
+      - name: Publish the Linux update feed
+        if: ${{ env.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          IMG=$(ls src-tauri/target/release/bundle/appimage/*.AppImage | head -1)
+          ASSET=$(basename "$IMG" | tr ' ' '.')
+          .github/scripts/update-feed.sh linux-x86_64 "$IMG.sig" "https://github.com/${GITHUB_REPOSITORY}/releases/download/radio-v$VERSION/$ASSET"
