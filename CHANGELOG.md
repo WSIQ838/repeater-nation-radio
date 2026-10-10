@@ -1,5 +1,9 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.68 — "Dispatch" is now "Control"
+
+- The Stream Deck plugin (1.0.1) and the control-head radio face now say Control instead of Dispatch.
+
 ## 0.2.67 — Update pop-up, automatic update checks and a new icon
 
 **The radio now tells you when a new version is out, without opening Settings.**

@@ -24,12 +24,12 @@ export const ACTIONS = [
   { id: "answer", app: "radio", name: "Radio: Answer call", tip: "Answer an incoming direct call." },
   { id: "decline", app: "radio", name: "Radio: Decline call", tip: "Decline an incoming direct call." },
   { id: "end_call", app: "radio", name: "Radio: End call", tip: "End the current direct call." },
-  // ---- Dispatch console ----
-  { id: "dp_listen", app: "dispatch", name: "Dispatch: Channel listen on / off", tip: "Switch a console channel on or off. Set its number in console order.", numbered: "slot", op: "listen" },
-  { id: "dp_ptt", app: "dispatch", name: "Dispatch: Channel push to talk (hold)", tip: "Hold to talk on a console channel. Set its number in console order.", numbered: "slot", op: "ptt", hold: true },
-  { id: "dp_general", app: "dispatch", name: "Dispatch: General transmit (hold)", tip: "Hold to talk on every channel that is on.", op: "general", hold: true },
-  { id: "dp_tone", app: "dispatch", name: "Dispatch: Send tone", tip: "Send a tone on every channel that is on. Set the tone number.", numbered: "index", op: "tone" },
-  { id: "dp_message", app: "dispatch", name: "Dispatch: Play recorded message", tip: "Play a recorded message on every channel that is on. Set the message number.", numbered: "index", op: "message" },
-  { id: "dp_alerts", app: "dispatch", name: "Dispatch: Alerts on / off", tip: "Turn the channel alert tones on or off.", op: "alerts" },
+  // ---- Control console ----
+  { id: "dp_listen", app: "dispatch", name: "Control: Channel listen on / off", tip: "Switch a console channel on or off. Set its number in console order.", numbered: "slot", op: "listen" },
+  { id: "dp_ptt", app: "dispatch", name: "Control: Channel push to talk (hold)", tip: "Hold to talk on a console channel. Set its number in console order.", numbered: "slot", op: "ptt", hold: true },
+  { id: "dp_general", app: "dispatch", name: "Control: General transmit (hold)", tip: "Hold to talk on every channel that is on.", op: "general", hold: true },
+  { id: "dp_tone", app: "dispatch", name: "Control: Send tone", tip: "Send a tone on every channel that is on. Set the tone number.", numbered: "index", op: "tone" },
+  { id: "dp_message", app: "dispatch", name: "Control: Play recorded message", tip: "Play a recorded message on every channel that is on. Set the message number.", numbered: "index", op: "message" },
+  { id: "dp_alerts", app: "dispatch", name: "Control: Alerts on / off", tip: "Turn the channel alert tones on or off.", op: "alerts" },
 ];
 export const uuidOf = (def) => `${PLUGIN_UUID}.${def.id.replace(/_/g, "-")}`;
