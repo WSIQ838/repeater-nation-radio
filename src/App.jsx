@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import {zoneLabel} from "./lib/labels";
-import {Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
+import {MapPin,Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels,reportLocation,stopLocation} from "./lib/auth";
 import {openUrl} from "@tauri-apps/plugin-opener";
@@ -15,6 +15,7 @@ import {ACTIONS,actionLabel,defaultBindings,defaultGlobal,loadKeymap,sameInput,s
 import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
 import {IS_PHONE,PhoneApp,loadPhoneFace,savePhoneFace} from "./components/PhoneApp";
+import MemberMap from "./components/MemberMap";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
 import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
@@ -399,7 +400,34 @@ function BluetoothPtt({status,setStatus}){
   </div>;
 }
 
+const LOC_NOTICE_KEY="rn-loc-notice-seen";
+// Shown once, before any location is shared: what is shared, with whom, and how to turn it off.
+function LocationNotice(){
+  const [open,setOpen]=useState(()=>readPref(LOC_NOTICE_KEY)!=="1");
+  if(!open)return null;
+  const done=off=>{
+    if(off){writePref("rn-share-location","0");writePref("rn-share-members","0")}
+    writePref(LOC_NOTICE_KEY,"1");setOpen(false);window.dispatchEvent(new Event("rn-loc-notice"));
+  };
+  return <div className="locnotice" role="dialog" aria-modal="true" aria-label="Location sharing">
+    <div className="locbox">
+      <h2>Location sharing is on</h2>
+      <p>While the radio is connected, this app shares your location:</p>
+      <ul>
+        <li><b>With dispatch</b>: your exact position.</li>
+        <li><b>With other members</b> on the Map tab: your position blurred to about 100 m. You can see them too.</li>
+      </ul>
+      <p>Nothing is shared while the radio is off or disconnected. You can turn either one off any time in Settings (More › Setup on a phone). Your phone or computer will also ask you to allow location.</p>
+      <div className="locbtns"><button type="button" className="primary" onClick={()=>done(false)}>OK, keep it on</button><button type="button" onClick={()=>done(true)}>Turn location sharing off</button></div>
+    </div>
+  </div>;
+}
+
 function RadioApp({session,onSignOut}){
+  return <><RadioAppInner session={session} onSignOut={onSignOut}/><LocationNotice/></>;
+}
+
+function RadioAppInner({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio",order:c.zoneOrder??999}])).values()).sort((a,b)=>a.order-b.order),[channels]);
   // What the channel announcement says: "Zone ALL, channel 1, Nation Wide".
@@ -527,23 +555,33 @@ function RadioApp({session,onSignOut}){
   useEffect(()=>{const current=channels.find(x=>x.id===channelId);if(current)setChannelName(current.name)},[channels,channelId]);
 
   const connected=state==="listening"||state==="transmitting";
-  // Share this radio's position with dispatch, only while switched on and connected.
-  const [shareLoc,setShareLocState]=useState(()=>readPref("rn-share-location")==="1"),[locNote,setLocNote]=useState("");
+  // Share this radio's position: with dispatch (exact) and, only if chosen, with other members (blurred).
+  // Only while switched on and connected.
+  const locOn=key=>readPref(key)!=="0"; // on unless the member turned it off
+  const [shareLoc,setShareLocState]=useState(()=>locOn("rn-share-location")),[shareMembers,setShareMembersState]=useState(()=>locOn("rn-share-members")),[locNote,setLocNote]=useState(""),[myPos,setMyPos]=useState(null),[locNoticeSeen,setLocNoticeSeen]=useState(()=>readPref(LOC_NOTICE_KEY)==="1");
+  // The first-run notice (LocationNotice) tells the member what is shared; sharing starts after it is answered.
+  useEffect(()=>{const sync=()=>{setLocNoticeSeen(readPref(LOC_NOTICE_KEY)==="1");setShareLocState(locOn("rn-share-location"));setShareMembersState(locOn("rn-share-members"))};window.addEventListener("rn-loc-notice",sync);return()=>window.removeEventListener("rn-loc-notice",sync)},[]);
   const setShareLoc=v=>{setShareLocState(v);writePref("rn-share-location",v?"1":"0")};
+  const setShareMembers=v=>{setShareMembersState(v);writePref("rn-share-members",v?"1":"0")};
+  const sharing=(shareLoc||shareMembers)&&locNoticeSeen;
   useEffect(()=>{
-    if(!shareLoc){setLocNote("");return}
+    if(!sharing){setLocNote("");setMyPos(null);return}
     if(typeof navigator==="undefined"||!navigator.geolocation){setLocNote("This device can't give a location.");return}
     if(!connected){setLocNote("Waiting for the radio to connect.");return}
     setLocNote("Looking for a location…");
     let last=0;
     const id=navigator.geolocation.watchPosition(pos=>{
-      const now=Date.now();if(now-last<15000)return;last=now;
       const c=pos.coords;
-      reportLocation({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,heading:c.heading,channel_id:channelIdRef.current}).then(()=>setLocNote("Sharing. Last sent "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+".")).catch(()=>setLocNote("Got a location but couldn't send it to dispatch."));
+      setMyPos({lat:c.latitude,lng:c.longitude});
+      const now=Date.now();if(now-last<15000)return;last=now;
+      reportLocation({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,heading:c.heading,channel_id:channelIdRef.current,visibility:shareMembers?"members":"dispatch"}).then(()=>setLocNote("Sharing with "+(shareMembers?"dispatch and other members":"dispatch")+". Last sent "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+".")).catch(()=>setLocNote("Got a location but couldn't send it."));
     },err=>setLocNote(err?.code===1?"Location is blocked for this app. Allow location in the system settings, then switch this off and on.":"Couldn't get a location yet."),{enableHighAccuracy:true,maximumAge:10000});
     return()=>{navigator.geolocation.clearWatch(id);stopLocation().catch(()=>{})};
-  },[shareLoc,connected]);
-  const locationSetting=<label className="setting"><span>Share my location with dispatch{shareLoc&&locNote?<small style={{display:"block",opacity:.75}}>{locNote}</small>:null}</span><input type="checkbox" checked={shareLoc} onChange={e=>setShareLoc(e.target.checked)}/></label>;
+  },[sharing,shareMembers,connected]);
+  const locationSetting=<>
+    <label className="setting"><span>Share my location with dispatch<small style={{display:"block",opacity:.75}}>On by default while the radio is connected. Turn it off here.</small>{sharing&&locNote?<small style={{display:"block",opacity:.75}}>{locNote}</small>:null}</span><input type="checkbox" checked={shareLoc||shareMembers} disabled={shareMembers} onChange={e=>setShareLoc(e.target.checked)}/></label>
+    <label className="setting"><span>Show my location to other members on the map<small style={{display:"block",opacity:.75}}>On by default. Blurred to about 100 m. You can see others only while this is on. Includes dispatch.</small></span><input type="checkbox" checked={shareMembers} onChange={e=>setShareMembers(e.target.checked)}/></label>
+  </>;
   const stateRef=useRef(state);stateRef.current=state;
   // Power turns the radio on, or off from any other state, including cancelling a
   // connect still in progress or a reconnect.
@@ -856,6 +894,7 @@ function RadioApp({session,onSignOut}){
     incoming={incoming} call={call} callState={callState} callError={callError} onlineUsers={onlineUsers} onCall={startCall} onAnswer={accept} onDecline={decline} onEndCall={endCall}
     displayName={displayName} callsign={callsign} onSignOut={logout}
     myStatus={myStatus} onStatus={chooseStatus}
+    mapPanel={<MemberMap showing={shareMembers} myPos={myPos} onShow={()=>setShareMembers(true)}/>}
     settingsPanel={<>
       <div className="setting"><span>Microphone</span><div className="prog-fields"><label><select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">Phone default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label></div></div>
       {locationSetting}
@@ -878,7 +917,7 @@ function RadioApp({session,onSignOut}){
       <div className="topbar-right"><span aria-label={"Build version "+String(__APP_VERSION__)} style={{fontSize:12,fontWeight:700,letterSpacing:".06em",opacity:.8,padding:"5px 9px",border:"1px solid rgba(255,255,255,.18)",borderRadius:6,background:"rgba(255,255,255,.06)"}}>BUILD v{String(__APP_VERSION__)}</span><button type="button" className="mini-open" onClick={toggleMini} title="Mini radio (always on top)"><Minimize2 size={15}/> Mini</button><div className="connection"><i className={connected?"online":"offline"}/>{connected?"Connected":state==="connecting"?"Connecting…":state==="reconnecting"?"Reconnecting…":"Ready"}<ChevronDown size={14}/></div></div>
     </header>
     <div className="body">
-      <aside className="sidebar">{[["radio","Radio",Radio],["console","Console",LayoutGrid],["log","Log",History],["members","Who’s On",Users],["calls","Calls",Phone],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
+      <aside className="sidebar">{[["radio","Radio",Radio],["console","Console",LayoutGrid],["log","Log",History],["members","Who’s On",Users],["calls","Calls",Phone],["map","Map",MapPin],["settings","Settings",Settings]].map(([id,label,Icon])=><button key={id} className={tab===id?"nav active":"nav"} onClick={()=>setTab(id)}><Icon size={19}/>{label}</button>)}</aside>
       <main className="content">
         {tab==="radio"&&<>
           <section className="hero apx-hero"><div><div className="eyebrow">{channelName.toUpperCase()}</div><h2>Repeater Nation Radio</h2><p className="muted">{displayName}{callsign?" · "+callsign:""}</p></div></section>
@@ -899,6 +938,7 @@ function RadioApp({session,onSignOut}){
         {tab==="log"&&<TrafficLog channels={channels} settings={trafficSettings} setSettings={setTrafficSettings} speakerId={speakerId} volume={volumeGain(volume)}/>}
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":callState==="reconnecting"?"Call reconnecting…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
+        {tab==="map"&&<section className="panel full"><div className="panel-title"><MapPin/> Member Map</div><MemberMap showing={shareMembers} myPos={myPos} onShow={()=>setShareMembers(true)}/></section>}
         {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="settings-group label">PROGRAMMING</div><div className="setting keymap-setting"><span>Radio</span><div className="face-picker">{FACES.map(x=><label key={x.id} className={face===x.id?"on":""}><input type="radio" name="face" value={x.id} checked={face===x.id} onChange={()=>chooseFace(x.id)}/><strong>{x.label}</strong><small>{x.note}</small></label>)}</div></div><div className="setting keymap-setting"><span>Zone and channel</span><div className="prog-fields"><label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><small>{connected?participants.length+" on channel":"Not connected"}</small></div></div><div className="setting keymap-setting"><span>Microphone and speaker</span><div className="prog-fields"><label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label><label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label><small>{muted?"Speaker muted":"Speaker on"}</small></div></div>{locationSetting}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray} onTest={testFeature}/></div><div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="settings-group label">ACCOUNT AND APP</div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||lastUrl||config.livekitUrl}</code></div>{state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}<UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>

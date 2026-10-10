@@ -30,3 +30,16 @@
 @media(max-width:700px){.radio-face{grid-template-columns:1fr}.radio-face-controls{display:grid;grid-template-columns:1fr 1.4fr 1fr}.radio-screen{min-height:150px}}
 .auth-status{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:#141b23;border:1px solid #2a3440;color:#b9c4cf;font-size:12px;line-height:1.5}
 .login-shell .error{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:#2a1517;border:1px solid #5a2a2e;color:#f3b4b4;font-size:12px;line-height:1.5}
+/* Member map */
+.rnmapwrap{position:relative}
+.rnmap{height:calc(100vh - 190px);min-height:300px;border-radius:8px;overflow:hidden}
+.rnmapnote{background:rgba(0,0,0,.35);border-radius:8px;padding:12px;margin-bottom:8px}
+.rnmapcount{font-size:12px;opacity:.8;margin-bottom:6px}
+.rnpin{background:#2a78e0;color:#fff;font-weight:700;font-size:12px;padding:3px 7px;border-radius:12px;border:2px solid #fff;white-space:nowrap}
+.rnpin.me{background:#1f9d4a}
+
+/* First-run location notice */
+.locnotice{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.locbox{background:#12181f;color:#e6edf5;border:1px solid #2b3644;border-radius:10px;max-width:440px;padding:18px}
+.locbox h2{margin:0 0 8px}.locbox ul{padding-left:20px}.locbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.locbtns button{padding:10px 14px;border-radius:6px;border:1px solid #2b3644;background:#1b2530;color:inherit}.locbtns button.primary{background:#2a78e0;border-color:#2a78e0;color:#fff}

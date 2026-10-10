@@ -213,6 +213,8 @@ export const radioPresence = () => invoke("radio-presence", {});
 
 // Location sharing is opt-in: a position is only sent while the member has it switched on.
 export const reportLocation = (fix) => invoke("radio-location", { action: "report", ...fix });
+// Other members who chose to show their location (blurred to about 100 m). Only answers while you are showing yours too.
+export const memberLocations = () => invoke("radio-location", { action: "members" });
 export const stopLocation = () => invoke("radio-location", { action: "stop" });
 
 export const directCall = (action, payload = {}) =>
