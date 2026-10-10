@@ -1,0 +1,106 @@
+# GMRS-RPT50 / TR-6000DM CPS Help (English)
+
+Cleaned-up copy of the vendor help text (`kyd-TR-6000DM-help.ini`). Wording was machine-translated by the vendor; obvious typos fixed. Section headings are the CPS tabs.
+
+- **Device information:** the preseted information by producer, such as model type, version and so on.
+- **Serial number:** each host is indicated by a string of 16 characters to check some basic information of it, such as model type, producing date etc.
+- **Model type:** to distinguish different application type with the same name.
+- **Machine code:** to represent the machine information by a string of characters and numbers.
+- **Frequency range:** to show the working frequency range of the host. And the host should be in the range or equal to the value of maximum and minimum frequency.
+- **Software version:** to show the software programming version of the host.
+- **Version date:** to show the date of the software programming version of the host.
+- **Alarm tone:** including buttons, battery power etc.
+- **Contextual model:** to set up the option setup of working contextual model of the device. Standard model: to turn on all the alarm tone. Noiseless: to turn off all the alarm tone.
+- **Text alarm tone:** the selecting list of text alarm tone can allow you to choose the tone to ring when you get a new message.
+- **Individual calling alarm tone:** the selecting list of individual call alarm tone can allow you to choose a tone to ring when you get a call.
+- **Group calling alarm tone:** the selecting list of group calling alarm tone can allow you to choose a tone to ring when you get a group calling.
+- **Volume:** to set up the volume of buttons. Range from 1~13. Default : 3. ( 10 is suggested. )
+- **Volume:** to set up the volume of low power alarm tone. Range from 1~13. Default : 3. ( 10 is suggested. )
+- **Basic setup:** aim at the name of the device and language etc.
+- **Name of the device:** you can name the device by checking the information menu. It can be composed with number, symbol, character or Chinese characters, and the maximum value of a name is 16 characters.
+- **Number of the device:** you can set up an ID to identify yourself. When others call or text you, you can use the ID to identify. Range from 1~16776412. Only digital model supports the function.
+- **Language setup:** you can choose one language from the presetted language to display on the interface. Hand-held/vehicle terminal : English, Chinese etc. ( Labeling the supported language package type. ) Default : English.
+- **Lock switch:** to turn on the automatic key lock or not. Default : OFF ( Manual operation is suggested ) [Option : OFF, AUTO, MANUAL OPERATION. ]
+- **Backlight switch:** to turn on the backlight controlling or not. Default : ON ( Manual operation is suggested ) [ Option : OFF, AUTO, MANUAL OPERATION. ]
+- **GPS selecting:** to turn on the GPS function or not. Default : OFF [ Option: OFF, ON. ]
+- **Power saving switch:** to select inter power saving function automatically or not. Default : OFF [ Option: OFF, ON. ]
+- **Starting time of power saving:** to set up the latency time for entering power saving model automatically. Range from 10~60ms. Default : 10s. It is only available when the power saving model is on. And it only supports hand-held terminal.
+- **Writing frequency code switch:** the code is the testing code to program. When you choose this function, you should edit setup in the input box, and every time you program new data you need to import the code, in addition, you can program it only when the code is correct. Turn off : do not turn on the writing frequency code function. Default : OFF.
+- **Writing frequency code setup:** you can set up a code here, and it can be composed with 6 numbers for most. Range from : 0~999999. Default : 123546.
+- **Reading frequency code switch:** the code is the testing code to read. When you choose this function, you should edit setup in the input box, and every time you read new data you need to import the code, in addition, you can program it only when the code is correct. Default : OFF.
+- **Reading frequency code setup:** you can set up a code here, and it can be composed with 6 numbers for most . Range from : 0~999999. Default : 123546.
+- **Built-in microphone gain switch 1:** to start the insetting microphone or not. If it is on, the host will start the gain control when it transmits the voice signal to keep the transmitting intensity in the proper range, so the receiver can hear more gentle voice. Default : OFF.
+- **Built-in microphone gain switch 1:** you can adjust it into the normal mode. Range : 0db, 6db,12db, 20db. Default : 0db.
+- **Built-in microphone gain switch 2:** to start the insetting microphone or not. If it is on, the host will start the gain control when it transmits the voice signal to keep the transmitting intensity in the proper range, so the receiver can hear more gentle voice. Default : OFF.
+- **Built-in microphone gain switch 2:** you can adjust it into the normal mode. Range from -34.5db~12db. Step : 1.5db. Default : 0db.
+- **Button setup:** aim at the definition of special buttons.
+- **Duration for long-press on buttons:** you can set up time after identifing long-press on button. It is valid for all buttons. Range from 0~15.5s. Stepping : 0.5s. Default : 0.2s.
+- **[ SK1 ] long-press on button:** to convert to programming function. Default : OFF.
+- **[ SK1 ] short-press on button:** to convert to programming function. Default : OFF.
+- [ TK ] long-press on button: to convert to programming function. Default : OFF.
+- [ TK ] short-press on button: to convert to programming function. Default : OFF.
+- [Green ] long-press on button: to convert to programming function. Default : OFF.
+- [Green ] short-press on button: to convert to programming function. Default : OFF.
+- [ SK2 ] long-press on button: to convert to programming function. Default : OFF.
+- [ SK2 ] short-press on button: to convert to programming function. Default: OFF.
+- **Contact setup:** to set up name, calling type, ID number.
+- **Contact name:** a name can be composed with number, symbol, character or Chinese characters, and the maximum value of a name is 10 characters.
+- **ID number:** only for digital contact, and only the same ID can communicate with each other.
+- **Calling property:** inculding number, analog, group calling, individual calling, general calling etc.
+- **DMR service setup:** aim at the special function of DMR.
+- **Call holding time:** to stay in the calling time after calling is finished. Range from 0~600ms. Stepping : 30ms. Default : 10*stepping. When the time value is 0, the function will be invalid. Only digital model supports the funcion.
+- **OACSU latency time:** to wait reply from target contact after it gives OACSU order. If it is overtime, the device will give the order again. ( Order is invalid and the second transmitting is not received. ) Range from 120~600ms. Default : 24*stepping. Stepping : 5ms. When the voice calling is in PATCS model, the function will be invalid. Only digital model supports the funcion.
+- **OACSU retransmission times:** to set the request times from target contact. When terminal transmits a signal, and if no reply from the contact over time, it will give the order again. If transmission times reach its ultimate and still no reply, this means the request failed. Range from 1~10. Default : 2. Stepping : 1. When the voice calling is in PATCS model, the function will be invalid. Only digital model supports the funcion.
+- **Activating latency time:** after the device sends an activating order to base station, and the device will wait for the same signal of base station. If it is timeout and it does not receive the signal, it will send the order again ( When it is failed to get retransmission in the proper times ).Range from 130~1000ms. Default : 30 * stepping. Stepping : 5ms.
+- **Activating retransmission times:** to set the times of activating base station. After the terminal sends the activating order to base station, if it is overtime and the device does not receive the signal from base station, it will send the order again. If it reaches the ultimate time, and the base station still not activate, then it means failed. Range from 1~10. Default : 2. Stepping : 1.
+- **Preceding sending number:** it is a string of information upload on the data and control messages before transmiting, and it increases the possobility of receiving the checking message. It will occupy the channel resource if you set up the preceding package number. So you can select it for your need or for programming need. Range from 0~63. Default : 0. Stepping : 1.
+- **Time of remote monitoring:** to set the open time of microphone after decoding remote monitoring order. Range from 10~120s. Default : 1 * stepping. Stepping : 10s.
+- **Overtime prohibition:** to set up the longest time for signal calling. It can allow the control centre to control the channel to avoid seizing long by a single user. Range from 30~500s. Default : 1 * stepping. Stepping : 10s.
+- **Remote monitoring decoded:** to set whether decoded or not when receiving remote monitoring. After receiving a remote monitoring, the receiver will secretly transmit individual calling. Default : OFF.
+- **Kill (radio disable) decode:** to set up a kill order for whether enter kill mode or not. The device will not work when it is killed, and it can only activate again by programming or receiving activating order. Default : OFF.
+- **Detecting device decode:** when the host receive a detect order, it will show an option whether decode into detection or not. Default : OFF.
+- **Activating device decode:** when the host receive an activating order, it will show an option whether decode into activation or not. Default : OFF.
+- **Calling alarm decode:** when the host receive a calling alarm order, it will show an option whether decode into calling alarm model or not. Default : OFF.
+- **Encryption:** it can encrypt the voice. And only when the receiver have the code, it can be decoded. It is used to avoid wire tapping. Default : OFF. If the parameter is closed, the digital channel encryption can not be set up.
+- **Encrypting initializing key:** to set up to encrypt initializing key when transmitting. Range from 0~65535.
+- **Decoding initializing key:** to set up to decode initializing key when receiving. Range from 0~65535.
+- **Presetting texts:** it can provide presetting messages to send. You can preset nearly 16 messages and the maximum character is 40 per message.
+- **Zone name:** you can name an Zone. It can be composed with number, symbol, character or Chinese characters, and the maximum value of a name is 10 characters. Default : checked.
+- **Channel name:** you can name a channel. It can be composed with number, symbol, character or Chinese characters, and the maximum value of a name is 10 characters. Default : checked.
+- **Frequency setup:** to set up the receiving frequency of current channel, and the value can only suit for the current channel. The frequency range is limited by frequency band.
+- **Group calling list:** it helps the current channel to be relevant to a receiving list. When it detects a group calling matched the ID in the receiving list, the host will open the loudspeaker to receive the voice. None : the host can only receive the calling from the contacts in setting channels. And if the transmitting contact is not in the list, the host will not receive any calling. Group calling list is about 1~4. Default : none. Only digital model supports this function. The receiving list should be presetted before choosing the group calling list, or the default will be choosed.
+- **Frequency setup:** to set the transmitting frequency of current channel, and the value can only suit for the current channel. The frequency range is limited by frequency band.
+- **Digital contact:** to set up name, ID and type. Group calling, individual calling, general calling, unaddressed calling, RawData confirm, DifinData confirm, SPData confirm, full duplex. Note : group calling, individual calling, general calling and unaddressed calling can only be used in voice communication.
+- **Emergency system:** any other defined digital alarm system can be relevant to the channel. Default : NONE. Firstly, you can only set up the alarm system when it is in the DMR alarm system, or the default will be choosed.
+- **Power degree:** to set up the transmitting power of the host. You can change the degree between high and low power through the programming button. Default : LOW. ( Suggestion : high. )
+- **Scanning list:** a scanning list can be relevant to the current channel. When it turns on, all the channels in the scanning list will be scaned, and it is only valid for current channel. None : means the channel can not be scanned. Scanning list : the channel can be scanned. When it turns on, all the selected items will be scanned.
+- **Emergency alarm switch:** when you receive an alarm code, you can choose tone or visualization to inform you. And it is only useful for current channel. Default : OFF
+- **Emergency alarm confirmation:** you can decide whether reply automatically or not when you receive an alarm code.
+- **Emergency calling instruction:** when you receive an emergency calling, you can choose tone or visualization to inform you. And it is only useful for current channel. Default : OFF
+- Accessing strategy :to set up how to respond when the user press PTT button. It will limit the sending process of current channel. Impolite : no matter what model the channel is, the device will transmit when PTT button is pressed. Polite to cc : it will transmit when the channel is available or the colour code is not fitted. Polite to all : it will transmit when the channel is available. Default : polite to all.
+- **Default short data type:** to set up the text type you send to the target contact. Default : confirm.
+- **Default individual calling type:** voice individual calling type. Patcs : sending voice message to target contact directly without replying. Oacsu : sending voice message to target contact only after replying confirmed.
+- **Colour code:** it can label a system. Only the same colour code setting can allow the devices to communicate. The host will not respond to any channel which do not suit for the presetting colour code. Because it considers it as a communication process between other else system. But when you want to detect several systems ( setting different colour code in serveral digital channels ), you can start scanning function to detect them. Range from 0~15. Default : 1.
+- **Relay time slot:** DMR adopts the TDMA technology to divide 12.5kHz channel into two commutative time slot. You can choose any of them to process voice communication and data transmittion. Default : time slot 1.
+- **Type of current channel:** means the same Zone and same channel of hand-held terminal. Default : number ( D ).
+- **Type of squelch:** to set up the decode condition when the channel receives calling. It can provide secret calling and it is only available for the current channel. Default : carrier wave. Note : only analog model supports the function.
+- **Digital/analog CTCSS:** you can assign a digital or analog CTCSS for current channel. Digital or analog CTCSS is the number or frequency order uploaded on the carrier wave. The voice frequency can only be transmitted when the received digital or analog CTCSS is fit for the presetting decode. Note : it is only available for analog model.
+- **Bandwidth:** you can set the working bandwidth model for channel selecting setup. The setup is only available for channel. Default : 25kHz. Note : it is only available for analog model. ( Option : broad band or narrow band. )
+- **Analog contact:** to set up name, ID and type. Group calling, individual calling, general calling. Note : group calling, individual calling and general calling can only be used in voice communication.
+- **Scanning list:** it allows you to monitor other channels. Scanning list is a group of monitored channels, and you can add or remove the list.
+- **Scanning list name:** it can be composed with number, symbol, character or Chinese characters, and the maximum value of a name is 10 characters.
+- **Scanning member:** all established channels.
+- **Receiving group calling list:** it can allow you to receive several group calling in one digital channel. You can set up 4 group calling lists and each list can add maximum 33 group. The setup list can be relevant to channel for using.
+- **Name of receiving group calling:** it can be composed with number, symbol, character or Chinese characters, and the maximum value of a name is 10 characters.
+- **Member of receiving group calling:** all digital group calling contacts.
+- **Emergency alarm list:** you can set up 8 alarm systems.
+- **Name of emergency alarm list:** it can be composed with number, symbol, character or Chinese characters, and the maximum value of a name is 10 characters.
+- **Type of alarm:** you can choose the instruction type to star the alarm as follow: option instruction : 0-off means it do not belong to the system. (1) Routine: the device sends alarm signal and shows itself in the voice frequency and visible instruction emergency model. (2) Prohibition : the device can not send a signal. (3) Silence : the device sends alarm signal, but it does not show itself in the voice frequency and visible instruction emergency model. In addition, it will not sound to respond to any received voice frequency. (4) Silence with voice : the device sends alarm signal, but it does not show itself in the voice frequency and visible instruction emergency model. And then, it will sound to respond to the eligible channels. Default : forbidon.
+- **Alarm model:** to decide the sending content. You can choose it for your need. Option instruction : emergency alarm : the device sends emergency alarm tone and then exits the emergency model. This alarm is a non-verbal order and it can trigger the instruction of another decice. Emergency alarm and calling : once you press the emergency alarm button, it will send alarm and you can transmit emergency calling by pressing the PTT button. Emergency alarm and voice : once you press the emergency alarm button, it will send alarm and it will send the voice automatically ( Without pressing PTT ).
+- **Replying channel:** to set up a channel as a replying channel, and it includs the channel indicated by channel selecting device.
+- **Impolite trying times:** to send while there are still processing program in current channel. The device will try unpolite sending several times to confirm, and then try to send politely. The function can set up the times you can try sending emergency alarm. Range from 1~15. Stepping : 1. Default : 3.
+- **Emergency microphone latency time:** to set the latency time when it sends emergency alarm automatically. Range from: 1~150s. Stepping : 1s. Default : 10s.
+- **Menu setup:** to choose whether the menu can be displayed and setted or not.
+
+## Please create Zone
+
