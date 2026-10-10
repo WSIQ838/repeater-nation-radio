@@ -1,5 +1,16 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.67 — Update pop-up, automatic update checks and a new icon
+
+**The radio now tells you when a new version is out, without opening Settings.**
+
+- New setting **Check for updates automatically** in Settings › Radio update (also in More › Setup on Android): Never, When the app opens, Every hour, Every 6 hours (the default), Once a day or Once a week. Every choice except Never also checks when the app opens. The schedule carries over when the app restarts.
+- When an automatic check finds a newer version, a pop-up offers **Download update**, **Later** (asks again at the next check) or **Skip this version** (stays quiet until an even newer one). Settings still shows the update either way.
+- Download update picks the Windows installer or the Android APK; on a Mac or Linux it opens the release page so you can pick the right file.
+- iPhone builds can't install from the release page, so they don't check on their own or pop up.
+- **New app icon**: an orange handheld radio with signal waves, on every platform (`src-tauri/icons/icon.svg`, plus the committed `icon.png` and `icon.ico`).
+- Version set to 0.2.67 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.66 — Controllers online
 
 **The radio now shows whether a Controller is online, and calls the people running the dispatch console Controllers.**

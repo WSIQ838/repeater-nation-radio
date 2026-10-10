@@ -3,8 +3,7 @@ import {zoneLabel,controllerLabel} from "./lib/labels";
 import {MapPin,Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
 import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels,reportLocation,stopLocation} from "./lib/auth";
-import {openUrl} from "@tauri-apps/plugin-opener";
-import {fetch as tauriFetch} from "@tauri-apps/plugin-http";
+import {CAN_INSTALL_UPDATES,UPDATE_EVERY,checkForUpdates,loadUpdateEvery,openRelease,saveUpdateEvery,skipVersion,skippedVersion,useAutoUpdateCheck,useUpdateState} from "./lib/updates";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
 import {useDirectCalls} from "./hooks/useDirectCalls";
@@ -88,66 +87,36 @@ function Login({notice=""}){
   </main>
 }
 
-const UPDATE_FEED="https://api.github.com/repos/WSIQ838/repeater-nation-radio/releases?per_page=20";
-
-// Turn a failed update check into what actually went wrong. GitHub answers 404 for a
-// private repository, so that is not "offline".
-async function describeUpdateError(r){
-  if(!r)return {pill:"OFFLINE",title:"Update check failed",detail:"Could not reach GitHub. Check your internet connection and try again."};
-  if(r.status===404)return {pill:"UNAVAILABLE",title:"Updates can't be checked",detail:"The release page for this app isn't public, so the app can't see new versions."};
-  const left=r.headers?.get?.("x-ratelimit-remaining"),reset=Number(r.headers?.get?.("x-ratelimit-reset"));
-  if(r.status===429||(r.status===403&&left==="0")){
-    const at=reset?new Date(reset*1000).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"";
-    return {pill:"LIMITED",title:"Too many update checks",detail:"GitHub's hourly limit was reached"+(at?". Try again after "+at+".":". Try again later.")};
-  }
-  return {pill:"ERROR",title:"Update check failed",detail:"GitHub answered with error "+r.status+". Try again later."};
+function UpdateStatus(){
+  const {status,release,failure}=useUpdateState();
+  const [every,setEvery]=useState(loadUpdateEvery);
+  // Opening Settings checks now unless a check already has an answer.
+  useEffect(()=>{if(status==="idle")checkForUpdates()},[]);// eslint-disable-line react-hooks/exhaustive-deps
+  const check=()=>checkForUpdates();
+  const icon=<RefreshCw size={18}/>;
+  const schedule=CAN_INSTALL_UPDATES&&<label className="update-every">Check for updates automatically<select value={every} onChange={e=>{setEvery(e.target.value);saveUpdateEvery(e.target.value)}}>{UPDATE_EVERY.map(x=><option key={x.id} value={x.id}>{x.label}</option>)}</select></label>;
+  if(status==="checking"||status==="idle")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Checking for updates…</h3></div></div><span className="status-pill">CHECKING</span></div><div className="update-display"><div><strong>Repeater Nation Radio</strong><small>Checking the latest published release</small></div></div>{schedule}</div>;
+  if(status==="available")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Update available</h3></div></div><span className="status-pill">READY</span></div><div className="update-display"><div><strong>Version {release.version}</strong><small>A newer Repeater Nation Radio release is ready.</small></div><span className="rx-dot"/></div><div className="update-actions"><button className="primary" onClick={()=>openRelease(release)}>Install update</button><button onClick={check}>Check again</button></div>{schedule}</div>;
+  if(status==="error")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>{failure?.title||"Update check failed"}</h3></div></div><span className="status-pill warn">{failure?.pill||"ERROR"}</span></div><div className="update-display"><div><strong>Version {String(__APP_VERSION__)}</strong><small>{failure?.detail||"Try again later."}</small></div></div><div className="update-actions"><button onClick={check}>Check again</button></div>{schedule}</div>;
+  return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date · {String(__APP_VERSION__)}</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div>{schedule}</div>;
 }
 
-function UpdateStatus(){
-  const [status,setStatus]=useState("checking");
-  const [release,setRelease]=useState(null);
-  const [failure,setFailure]=useState(null);
-
-  const check=async()=>{
-    setStatus("checking");
-    let r=null;
-    try{
-      try{r=await tauriFetch(UPDATE_FEED,{headers:{Accept:"application/vnd.github+json"}})}catch(e){console.error("[update]",e);r=null}
-      if(!r?.ok)throw new Error("Update service returned "+(r?.status??"no response"));
-      const releases=await r.json();
-      const candidates=(Array.isArray(releases)?releases:[])
-        .filter(x=>!x.draft&&/^radio-v\d+\.\d+\.\d+$/i.test(String(x.tag_name||"")))
-        .sort((a,b)=>{
-          const parse=s=>String(s||"").replace(/^radio-v/i,"").split(".").map(x=>parseInt(x,10)||0);
-          const av=parse(a.tag_name),bv=parse(b.tag_name);
-          return bv[0]-av[0]||bv[1]-av[1]||bv[2]-av[2];
-        });
-      const data=candidates[0];
-      if(!data){
-        setStatus("current");
-        setRelease(null);
-        return;
-      }
-      const latest=String(data.tag_name).replace(/^radio-v/i,"");
-      const current=String(__APP_VERSION__);
-      const n=s=>s.split(".").map(x=>parseInt(x,10)||0);
-      const a=n(current),b=n(latest);
-      const newer=b[0]>a[0]||(b[0]===a[0]&&(b[1]>a[1]||(b[1]===a[1]&&b[2]>a[2])));
-      if(newer){setRelease({...data,version:latest});setStatus("available")}
-      else{setRelease(null);setStatus("current")}
-    }catch(e){
-      console.error("[update]",e);
-      setFailure(await describeUpdateError(r?.ok?{status:"bad data"}:r));
-      setStatus("error");
-    }
-  };
-
-  useEffect(()=>{check()},[]);
-  const icon=<RefreshCw size={18}/>;
-  if(status==="checking")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Checking for updates…</h3></div></div><span className="status-pill">CHECKING</span></div><div className="update-display"><div><strong>Repeater Nation Radio</strong><small>Checking the latest published release</small></div></div></div>;
-  if(status==="available")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Update available</h3></div></div><span className="status-pill">READY</span></div><div className="update-display"><div><strong>Version {release.version}</strong><small>A newer Repeater Nation Radio release is ready.</small></div><span className="rx-dot"/></div><div className="update-actions"><button className="primary" onClick={()=>{const asset=/Windows/i.test(navigator.userAgent)?(release.assets||[]).find(a=>/\.exe$/i.test(a.name)):null;openUrl(asset?.browser_download_url||release.html_url)}}>Install update</button></div></div>;
-  if(status==="error")return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>{failure?.title||"Update check failed"}</h3></div></div><span className="status-pill warn">{failure?.pill||"ERROR"}</span></div><div className="update-display"><div><strong>Version {String(__APP_VERSION__)}</strong><small>{failure?.detail||"Try again later."}</small></div></div><div className="update-actions"><button onClick={check}>Check again</button></div></div>;
-  return <div className="update-widget"><div className="channel-head"><div className="update-title">{icon}<div><span className="label">RADIO UPDATE</span><h3>Repeater Nation Radio</h3></div></div><span className="status-pill">CURRENT</span></div><div className="update-display"><div><strong>You're up to date · {String(__APP_VERSION__)}</strong><small>You're running the latest published version.</small></div><span className="rx-dot"/></div><div className="update-actions"><button onClick={check}>Check now</button></div></div>;
+// Pops up when an automatic check finds a newer version. "Later" waits for the next
+// automatic check; "Skip this version" stays quiet until an even newer one comes out.
+// Settings › Radio update still shows it either way.
+function UpdatePopup(){
+  const {status,release,seq,auto}=useUpdateState();
+  const [dismissed,setDismissed]=useState(0);
+  if(!CAN_INSTALL_UPDATES||!auto||status!=="available"||!release||seq<=dismissed||release.version===skippedVersion())return null;
+  const close=()=>setDismissed(seq);
+  return <div className="locnotice update-popup" role="dialog" aria-modal="true" aria-label="Update available">
+    <div className="locbox">
+      <h2>Update available</h2>
+      <p>Repeater Nation Radio <b>{release.version}</b> is out. You have {String(__APP_VERSION__)}.</p>
+      <p className="muted">Download and run the installer; it replaces this version and keeps your sign-in and settings.</p>
+      <div className="locbtns"><button type="button" className="primary" onClick={()=>{openRelease(release);close()}}>Download update</button><button type="button" onClick={close}>Later</button><button type="button" onClick={()=>{skipVersion(release.version);close()}}>Skip this version</button></div>
+    </div>
+  </div>;
 }
 
 function RadioFeatures({features,setFeature,hasTray,onTest}){
@@ -455,7 +424,8 @@ function LocationNotice(){
 }
 
 function RadioApp({session,onSignOut}){
-  return <><RadioAppInner session={session} onSignOut={onSignOut}/><LocationNotice/></>;
+  useAutoUpdateCheck();
+  return <><RadioAppInner session={session} onSignOut={onSignOut}/><LocationNotice/><UpdatePopup/></>;
 }
 
 function RadioAppInner({session,onSignOut}){
@@ -969,6 +939,7 @@ function RadioAppInner({session,onSignOut}){
       <div className="setting ble-setting"><span>Bluetooth PTT mic</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>
       <div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>
       {state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}
+      {CAN_INSTALL_UPDATES&&<UpdateStatus/>}
     </>}
   />;
   if(mini)return <MiniRadio
