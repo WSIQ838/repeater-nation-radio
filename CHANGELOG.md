@@ -1,5 +1,16 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.63 — Member map, and location sharing on by default (you can turn it off)
+
+**The radio now has a Map, and sharing your location is on by default for everyone**, after Sean asked for everyone's location to be shared with dispatch and for members to see each other, with each member able to turn it off.
+
+- New **Map** tab (More › Map on a phone): members who share their location show as pins with their callsign. Other members are shown blurred to about 100 m; dispatch sees exact positions.
+- Both location settings are now **on by default**, while the radio is connected: "Share my location with dispatch" and "Show my location to other members on the map". Each can be turned off in Settings (More › Setup on a phone).
+- You can see other members on the map only while you show your own location to members.
+- The first time you open this version a notice explains what is shared and with whom, and lets you turn it off right there. Nothing is shared until you answer it.
+- Nothing is shared while the radio is off or disconnected, and your position is removed when you disconnect.
+- Version set to 0.2.63 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.62 — Location sharing works on phones, and says what it is doing
 
 **Sharing your location with dispatch now has the permissions it needs on Android, iPhone and Mac, and the setting shows what is happening**, after Sean asked whether the radios give dispatch a GPS location.

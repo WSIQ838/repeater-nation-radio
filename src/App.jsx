@@ -400,7 +400,34 @@ function BluetoothPtt({status,setStatus}){
   </div>;
 }
 
+const LOC_NOTICE_KEY="rn-loc-notice-seen";
+// Shown once, before any location is shared: what is shared, with whom, and how to turn it off.
+function LocationNotice(){
+  const [open,setOpen]=useState(()=>readPref(LOC_NOTICE_KEY)!=="1");
+  if(!open)return null;
+  const done=off=>{
+    if(off){writePref("rn-share-location","0");writePref("rn-share-members","0")}
+    writePref(LOC_NOTICE_KEY,"1");setOpen(false);window.dispatchEvent(new Event("rn-loc-notice"));
+  };
+  return <div className="locnotice" role="dialog" aria-modal="true" aria-label="Location sharing">
+    <div className="locbox">
+      <h2>Location sharing is on</h2>
+      <p>While the radio is connected, this app shares your location:</p>
+      <ul>
+        <li><b>With dispatch</b>: your exact position.</li>
+        <li><b>With other members</b> on the Map tab: your position blurred to about 100 m. You can see them too.</li>
+      </ul>
+      <p>Nothing is shared while the radio is off or disconnected. You can turn either one off any time in Settings (More › Setup on a phone). Your phone or computer will also ask you to allow location.</p>
+      <div className="locbtns"><button type="button" className="primary" onClick={()=>done(false)}>OK, keep it on</button><button type="button" onClick={()=>done(true)}>Turn location sharing off</button></div>
+    </div>
+  </div>;
+}
+
 function RadioApp({session,onSignOut}){
+  return <><RadioAppInner session={session} onSignOut={onSignOut}/><LocationNotice/></>;
+}
+
+function RadioAppInner({session,onSignOut}){
   const [tab,setTab]=useState("radio"),[ptt,setPtt]=useState(false),[channels,setChannels]=useState([]),[zoneId,setZoneId]=useState(""),[channelId,setChannelId]=useState(config.defaultChannelId),[channelName,setChannelName]=useState(config.defaultChannelName),[micDeviceId,setMicDeviceId]=useState(()=>readPref("rn-mic")||""),[speakerId,setSpeakerId]=useState(()=>readPref("rn-speaker")||"");
   const zones=useMemo(()=>Array.from(new Map(channels.filter(c=>c.zoneId).map(c=>[c.zoneId,{id:c.zoneId,name:c.zoneName||"Radio",order:c.zoneOrder??999}])).values()).sort((a,b)=>a.order-b.order),[channels]);
   // What the channel announcement says: "Zone ALL, channel 1, Nation Wide".
@@ -530,10 +557,13 @@ function RadioApp({session,onSignOut}){
   const connected=state==="listening"||state==="transmitting";
   // Share this radio's position: with dispatch (exact) and, only if chosen, with other members (blurred).
   // Only while switched on and connected.
-  const [shareLoc,setShareLocState]=useState(()=>readPref("rn-share-location")==="1"),[shareMembers,setShareMembersState]=useState(()=>readPref("rn-share-members")==="1"),[locNote,setLocNote]=useState(""),[myPos,setMyPos]=useState(null);
+  const locOn=key=>readPref(key)!=="0"; // on unless the member turned it off
+  const [shareLoc,setShareLocState]=useState(()=>locOn("rn-share-location")),[shareMembers,setShareMembersState]=useState(()=>locOn("rn-share-members")),[locNote,setLocNote]=useState(""),[myPos,setMyPos]=useState(null),[locNoticeSeen,setLocNoticeSeen]=useState(()=>readPref(LOC_NOTICE_KEY)==="1");
+  // The first-run notice (LocationNotice) tells the member what is shared; sharing starts after it is answered.
+  useEffect(()=>{const sync=()=>{setLocNoticeSeen(readPref(LOC_NOTICE_KEY)==="1");setShareLocState(locOn("rn-share-location"));setShareMembersState(locOn("rn-share-members"))};window.addEventListener("rn-loc-notice",sync);return()=>window.removeEventListener("rn-loc-notice",sync)},[]);
   const setShareLoc=v=>{setShareLocState(v);writePref("rn-share-location",v?"1":"0")};
   const setShareMembers=v=>{setShareMembersState(v);writePref("rn-share-members",v?"1":"0")};
-  const sharing=shareLoc||shareMembers;
+  const sharing=(shareLoc||shareMembers)&&locNoticeSeen;
   useEffect(()=>{
     if(!sharing){setLocNote("");setMyPos(null);return}
     if(typeof navigator==="undefined"||!navigator.geolocation){setLocNote("This device can't give a location.");return}
@@ -549,8 +579,8 @@ function RadioApp({session,onSignOut}){
     return()=>{navigator.geolocation.clearWatch(id);stopLocation().catch(()=>{})};
   },[sharing,shareMembers,connected]);
   const locationSetting=<>
-    <label className="setting"><span>Share my location with dispatch{sharing&&locNote?<small style={{display:"block",opacity:.75}}>{locNote}</small>:null}</span><input type="checkbox" checked={shareLoc||shareMembers} disabled={shareMembers} onChange={e=>setShareLoc(e.target.checked)}/></label>
-    <label className="setting"><span>Show my location to other members on the map<small style={{display:"block",opacity:.75}}>Blurred to about 100 m. You can see others only while this is on. Includes dispatch.</small></span><input type="checkbox" checked={shareMembers} onChange={e=>setShareMembers(e.target.checked)}/></label>
+    <label className="setting"><span>Share my location with dispatch<small style={{display:"block",opacity:.75}}>On by default while the radio is connected. Turn it off here.</small>{sharing&&locNote?<small style={{display:"block",opacity:.75}}>{locNote}</small>:null}</span><input type="checkbox" checked={shareLoc||shareMembers} disabled={shareMembers} onChange={e=>setShareLoc(e.target.checked)}/></label>
+    <label className="setting"><span>Show my location to other members on the map<small style={{display:"block",opacity:.75}}>On by default. Blurred to about 100 m. You can see others only while this is on. Includes dispatch.</small></span><input type="checkbox" checked={shareMembers} onChange={e=>setShareMembers(e.target.checked)}/></label>
   </>;
   const stateRef=useRef(state);stateRef.current=state;
   // Power turns the radio on, or off from any other state, including cancelling a

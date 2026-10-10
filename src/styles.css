@@ -37,3 +37,9 @@
 .rnmapcount{font-size:12px;opacity:.8;margin-bottom:6px}
 .rnpin{background:#2a78e0;color:#fff;font-weight:700;font-size:12px;padding:3px 7px;border-radius:12px;border:2px solid #fff;white-space:nowrap}
 .rnpin.me{background:#1f9d4a}
+
+/* First-run location notice */
+.locnotice{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.locbox{background:#12181f;color:#e6edf5;border:1px solid #2b3644;border-radius:10px;max-width:440px;padding:18px}
+.locbox h2{margin:0 0 8px}.locbox ul{padding-left:20px}.locbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.locbtns button{padding:10px 14px;border-radius:6px;border:1px solid #2b3644;background:#1b2530;color:inherit}.locbtns button.primary{background:#2a78e0;border-color:#2a78e0;color:#fff}
