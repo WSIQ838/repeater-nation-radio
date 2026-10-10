@@ -1,5 +1,14 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.65 — Stream Deck support
+
+**The desktop radio can now be driven from an Elgato Stream Deck, with live state on the keys**, after Sean asked whether the radio and the dispatch panel could be made Stream Deck compatible.
+
+- New **Stream Deck** switch in Settings (desktop only, off by default). The Repeater Nation Stream Deck plugin (a separate download on the releases page, `streamdeck-v…`) then presses radio actions and shows the channel, who is talking, mute, scan and your status on the keys.
+- Actions: push to talk (hold), channel and zone up/down, one-touch channels P1–P5, power, mute, volume, scan, replay, the six statuses, and answer / decline / end call.
+- The radio only talks to a plugin on the same computer. Nothing changes unless you switch it on.
+- Version set to 0.2.65 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.64 — VOX (hands-free) in the radio settings
 
 **The radio can now key up by voice**, after Sean asked for VOX settings.

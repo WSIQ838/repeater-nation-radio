@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Repeater Nation</title>
+<style>
+body{margin:0;padding:12px;background:#2d2d2d;color:#d8d8d8;font:13px Segoe UI,Arial,sans-serif}
+label{display:block;margin-bottom:6px}input{width:90px;padding:6px;background:#1e1e1e;color:#fff;border:1px solid #555;border-radius:3px;font-size:14px}
+small{display:block;margin-top:8px;opacity:.7}
+</style></head>
+<body>
+<label for="n">Channel number (in console order)</label>
+<input id="n" type="number" min="1" max="99" value="1">
+<small>1 is the first channel in the dispatch console, in zone order.</small>
+<script>
+// Stream Deck property inspector: reads and saves this key's setting.
+let ws, uuid, key = "slot";
+function connectElgatoStreamDeckSocket(port, inUUID, registerEvent) {
+  uuid = inUUID;
+  ws = new WebSocket("ws://127.0.0.1:" + port);
+  ws.onopen = () => { ws.send(JSON.stringify({ event: registerEvent, uuid })); ws.send(JSON.stringify({ event: "getSettings", context: uuid })); };
+  ws.onmessage = (e) => {
+    const m = JSON.parse(e.data);
+    if (m.event === "didReceiveSettings") { const v = m.payload?.settings?.[key]; if (v) document.getElementById("n").value = v; }
+  };
+}
+document.getElementById("n").addEventListener("input", (e) => {
+  if (!ws || ws.readyState !== 1) return;
+  const settings = {}; settings[key] = Math.max(1, Number(e.target.value) || 1);
+  ws.send(JSON.stringify({ event: "setSettings", context: uuid, payload: settings }));
+});
+</script>
+</body></html>

@@ -1,0 +1,26 @@
+{
+  "name": "repeater-nation-streamdeck",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Elgato Stream Deck plugin for the Repeater Nation radio and dispatch console",
+  "scripts": {
+    "icons": "node scripts/gen-assets.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test-bridge.mjs",
+    "validate": "streamdeck validate com.repeaternation.radio.sdPlugin",
+    "pack": "streamdeck pack com.repeaternation.radio.sdPlugin --output dist --force"
+  },
+  "engines": {
+    "node": ">=20.5.1"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^3.0.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@elgato/cli": "^1.10.2",
+    "esbuild": "^0.25.0",
+    "sharp": "^0.35.5"
+  }
+}
