@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import {MapPin,ChevronLeft,ListChecks,Power,Radio,RefreshCw,UserRound,Users,Volume2,VolumeX,Minus,Plus,PhoneCall,PhoneOff,LogOut} from "lucide-react";
 import {ChanLine} from "./ChanLine";
 import {PHONE_FACES,PhoneFaceBody} from "./PhoneFaces";
-import {zoneLabel} from "../lib/labels";
+import {zoneLabel,controllerLabel} from "../lib/labels";
 import {STATUSES,statusClass} from "../lib/status";
 
 // The Android and iPhone app (and a phone-sized browser) starts on a full-screen version of
@@ -48,7 +48,7 @@ function PttButton({ptt,connected,state,onDown,onUp}){
 
 export function PhoneApp(p){
   const {zones,zoneId,visibleChannels,channelId,channelName,state,connected,error,connectNote,ptt,muted,onAir,participants=[],
-    scanning,scanActive,volume,lastHeard=[],incoming,call,callState,onlineUsers=[],displayName,callsign,myStatus=""}=p;
+    scanning,scanActive,volume,lastHeard=[],incoming,call,callState,onlineUsers=[],controllersOnline=0,displayName,callsign,myStatus=""}=p;
   const face=p.face||PHONE_SCREEN;
   const [screen,setScreen]=useState("home"),[notice,setNotice]=useState(""),[now,setNow]=useState(()=>Date.now());
   useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),15000);return()=>clearInterval(id)},[]);
@@ -143,6 +143,7 @@ export function PhoneApp(p){
     <div className="n7-statusbar">
       <span className="n7-brand">REPEATER NATION</span>
       {tx?<em className="tx">TX</em>:rx?<em className="rx">RX</em>:null}
+      <span className={"n7-ctl"+(controllersOnline?" on":"")} title="Controllers with the console open">{controllerLabel(controllersOnline)}</span>
       <span className="n7-batt"/><span className="n7-time">{clock(now)}</span>
       <button type="button" className={"n7-power"+(connected?" on":state==="connecting"||state==="reconnecting"?" busy":"")} onClick={p.onPower} aria-label={connected?"Turn radio off":"Turn radio on"}><Power size={18}/></button>
     </div>

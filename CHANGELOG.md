@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.66 — Controllers online
+
+**The radio now shows whether a Controller is online, and calls the people running the dispatch console Controllers.**
+
+- The top bar (and the phone status bar) shows **Controller online**, **2 Controllers online** and so on, or **No Controller online**. It counts Controllers who have the console open, and updates every 15 seconds while the radio window is showing.
+- Location sharing now says **Share my location with Controllers**, and the location notice says **With Controllers** instead of "dispatch".
+- Needs the updated `radio-presence` server function (now live), which reports `controllersOnline`. Against an older server the radio shows **No Controller online**.
+- The **Dispatch control head** radio face keeps its name: it's the name of the radio model it's drawn from.
+- Version set to 0.2.66 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.65 — Stream Deck support
 
 **The desktop radio can now be driven from an Elgato Stream Deck, with live state on the keys**, after Sean asked whether the radio and the dispatch panel could be made Stream Deck compatible.
