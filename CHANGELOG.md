@@ -1,5 +1,17 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.64 — VOX (hands-free) in the radio settings
+
+**The radio can now key up by voice**, after Sean asked for VOX settings.
+
+- New **VOX (hands-free)** section in Settings (More › Setup on a phone), off by default.
+- **Sensitivity** (1–10): how quiet speech can be and still key up. A live mic-level bar shows where VOX will trigger (the white mark), so you can set it by eye.
+- **Hang time** (0.5–3 s): how long it keeps transmitting after you stop talking.
+- It works while the radio is connected, and it never keys up while someone else is talking, so the speaker can't set it off. A loud speaker can still trigger it: use a headset.
+- It only releases a transmission that VOX started, so a PTT held by hand or key is never cut off.
+- VOX keeps the microphone open while it is on, so it uses a little more battery on a phone, and a Bluetooth headset stays in call mode.
+- Version set to 0.2.64 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.63 — Member map, and location sharing on by default (you can turn it off)
 
 **The radio now has a Map, and sharing your location is on by default for everyone**, after Sean asked for everyone's location to be shared with dispatch and for members to see each other, with each member able to turn it off.

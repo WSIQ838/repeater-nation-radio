@@ -16,6 +16,7 @@ import {PalmMic} from "./components/ControlHead";
 import {MiniRadio} from "./components/MiniRadio";
 import {IS_PHONE,PhoneApp,loadPhoneFace,savePhoneFace} from "./components/PhoneApp";
 import MemberMap from "./components/MemberMap";
+import {useVox,voxThreshold} from "./hooks/useVox";
 import {FACES,RadioFace,loadFace,saveFace} from "./components/RadioFaces";
 import {STATUSES,statusClass} from "./lib/status";
 import {appInBackground,listenTray,notify,setMiniWindow,setTray} from "./lib/desktop";
@@ -400,6 +401,26 @@ function BluetoothPtt({status,setStatus}){
   </div>;
 }
 
+const VOX_KEY="rn-vox",VOX_DEFAULT={on:false,sens:5,hang:1000};
+const loadVox=()=>{try{return {...VOX_DEFAULT,...JSON.parse(readPref(VOX_KEY)||"{}")}}catch{return VOX_DEFAULT}};
+// A live bar of the mic level with a mark where VOX keys up, so the sensitivity can be set by eye.
+function VoxMeter({levelRef,sens}){
+  const [lvl,setLvl]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>setLvl(levelRef.current),100);return()=>clearInterval(t)},[levelRef]);
+  const mark=Math.min(1,voxThreshold(sens)/0.15);
+  return <div className="voxmeter" aria-hidden="true"><i style={{width:Math.round(lvl*100)+"%"}} className={lvl>=mark?"hot":""}/><b style={{left:Math.round(mark*100)+"%"}}/></div>;
+}
+function VoxSettings({vox,setVox,levelRef,note,connected}){
+  return <div className="voxset">
+    <label className="setting"><span>VOX (hands-free)<small style={{display:"block",opacity:.75}}>Keys up when you talk and off after you stop. Works while the radio is connected. Use a headset: it won't key up while someone else is talking, but a loud speaker can still trigger it.</small></span><input type="checkbox" checked={vox.on} onChange={e=>setVox({...vox,on:e.target.checked})}/></label>
+    {vox.on&&<>
+      <label className="setting"><span>Sensitivity<small style={{display:"block",opacity:.75}}>Higher keys up on quieter speech. Lower it if background noise keys up.</small></span><input type="range" min="1" max="10" step="1" value={vox.sens} onChange={e=>setVox({...vox,sens:Number(e.target.value)})}/></label>
+      <label className="setting"><span>Hang time<small style={{display:"block",opacity:.75}}>How long to keep transmitting after you stop talking.</small></span><select value={vox.hang} onChange={e=>setVox({...vox,hang:Number(e.target.value)})}>{[[500,"0.5 s"],[1000,"1 s"],[1500,"1.5 s"],[2000,"2 s"],[3000,"3 s"]].map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></label>
+      <div className="setting"><span>Mic level<small style={{display:"block",opacity:.75}}>Talk normally: the bar should pass the white mark.{!connected?" (The radio must be connected for VOX to key up.)":""}{note?" "+note:""}</small></span><VoxMeter levelRef={levelRef} sens={vox.sens}/></div>
+    </>}
+  </div>;
+}
+
 const LOC_NOTICE_KEY="rn-loc-notice-seen";
 // Shown once, before any location is shared: what is shared, with whom, and how to turn it off.
 function LocationNotice(){
@@ -682,6 +703,14 @@ function RadioAppInner({session,onSignOut}){
     return()=>{clearTimeout(warn);clearTimeout(stop)};
   },[state,features.tot]);
   const up=async()=>{if(!pttRef.current)return;setPttState(false);await releasePTT()};
+  // VOX: keys up by voice. It only releases a transmission that VOX itself started.
+  const [vox,setVoxState]=useState(loadVox),voxKeyedRef=useRef(false);
+  const setVox=v=>{setVoxState(v);writePref(VOX_KEY,JSON.stringify(v))};
+  const {levelRef:voxLevelRef,note:voxNote}=useVox({
+    enabled:vox.on&&connected,sensitivity:vox.sens,hangMs:vox.hang,deviceId:micDeviceId,blocked:!!onAir,
+    onKey:()=>{if(pttRef.current)return;voxKeyedRef.current=true;downRef.current?.()},
+    onUnkey:()=>{if(!voxKeyedRef.current)return;voxKeyedRef.current=false;upRef.current?.()},
+  });
 
   // Button mapping: every radio action can be bound to keys and hardware buttons.
   const [hwCaps,setHwCaps]=useState(null),[keymap,setKeymap]=useState(null),[learnFor,setLearnFor]=useState(""),[mapNotice,setMapNotice]=useState("");
@@ -900,6 +929,7 @@ function RadioAppInner({session,onSignOut}){
       {locationSetting}
       <div className="setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div>
       <div className="setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={false} onTest={testFeature}/></div>
+      <VoxSettings vox={vox} setVox={setVox} levelRef={voxLevelRef} note={voxNote} connected={connected}/>
       <div className="setting ble-setting"><span>Bluetooth PTT mic</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>
       <div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>
       {state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}
@@ -939,7 +969,7 @@ function RadioAppInner({session,onSignOut}){
         {tab==="members"&&<section className="panel full"><div className="panel-title"><Users/> Who’s On — {channelName}</div>{participants.length?participants.map(p=><MemberName key={p.identity} participant={p} talking={onAir?.identity===p.identity}/>):<div className="empty">{connected?"No other members are currently on this channel.":"Connect to see who’s on."}</div>}</section>}
         {tab==="calls"&&<section className="panel full"><div className="panel-title"><Phone/> Calls</div>{incoming&&<div className="call-card"><strong>Incoming call</strong><span>{incoming.caller_display_name||incoming.caller_callsign||"Member"}</span><div><button className="primary" onClick={accept}><PhoneCall size={16}/> Answer</button><button className="danger" onClick={decline}><PhoneOff size={16}/> Decline</button></div></div>}{call&&!incoming&&<div className="call-card"><strong>{callState==="calling"?"Calling…":callState==="reconnecting"?"Call reconnecting…":"Call connected"}</strong><span>{call.recipient_display_name||call.recipient_callsign||call.caller_display_name||"Member"}</span><button className="danger" onClick={endCall}><PhoneOff size={16}/> End call</button></div>}<div className="panel-title"><Users size={17}/> Available Members</div>{onlineUsers.length?onlineUsers.map(u=><div className="member" key={u.userId}><div><strong>{u.callsign||u.displayName}</strong><span>{u.channelId?"On radio":"Available"}</span></div><button className="primary" onClick={()=>startCall(u)} disabled={callState!=="idle"}><PhoneCall size={15}/> Call</button></div>):<div className="empty">No other radio members are currently online.</div>}{callError&&<div className="error">{callError}</div>}</section>}
         {tab==="map"&&<section className="panel full"><div className="panel-title"><MapPin/> Member Map</div><MemberMap showing={shareMembers} myPos={myPos} onShow={()=>setShareMembers(true)}/></section>}
-        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="settings-group label">PROGRAMMING</div><div className="setting keymap-setting"><span>Radio</span><div className="face-picker">{FACES.map(x=><label key={x.id} className={face===x.id?"on":""}><input type="radio" name="face" value={x.id} checked={face===x.id} onChange={()=>chooseFace(x.id)}/><strong>{x.label}</strong><small>{x.note}</small></label>)}</div></div><div className="setting keymap-setting"><span>Zone and channel</span><div className="prog-fields"><label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><small>{connected?participants.length+" on channel":"Not connected"}</small></div></div><div className="setting keymap-setting"><span>Microphone and speaker</span><div className="prog-fields"><label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label><label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label><small>{muted?"Speaker muted":"Speaker on"}</small></div></div>{locationSetting}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray} onTest={testFeature}/></div><div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="settings-group label">ACCOUNT AND APP</div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||lastUrl||config.livekitUrl}</code></div>{state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}<UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
+        {tab==="settings"&&<section className="panel full"><div className="panel-title"><Settings/> Radio Settings</div><div className="settings-group label">PROGRAMMING</div><div className="setting keymap-setting"><span>Radio</span><div className="face-picker">{FACES.map(x=><label key={x.id} className={face===x.id?"on":""}><input type="radio" name="face" value={x.id} checked={face===x.id} onChange={()=>chooseFace(x.id)}/><strong>{x.label}</strong><small>{x.note}</small></label>)}</div></div><div className="setting keymap-setting"><span>Zone and channel</span><div className="prog-fields"><label>Zone<select value={zoneId} onChange={chooseZone} disabled={!zones.length}>{zones.map(z=><option key={z.id} value={z.id}>{z.name}</option>)}</select></label><label>Channel<select value={channelId} onChange={chooseChannel} disabled={!visibleChannels.length}>{visibleChannels.map(c=><option key={c.id} value={c.id}>{c.name} · CH {c.number}</option>)}</select></label><small>{connected?participants.length+" on channel":"Not connected"}</small></div></div><div className="setting keymap-setting"><span>Microphone and speaker</span><div className="prog-fields"><label>Microphone<select value={micDeviceId} onFocus={refreshDevices} onChange={e=>setMicDeviceId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audioinput").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Microphone"}</option>)}</select></label><label>Speaker<select value={speakerId} onFocus={refreshDevices} onChange={e=>setSpeakerId(e.target.value)}><option value="">System default</option>{devices.filter(d=>d.kind==="audiooutput"&&d.deviceId!=="default").map(d=><option key={d.deviceId} value={d.deviceId}>{d.label||"Speaker"}</option>)}</select></label><small>{muted?"Speaker muted":"Speaker on"}</small></div></div>{locationSetting}<div className="setting keymap-setting"><span>Scan list</span><ScanList channels={channels} zones={zones} scan={scan} setScan={setScanCfg} status={scanStatus} errors={scanErrors}/></div><div className="setting keymap-setting"><span>Radio features</span><RadioFeatures features={features} setFeature={setFeature} hasTray={hasTray} onTest={testFeature}/></div><VoxSettings vox={vox} setVox={setVox} levelRef={voxLevelRef} note={voxNote} connected={connected}/><div className="setting keymap-setting"><span>Buttons and PTT</span><KeyMap {...keymapProps}/></div>{inDesktopApp()&&<div className="setting ble-setting"><span>Bluetooth button</span><BluetoothPtt status={bleStatus} setStatus={setBleStatus}/></div>}<div className="settings-group label">ACCOUNT AND APP</div><div className="setting"><span>Account</span><strong>{displayName}{callsign?" · "+callsign:""}</strong></div><div className="setting"><span>LiveKit server</span><code>{radioSession?.liveKitUrl||lastUrl||config.livekitUrl}</code></div>{state==="error"&&errorDetail&&<div className="setting"><span>Last connection error</span><code className="setting-error">{errorDetail}</code></div>}<UpdateStatus/><button className="danger" onClick={logout}><RefreshCw size={16}/> Sign out / switch account</button></section>}
       </main>
     </div>
   </div>

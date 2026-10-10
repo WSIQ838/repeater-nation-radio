@@ -43,3 +43,8 @@
 .locbox{background:#12181f;color:#e6edf5;border:1px solid #2b3644;border-radius:10px;max-width:440px;padding:18px}
 .locbox h2{margin:0 0 8px}.locbox ul{padding-left:20px}.locbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .locbtns button{padding:10px 14px;border-radius:6px;border:1px solid #2b3644;background:#1b2530;color:inherit}.locbtns button.primary{background:#2a78e0;border-color:#2a78e0;color:#fff}
+
+/* VOX */
+.voxmeter{position:relative;width:180px;height:14px;background:#0b0e12;border:1px solid #2b3644;border-radius:7px;overflow:hidden}
+.voxmeter i{display:block;height:100%;background:#2e8b57;transition:width .08s}.voxmeter i.hot{background:#d9a21a}
+.voxmeter b{position:absolute;top:0;bottom:0;width:2px;background:#fff}
