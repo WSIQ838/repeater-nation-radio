@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from "react";
-import {ChevronLeft,ListChecks,Power,Radio,RefreshCw,UserRound,Users,Volume2,VolumeX,Minus,Plus,PhoneCall,PhoneOff,LogOut} from "lucide-react";
+import {MapPin,ChevronLeft,ListChecks,Power,Radio,RefreshCw,UserRound,Users,Volume2,VolumeX,Minus,Plus,PhoneCall,PhoneOff,LogOut} from "lucide-react";
 import {ChanLine} from "./ChanLine";
 import {PHONE_FACES,PhoneFaceBody} from "./PhoneFaces";
 import {zoneLabel} from "../lib/labels";
@@ -84,12 +84,14 @@ export function PhoneApp(p){
     {p.onFace&&<button type="button" className="n7-item" onClick={()=>go("faces")}><Radio size={18}/>Radio</button>}
     <button type="button" className="n7-item" onClick={()=>go("who")}><Users size={18}/>Who's On ({participants.length})</button>
     <button type="button" className="n7-item" onClick={()=>go("recent")}><RefreshCw size={18}/>Recent</button>
+    {p.mapPanel&&<button type="button" className="n7-item" onClick={()=>go("map")}><MapPin size={18}/>Map</button>}
     <button type="button" className="n7-item" onClick={()=>go("status")}><UserRound size={18}/>My Status</button>
     <button type="button" className="n7-item" onClick={()=>{p.onPower();go("home")}}><Power size={18}/>{connected||state==="connecting"||state==="reconnecting"?"Radio off":"Radio on"}</button>
     <button type="button" className="n7-item" onClick={()=>go("settings")}><ListChecks size={18}/>Setup</button>
     <button type="button" className="n7-item" onClick={p.onSignOut}><LogOut size={18}/>Sign out / switch account</button>
     <div className="n7-dim">Build v{String(__APP_VERSION__)}</div>
   </>);
+  else if(screen==="map")body=<div className="n7-list"><button type="button" className="n7-back" onClick={()=>go("more")}><ChevronLeft size={20}/>Map</button>{p.mapPanel}</div>;
   else if(screen==="settings")body=<div className="n7-list"><button type="button" className="n7-back" onClick={()=>go("more")}><ChevronLeft size={20}/>Setup</button><div className="n7-setup">{p.settingsPanel}</div></div>;
   else if(face!==PHONE_SCREEN)body=<PhoneFaceBody face={face} c={{p,zone,chan,activity,tone,tx,rx,last,step,go}}/>;
   else body=<>
