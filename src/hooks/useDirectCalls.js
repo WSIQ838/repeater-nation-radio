@@ -22,7 +22,7 @@ export function useDirectCalls(userId, outputDeviceId="", micDeviceId="", volume
   const micIdRef=useRef(micDeviceId);micIdRef.current=micDeviceId;
   const roomRef=useRef(null), micRef=useRef(null), callIdRef=useRef(null), startedAtRef=useRef(0), joinRef=useRef(null), rejoinedRef=useRef(false), answeredRef=useRef(false);
   const audioElsRef=useRef(new Map());
-  const [onlineUsers,setOnlineUsers]=useState([]),[incoming,setIncoming]=useState(null),[call,setCall]=useState(null),[callState,setCallState]=useState("idle"),[error,setError]=useState("");
+  const [onlineUsers,setOnlineUsers]=useState([]),[controllersOnline,setControllersOnline]=useState(0),[incoming,setIncoming]=useState(null),[call,setCall]=useState(null),[callState,setCallState]=useState("idle"),[error,setError]=useState("");
   const callStateRef=useRef(callState);callStateRef.current=callState;
 
   useEffect(()=>{for(const el of audioElsRef.current.values())setSink(el,outputDeviceId)},[outputDeviceId]);
@@ -122,6 +122,8 @@ export function useDirectCalls(userId, outputDeviceId="", micDeviceId="", volume
     if(!userId||(typeof document!=="undefined"&&document.hidden))return;
     const p=await radioPresence().catch(()=>null);
     if(p)setOnlineUsers(prev=>sameData(prev,p.users||[])?prev:(p.users||[]));
+    // How many Controllers have the console open (an older server leaves this out).
+    if(p)setControllersOnline(Number(p.controllersOnline)||0);
   },[userId]);
 
   useEffect(()=>{refresh();const id=setInterval(refresh,CALLS_POLL_MS);return()=>clearInterval(id)},[refresh]);
@@ -163,5 +165,5 @@ export function useDirectCalls(userId, outputDeviceId="", micDeviceId="", volume
   const decline=useCallback(async()=>{if(!incoming)return;await directCall("decline",{call_id:incoming.id}).catch(()=>{});setIncoming(null)},[incoming]);
   const endCall=useCallback(async()=>{const id=callIdRef.current;if(id)await directCall("end",{call_id:id}).catch(()=>{});await clearCall()},[clearCall]);
 
-  return {onlineUsers,incoming,call,callState,error,startCall,accept,decline,endCall};
+  return {onlineUsers,controllersOnline,incoming,call,callState,error,startCall,accept,decline,endCall};
 }

@@ -1,6 +1,6 @@
 [package]
 name = "repeater-nation-radio"
-version = "0.2.65"
+version = "0.2.66"
 description = "Repeater Nation desktop radio"
 authors = ["Repeater Nation"]
 edition = "2021"

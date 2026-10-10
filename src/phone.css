@@ -16,6 +16,7 @@ html.phone .login-form,html.phone .google-login{width:100%}
 .n7-brand{font:800 11px/1 Arial,sans-serif;letter-spacing:1.5px;color:#9a9ca0;margin-right:auto}
 .n7-statusbar em{font:800 11px/1 Arial,sans-serif;font-style:normal;padding:3px 6px;border-radius:3px}
 .n7-statusbar em.tx{background:#d93b30}.n7-statusbar em.rx{background:#1e8e4a}
+.n7-ctl{font:700 10px/1 Arial,sans-serif;color:#7d8086;white-space:nowrap}.n7-ctl.on{color:#46c77a}
 .n7-batt{position:relative;width:9px;height:15px;background:#fff;border-radius:2px;margin-left:4px}
 .n7-batt:before{content:"";position:absolute;left:28%;right:28%;top:-3px;height:3px;background:#fff;border-radius:1px 1px 0 0}
 .n7-time{font:600 15px/1 Arial,Helvetica,sans-serif}
