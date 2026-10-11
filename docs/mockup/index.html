@@ -1,7 +1,7 @@
 <title>Repeater Nation App</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a device stage. Phone = bottom tab bar + a More hub. Tablet = grouped side rail, two panes. Dark by choice, like the radio client. */
+/* Layout: a device stage. Phone = bottom tab bar + a More hub. Tablet = grouped side rail, two panes. Dark by choice. */
 :root{
   --bg:#0b0d10; --panel:#14181d; --panel2:#1b2027; --line:#262d36; --fg:#eef1f4; --mute:#8a95a3;
   --accent:#ff8a1f; --accent-ink:#1a0e00; --good:#2fc46a; --warn:#f2c14e; --bad:#ef5350; --blue:#4aa3ff;
@@ -295,10 +295,9 @@ const MORE=[
  ['board','Leaderboard','trophy','XP, badges and streaks'],
  ['fcc','Callsign Lookup','id','Check an FCC license'],
  ['msgs','Messages','mail','Friends and direct messages'],
- ['radio','Radio','mic','Open Repeater Nation Radio'],
  ['me','Me','user','Profile, privacy and notifications']
 ];
-const TITLE={};NAV.forEach(g=>g[1].forEach(x=>TITLE[x[0]]=x[1]));TITLE.me='Me';TITLE.radio='Radio';TITLE.more='More';
+const TITLE={};NAV.forEach(g=>g[1].forEach(x=>TITLE[x[0]]=x[1]));TITLE.me='Me';TITLE.more='More';
 
 const av=(c,on)=>`<div class="av ${on?'on':''}">${c.slice(0,2)}</div>`;
 const stDot=s=>`<span class="dot ${s==='off'?'off':s==='busy'?'busy':''}"></span>`;
@@ -460,9 +459,6 @@ function msgs(){
   if(T())return `<div class="two" style="grid-template-columns:minmax(0,1fr) minmax(0,1.4fr)"><div class="l"><div class="pad">${head('Friends','Messages')}${list}</div></div><div class="r"><div class="pad" style="padding-top:26px"><div class="row" style="margin-bottom:14px">${av(f.c,f.on)}<div><b>${f.n}</b><div class="sm mute mono">${f.c}</div></div></div>${thread}</div></div></div>`;
   return `<div class="pad">${head('Friends','Messages')}${list}<div class="sec"><h3>${f.n}</h3></div>${thread}</div>`;
 }
-function radio(){
-  return `<div class="pad">${head('Companion','Radio')}<div class="hero"><div class="eyebrow" style="color:#ffb066">Nation Wide · CH 1</div><div class="big">3 on channel</div><div class="mute" style="margin-bottom:14px">Push to talk lives in the Repeater Nation Radio app. This button opens it.</div><button class="btn" data-a="toast" data-v="Opening Repeater Nation Radio">${I('mic')}Open Radio</button></div></div>`;
-}
 function me(){
   const sw=(k,t,d)=>`<div class="set"><div><div style="font-weight:500">${t}</div><div class="sm mute">${d}</div></div><button class="sw" role="switch" aria-checked="${S.notif[k]}" aria-label="${t}" data-a="sw" data-v="${k}"></button></div>`;
   const prof=`<div class="card"><div class="row"><div class="av" style="width:64px;height:64px;font-size:22px;background:#2a1604;border-color:#5a3512">SE</div><div class="grow"><div style="font:700 24px var(--display)">Sean</div><div class="row"><span class="mono" style="color:var(--accent)">WSIQ838</span><span class="ver">${I('check')}Verified</span></div><div class="sm mute">General · Member since 2024 · Dallas, TX</div></div></div>
@@ -475,12 +471,12 @@ function me(){
 function more(){
   return `<div class="pad">${head('Everything else','More')}<div class="tiles">${MORE.map(m=>`<button class="tile" data-a="tab" data-v="${m[0]}">${I(m[2])}<b>${m[1]}</b><span>${m[3]}</span></button>`).join('')}</div></div>`;
 }
-const SCR={home,dir,nets,clubs,parks,forum,market,equip,trips,sdr,log,board,fcc,msgs,radio,me,more};
+const SCR={home,dir,nets,clubs,parks,forum,market,equip,trips,sdr,log,board,fcc,msgs,me,more};
 
 function render(){
   const dev=document.getElementById('dev'),t=T();
   dev.className='dev '+S.dev;
-  const rail=t?`<nav class="rail" aria-label="Main"><div class="brand"><span style="color:var(--accent)">${I('tower')}</span>Repeater Nation</div>${NAV.map(g=>`<div class="grp">${g[0]}</div>${g[1].map(([k,l,i])=>`<button data-a="tab" data-v="${k}" ${S.tab===k?'aria-current="page"':''}>${I(i)}${l}</button>`).join('')}`).join('')}<div class="grp">Radio</div><button data-a="tab" data-v="radio" ${S.tab==='radio'?'aria-current="page"':''}>${I('mic')}Open Radio</button><div class="me"><div class="av on">SE</div><div class="grow"><b>Sean</b><div class="sm mute mono">WSIQ838</div></div><button data-a="tab" data-v="me" style="padding:6px;border-radius:8px" aria-label="Me" ${S.tab==='me'?'aria-current="page"':''}>${I('user')}</button></div></nav>`:'';
+  const rail=t?`<nav class="rail" aria-label="Main"><div class="brand"><span style="color:var(--accent)">${I('tower')}</span>Repeater Nation</div>${NAV.map(g=>`<div class="grp">${g[0]}</div>${g[1].map(([k,l,i])=>`<button data-a="tab" data-v="${k}" ${S.tab===k?'aria-current="page"':''}>${I(i)}${l}</button>`).join('')}`).join('')}<div class="me"><div class="av on">SE</div><div class="grow"><b>Sean</b><div class="sm mute mono">WSIQ838</div></div><button data-a="tab" data-v="me" style="padding:6px;border-radius:8px" aria-label="Me" ${S.tab==='me'?'aria-current="page"':''}>${I('user')}</button></div></nav>`:'';
   const cur=MAIN.includes(S.tab)?S.tab:'more';
   const TB=[['home','Home','home'],['dir','Repeaters','tower'],['nets','Nets','cal'],['clubs','Clubs','users'],['more','More','grid']];
   const tabs=t?'':`<nav class="tabs" aria-label="Main">${TB.map(([k,l,i])=>`<button data-a="tab" data-v="${k}" ${cur===k?'aria-current="page"':''}>${I(i)}${l}</button>`).join('')}</nav>`;
