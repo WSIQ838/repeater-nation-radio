@@ -147,6 +147,18 @@ h3{font:600 17px var(--display);margin:0;letter-spacing:.02em}
 .eq i:nth-child(2){animation-delay:.2s}.eq i:nth-child(3){animation-delay:.4s}.eq i:nth-child(4){animation-delay:.1s}
 @keyframes eq{0%,100%{height:4px}50%{height:18px}}
 .rk{font:700 18px var(--display);width:26px;text-align:center;color:var(--mute)}
+.ro{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.ro:last-child{border:0}
+.ro b{font:500 18px var(--mono);text-align:right}
+pre.code{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;overflow:auto;font:12px/1.5 var(--mono);margin:0;max-height:200px}
+.ph{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.ph div{background:var(--panel2);border-radius:10px;padding:8px;text-align:center}
+.ph b{display:block;font:600 20px var(--display);color:var(--accent)}
+.ph span{font-size:12px}
+.mo{font:500 15px var(--mono);line-height:2;word-break:break-word}
+table.bp{width:100%;border-collapse:collapse;font-size:13px}
+.bp th,.bp td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left}
+.bp th{font:600 11px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 .note{max-width:1100px;margin:18px auto 0;color:var(--mute);font-size:12px;text-align:center}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -192,6 +204,10 @@ const ic={
  id:'<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="11" r="2"/><path d="M5.5 16a3 3 0 0 1 6 0M14 10h5M14 14h4"/>',
  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
  alert:'<path d="M12 3L2 21h20zM12 10v5M12 18v.5"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+ battery:'<rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2M6 10v4M10 10v4"/>',
+ file:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6"/>',
+ flag:'<path d="M5 21V4M5 4h13l-2 4 2 4H5"/>',
  back:'<path d="M15 18l-6-6 6-6"/>',
  send:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
  play:'<path d="M7 4l13 8-13 8z"/>',
@@ -280,7 +296,7 @@ const FRIENDS=[
 ];
 
 const S={dev:'phone',tab:'home',filter:'All',q:'',sel:1,sheet:false,view:'list',liked:{},checked:false,joined:{1:true},club:1,park:'All',fav:{1:true,3:true},
-  evf:'All',cat:'All',eq:{},sdr:null,log:LOG.slice(),sos:0,safe:false,share:false,conv:'KD5JAX',msgs:{KD5JAX:[['them','Heading to the ridge Saturday, want to try for 80 miles?'],['me','Count me in. 446.000 simplex?'],['them','Yes. 9 AM.']],W5ABC:[['them','Thanks for hosting the net.']],N5TOM:[['them','Can you cover next Tuesday?']]},
+  evf:'All',cat:'All',eq:{},sdr:null,log:LOG.slice(),tl:{},tool:null,cls:'Technician',issue:'Down',exp:{},sos:0,safe:false,share:false,conv:'KD5JAX',msgs:{KD5JAX:[['them','Heading to the ridge Saturday, want to try for 80 miles?'],['me','Count me in. 446.000 simplex?'],['them','Yes. 9 AM.']],W5ABC:[['them','Thanks for hosting the net.']],N5TOM:[['them','Can you cover next Tuesday?']]},
   notif:{push:true,nets:true,dm:true,loc:false,bio:true,offline:true},toast:''};
 
 /* navigation */
@@ -288,7 +304,7 @@ const MAIN=['home','dir','nets','clubs','more'];
 const NAV=[
  ['Explore',[['home','Home','home'],['dir','Repeaters','tower'],['nets','Nets & Events','cal'],['clubs','Clubs','users'],['parks','Parks & Summits','mount']]],
  ['Community',[['forum','Forum','chat'],['market','Marketplace','bag'],['equip','Equipment','tool'],['msgs','Messages','mail']]],
- ['Tools',[['trips','Trips','route'],['sdr','SDR Streams','wave'],['log','Logbook','book'],['emerg','Emergency & Situational Awareness','alert']]]
+ ['Field',[['tools','Tools','tool'],['trips','Trips','route'],['sdr','SDR Streams','wave'],['log','Logbook','book'],['emerg','Emergency & Situational Awareness','alert']]]
 ];
 const MORE=[
  ['parks','Parks & Summits','mount','POTA and SOTA, favorites and activations'],
@@ -298,6 +314,7 @@ const MORE=[
  ['trips','Trips','route','Plan a route with repeaters along it'],
  ['sdr','SDR Streams','wave','Listen to receivers in your area'],
  ['log','Logbook','book','Your contacts, ready to export'],
+ ['tools','Tools','tool','Calculators, clocks and field helpers'],
  ['msgs','Messages','mail','Friends and direct messages'],
  ['emerg','Emergency & Situational Awareness','alert','Alerts, emergency nets and check-in'],
  ['me','Me','user','Profile, privacy and notifications']
@@ -477,7 +494,149 @@ function me(){
 function more(){
   return `<div class="pad">${head('Everything else','More')}<div class="tiles">${MORE.map(m=>`<button class="tile" data-a="tab" data-v="${m[0]}">${I(m[2])}<b>${m[1]}</b><span>${m[3]}</span></button>`).join('')}</div></div>`;
 }
-const SCR={home,dir,nets,clubs,parks,forum,market,equip,trips,sdr,log,emerg,msgs,me,more};
+/* tools: working calculators and field helpers */
+const esc=x=>String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const val=(id,d)=>S.tl[id]??d;
+const num=(id,d)=>{const x=parseFloat(val(id,d));return isNaN(x)?null:x};
+const fld=(id,label,def,unit='')=>`<div class="fld"><label for="${id}">${label}${unit?` (${unit})`:''}</label><input id="${id}" data-t inputmode="decimal" autocomplete="off" value="${esc(val(id,def))}"></div>`;
+const sel=(id,label,opts,def)=>`<div class="fld"><label for="${id}">${label}</label><select id="${id}" data-t>${opts.map(o=>`<option value="${esc(o[0])}" ${String(val(id,def))===String(o[0])?'selected':''}>${o[1]}</option>`).join('')}</select></div>`;
+const ro=(l,v)=>`<div class="ro"><span class="mute">${l}</span><b>${v}</b></div>`;
+const ftin=ft=>{const f=Math.floor(ft),i=(ft-f)*12;return `${f} ft ${i.toFixed(1)} in`};
+const bad=m=>`<div class="card mute">${m}</div>`;
+
+const TOOLS=[
+ ['offset','Offset & Tone','tower','Repeater input frequency and tone'],
+ ['antenna','Antenna Length','wave','Dipole, quarter-wave and 5/8 wave'],
+ ['coax','Coax Loss & SWR','route','Cable loss, power at the antenna'],
+ ['range','Range','nav','Radio horizon from antenna heights'],
+ ['grid','Grid Square','map','Maidenhead locator from lat/long'],
+ ['battery','Battery Runtime','battery','How long a pack lasts'],
+ ['clock','UTC Clock','clock','UTC, local time and net times'],
+ ['phon','Phonetics','mic','Spell a callsign'],
+ ['morse','Morse','wave','Text to code, with sound'],
+ ['band','Band Plan','book','What your license class allows'],
+ ['chirp','Export for CHIRP','file','Saved repeaters as a CSV'],
+ ['report','Report a Repeater','flag','Tell the owner what changed']
+];
+
+function t_offset(){
+  const f=num('of',146.94);
+  if(f===null)return fld('of','Repeater output frequency',146.94,'MHz')+bad('Enter a frequency in MHz.');
+  let off=null;
+  if(f>=145.1&&f<145.5||f>=146.6&&f<147.0)off=-0.6;
+  else if(f>=146.0&&f<146.4||f>=147.0&&f<147.4)off=0.6;
+  else if(f>=442&&f<445)off=5;
+  else if(f>=447&&f<450)off=-5;
+  const tones=['67.0','71.9','74.4','77.0','79.7','82.5','85.4','88.5','91.5','94.8','97.4','100.0','103.5','107.2','110.9','114.8','118.8','123.0','127.3','131.8','136.5','141.3','146.2','151.4','156.7','162.2','167.9','173.8','179.9','186.2','192.8','203.5','210.7','218.1','225.7','233.6','241.8','250.3'];
+  return fld('of','Repeater output frequency',146.94,'MHz')+sel('tn','CTCSS tone',tones.map(t=>[t,t+' Hz']),'100.0')+
+   (off===null?bad('That frequency has no standard offset in the US band plan. Treat it as simplex, or check the repeater listing.'):
+   `<div class="card" style="padding:2px 14px">${ro('Receive (repeater output)',f.toFixed(3)+' MHz')}${ro('Transmit (repeater input)',(f+off).toFixed(3)+' MHz')}${ro('Offset',(off>0?'+':'−')+Math.abs(off)+' MHz')}${ro('Tone (transmit)',val('tn','100.0')+' Hz')}</div>`);
+}
+function t_antenna(){
+  const f=num('af',146.52);
+  if(!f||f<=0)return fld('af','Frequency',146.52,'MHz')+bad('Enter a frequency in MHz.');
+  const r=(n,k)=>{const ft=k/f;return ro(n,`${ftin(ft)}<div class="sm mute" style="font:12px var(--mono)">${(ft*0.3048).toFixed(2)} m</div>`)};
+  return fld('af','Frequency',146.52,'MHz')+`<div class="card" style="padding:2px 14px">${r('Quarter-wave vertical',234)}${r('Half-wave dipole (total)',468)}${r('Each dipole leg',234)}${r('5/8 wave vertical',585)}</div><div class="sm mute" style="margin-top:8px">Free-space starting points. Trim while watching SWR.</div>`;
+}
+function t_coax(){
+  const LOSS={'RG-58':[2.2,5.0,9.5],'RG-8X':[1.4,3.7,6.7],'RG-213':[0.7,1.9,3.8],'LMR-400':[0.6,1.5,2.7]};
+  const cab=val('cc','RG-58'),b=+val('cb',1),len=num('cl',50),p=num('cp',50),s=num('sw',1.5);
+  let out=fld('cl','Cable length',50,'ft')+fld('cp','Transmitter power',50,'W');
+  const body=len===null||p===null?bad('Enter a length and power.'):(()=>{const dB=LOSS[cab][b]*len/100,po=p*Math.pow(10,-dB/10);return `<div class="card" style="padding:2px 14px">${ro('Loss',dB.toFixed(2)+' dB')}${ro('Power at the antenna',po.toFixed(1)+' W')}${ro('Lost as heat',(p-po).toFixed(1)+' W')}</div>`})();
+  let swr=bad('Enter an SWR of 1.0 or higher.');
+  if(s!==null&&s>=1){const g=(s-1)/(s+1);swr=`<div class="card" style="padding:2px 14px">${ro('Reflected power',(g*g*100).toFixed(1)+' %')}${ro('Return loss',g===0?'∞':(-20*Math.log10(g)).toFixed(1)+' dB')}${ro('Mismatch loss',(-10*Math.log10(1-g*g)).toFixed(2)+' dB')}</div>`}
+  return sel('cc','Cable',Object.keys(LOSS).map(k=>[k,k]),'RG-58')+sel('cb','Band',[[0,'10 m (28 MHz)'],[1,'2 m (146 MHz)'],[2,'70 cm (446 MHz)']],1)+out+body+`<div class="sec"><h3>SWR check</h3></div>`+fld('sw','SWR at the antenna',1.5)+swr+`<div class="sm mute" style="margin-top:8px">Loss figures are typical values for new cable. Real cable varies.</div>`;
+}
+function t_range(){
+  const a=num('h1',6),b=num('h2',200);
+  const body=a===null||b===null||a<0||b<0?bad('Enter two heights in feet.'):(()=>{const mi=1.415*(Math.sqrt(a)+Math.sqrt(b));return `<div class="card" style="padding:2px 14px">${ro('Line of sight',mi.toFixed(1)+' mi')}${ro('In kilometers',(mi*1.609).toFixed(1)+' km')}</div>`})();
+  return fld('h1','Your antenna height',6,'ft')+fld('h2','Other antenna height (repeater tower)',200,'ft')+body+`<div class="sm mute" style="margin-top:8px">Radio horizon on flat ground. Hills, buildings and trees shorten it.</div>`;
+}
+function t_grid(){
+  const lat=num('la',32.78),lng=num('lo',-96.8);
+  let body=bad('Latitude is −90 to 90 and longitude is −180 to 180.');
+  if(lat!==null&&lng!==null&&Math.abs(lat)<=90&&Math.abs(lng)<=180){
+    let x=lng+180,y=lat+90;const A='ABCDEFGHIJKLMNOPQR',a='abcdefghijklmnopqrstuvwx';
+    const f1=Math.min(17,Math.floor(x/20)),f2=Math.min(17,Math.floor(y/10));x-=f1*20;y-=f2*10;
+    const s1=Math.min(9,Math.floor(x/2)),s2=Math.min(9,Math.floor(y));x-=s1*2;y-=s2;
+    const u1=Math.min(23,Math.floor(x*12)),u2=Math.min(23,Math.floor(y*24));
+    const g=A[f1]+A[f2]+s1+s2+a[u1]+a[u2];
+    body=`<div class="card" style="padding:2px 14px">${ro('Grid square (6 characters)',g)}${ro('4 characters',g.slice(0,4))}</div>`;
+  }
+  return fld('la','Latitude',32.78,'degrees')+fld('lo','Longitude',-96.8,'degrees, west is negative')+body;
+}
+function t_battery(){
+  const c=num('batc',2000),tx=num('batx',1500),rx=num('barx',180),sb=num('bast',60),tp=num('batp',5),rp=num('barp',10);
+  const ok=[c,tx,rx,sb,tp,rp].every(x=>x!==null)&&tp+rp<=100&&c>0;
+  const body=!ok?bad('Fill every box. Transmit and receive time can add up to 100 % at most.'):(()=>{const avg=tp/100*tx+rp/100*rx+(100-tp-rp)/100*sb,h=c/avg;return `<div class="card" style="padding:2px 14px">${ro('Average draw',avg.toFixed(0)+' mA')}${ro('Runtime',h.toFixed(1)+' hours')}${ro('About',(h/24).toFixed(1)+' days')}</div>`})();
+  return `<div class="grid2" style="gap:10px">${fld('batc','Battery','2000','mAh')}${fld('batx','Transmit draw',1500,'mA')}${fld('barx','Receive draw',180,'mA')}${fld('bast','Standby draw',60,'mA')}${fld('batp','Time transmitting',5,'%')}${fld('barp','Time receiving',10,'%')}</div>`+body;
+}
+function t_clock(){
+  const t=val('ct','20:00'),z=+val('cz',-5);
+  const m=/^(\d{1,2}):(\d{2})$/.exec(t.trim());
+  let body=bad('Enter a time like 20:00.');
+  if(m&&+m[1]<24&&+m[2]<60){let mins=+m[1]*60+ +m[2]-z*60,day='same day';if(mins>=1440){mins-=1440;day='next day'}if(mins<0){mins+=1440;day='previous day'}
+    body=`<div class="card" style="padding:2px 14px">${ro('UTC',String(Math.floor(mins/60)).padStart(2,'0')+':'+String(mins%60).padStart(2,'0')+' Z')}${ro('Date in UTC',day)}</div>`}
+  return `<div class="card hero" style="text-align:center"><div class="eyebrow" style="color:#ffb066">UTC</div><div class="mono" data-clock="utc" style="font-size:40px;letter-spacing:-.02em">--:--:--</div><div class="eyebrow" style="margin-top:10px">Local</div><div class="mono mute" data-clock="local" style="font-size:20px">--:--:--</div></div><div class="sec"><h3>Net time to UTC</h3></div>`+
+   fld('ct','Local time (24 hour)','20:00')+sel('cz','Local time zone',[[-4,'Eastern daylight, UTC−4'],[-5,'Central daylight or Eastern standard, UTC−5'],[-6,'Mountain daylight or Central standard, UTC−6'],[-7,'Pacific daylight or Mountain standard, UTC−7'],[-8,'Pacific standard, UTC−8']],-5)+body;
+}
+const PH={A:'Alfa',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliett',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'X-ray',Y:'Yankee',Z:'Zulu',0:'Zero',1:'One',2:'Two',3:'Three',4:'Four',5:'Five',6:'Six',7:'Seven',8:'Eight',9:'Nine','/':'Stroke'};
+function t_phon(){
+  const t=val('pt','WSIQ838').toUpperCase().replace(/[^A-Z0-9/]/g,'');
+  return `<div class="fld"><label for="pt">Callsign or text</label><input id="pt" data-t value="${esc(val('pt','WSIQ838'))}" autocapitalize="characters" autocomplete="off"></div>`+(t?`<div class="ph">${[...t].map(c=>`<div><b>${c}</b><span>${PH[c]}</span></div>`).join('')}</div><div class="card" style="margin-top:12px"><div class="sm mute">Say it as</div><div style="font-weight:600;margin-top:4px">${[...t].map(c=>PH[c]).join(' ')}</div></div>`:bad('Type a callsign above.'));
+}
+const MC={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.','/':'-..-.','?':'..--..','.':'.-.-.-',',':'--..--'};
+const morseOf=t=>t.toUpperCase().split('').map(c=>c===' '?'/':MC[c]||'').filter(Boolean);
+function t_morse(){
+  const m=morseOf(val('mt','CQ CQ DE WSIQ838'));
+  return `<div class="fld"><label for="mt">Text</label><input id="mt" data-t value="${esc(val('mt','CQ CQ DE WSIQ838'))}" autocomplete="off"></div>`+sel('mw','Speed',[[12,'12 words per minute'],[15,'15 words per minute'],[20,'20 words per minute']],15)+
+   `<div class="card"><div class="mo">${m.length?m.join('&nbsp;&nbsp; ').replace(/\./g,'·').replace(/-/g,'−').replace(/\/ /g,'/ '):'<span class="mute">Type some text.</span>'}</div></div><div class="row" style="margin-top:12px"><button class="btn" data-a="morse">${I('play')}Play</button><span class="sm mute">Sound starts when you tap Play.</span></div>`;
+}
+const BANDS=[
+ ['80 m','3.5–4.0',['p','p','f']],['40 m','7.0–7.3',['p','p','f']],['20 m','14.0–14.35',['n','p','f']],['15 m','21.0–21.45',['p','p','f']],['10 m','28.0–29.7',['p','f','f']],
+ ['6 m','50–54',['f','f','f']],['2 m','144–148',['f','f','f']],['1.25 m','222–225',['f','f','f']],['70 cm','420–450',['f','f','f']]
+];
+function t_band(){
+  const k=['Technician','General','Extra'].indexOf(S.cls);const i=k<0?0:k;
+  const sym={f:'<span class="tag g">Full</span>',p:'<span class="tag" style="color:var(--warn);border-color:#6b5420">Part</span>',n:'<span class="tag">None</span>'};
+  return ch(['Technician','General','Extra'],'cls')+`<div class="card" style="padding:2px 14px;overflow-x:auto"><table class="bp"><thead><tr><th>Band</th><th>MHz</th><th>${S.cls||'Technician'}</th></tr></thead><tbody>${BANDS.map(b=>`<tr><td><b>${b[0]}</b></td><td class="mono">${b[1]}</td><td>${sym[b[2][i]]}</td></tr>`).join('')}</tbody></table></div><div class="sm mute" style="margin-top:8px">Part means some modes or segments only. Always check the current FCC rules and the ARRL band chart before you transmit.</div>`;
+}
+function t_chirp(){
+  const fm=REPS.filter(r=>r.mode==='FM');
+  const on=r=>S.exp[r.id]!==false;
+  const rows=fm.filter(on).map((r,i)=>[i,r.call,r.f,r.off.startsWith('−')?'-':'+',Math.abs(parseFloat(r.off.replace('−','-'))).toFixed(6),'Tone',r.tone,r.tone,'023','NN','FM','5.00','','' ].join(','));
+  const csv='Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,Mode,TStep,Skip,Comment\n'+rows.join('\n');
+  S._csv=csv;
+  return `<div class="card" style="padding:2px 14px">${fm.map(r=>`<div class="set" style="justify-content:flex-start"><button class="sw" role="switch" aria-checked="${on(r)}" aria-label="${r.call}" data-a="exp" data-v="${r.id}" style="width:38px;height:24px"></button><div class="grow"><b>${r.call}</b> <span class="mono mute">${r.f}</span></div></div>`).join('')}</div><div class="sm mute" style="margin:8px 0 12px">Digital repeaters (DMR, Fusion) are left out. CHIRP FM files cannot hold them.</div><pre class="code" tabindex="0">${esc(csv)}</pre><div class="row" style="margin-top:12px"><button class="btn" data-a="copycsv">Copy CSV</button><span class="sm mute">Paste into a file and open it in CHIRP.</span></div>`;
+}
+function t_report(){
+  const r=REPS.find(x=>x.id==(val('rr',1)))||REPS[0];
+  return sel('rr','Repeater',REPS.map(x=>[x.id,`${x.call} · ${x.f}`]),1)+`<div class="eyebrow" style="margin:4px 0 8px">What happened</div>`+ch(['Down','Noisy','Wrong tone','Frequency changed','Other'],'issue')+`<div class="fld"><label for="rn">Notes</label><input id="rn" data-t value="${esc(val('rn',''))}" placeholder="What did you hear, and where were you?"></div><button class="btn" style="width:100%" data-a="toast" data-v="Report sent to the ${r.call} owner">${I('send')}Send report</button>`;
+}
+const TFN={offset:t_offset,antenna:t_antenna,coax:t_coax,range:t_range,grid:t_grid,battery:t_battery,clock:t_clock,phon:t_phon,morse:t_morse,band:t_band,chirp:t_chirp,report:t_report};
+function tools(){
+  const cur=S.tool||(T()?'offset':null);
+  const info=TOOLS.find(x=>x[0]===cur);
+  const detail=info?`<div class="eyebrow">${info[3]}</div><h2 class="title" style="margin-bottom:14px">${info[1]}</h2>${TFN[cur]()}`:'';
+  const tiles=`<div class="tiles">${TOOLS.map(x=>`<button class="tile" data-a="tool" data-v="${x[0]}">${I(x[2])}<b>${x[1]}</b><span>${x[3]}</span></button>`).join('')}</div>`;
+  if(T())return `<div class="two" style="grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)"><div class="l"><div class="pad">${head('Calculators and helpers','Tools')}${TOOLS.map(x=>`<button class="item" data-a="tool" data-v="${x[0]}" aria-selected="${cur===x[0]}">${I(x[2])}<div class="grow"><b>${x[1]}</b><div class="sm mute">${x[3]}</div></div></button>`).join('')}</div></div><div class="r"><div class="pad" style="padding-top:26px">${detail}</div></div></div>`;
+  return info?`<div class="pad">${detail}</div>`:`<div class="pad">${head('Calculators and helpers','Tools')}${tiles}</div>`;
+}
+function tick(){
+  const n=new Date();
+  document.querySelectorAll('[data-clock]').forEach(e=>{e.textContent=e.dataset.clock==='utc'?n.toISOString().slice(11,19)+' Z':n.toLocaleTimeString([], {hour12:false})});
+}
+function playMorse(){
+  try{
+    const m=morseOf(val('mt','CQ CQ DE WSIQ838')),u=1.2/(+val('mw',15)),AC=window.AudioContext||window.webkitAudioContext,c=new AC();
+    let t=c.currentTime+.05;
+    m.forEach(w=>{ if(w==='/'){t+=u*4;return}
+      [...w].forEach(s=>{const d=s==='.'?u:u*3,o=c.createOscillator(),g=c.createGain();o.frequency.value=700;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.25,t+.005);g.gain.setValueAtTime(.25,t+d-.005);g.gain.linearRampToValueAtTime(0,t+d);o.start(t);o.stop(t+d+.01);t+=d+u});
+      t+=u*2});
+  }catch(e){toast('Sound is not available here')}
+}
+
+const SCR={tools,home,dir,nets,clubs,parks,forum,market,equip,trips,sdr,log,emerg,msgs,me,more};
 
 function render(){
   const dev=document.getElementById('dev'),t=T();
@@ -488,16 +647,16 @@ function render(){
   const tabs=t?'':`<nav class="tabs" aria-label="Main">${TB.map(([k,l,i])=>`<button data-a="tab" data-v="${k}" ${cur===k?'aria-current="page"':''}>${I(i)}${l}</button>`).join('')}</nav>`;
   const modal=(!t&&S.sheet)?(()=>{const r=REPS.find(x=>x.id===S.sel);return `<div class="modal" data-a="closeSheet"><div class="sheet" onclick="event.stopPropagation()"><div style="display:flex;justify-content:flex-end"><button data-a="closeSheet" aria-label="Close" style="color:var(--mute)">${I('x')}</button></div>${repDetail(r)}</div></div>`})():'';
   const prev=dev.querySelector('.body')?.scrollTop||0;
-  const backBtn=(!t&&!MAIN.includes(S.tab))?`<div style="padding:4px 14px 0"><button class="back" data-a="tab" data-v="more">${I('back')}More</button></div>`:'';
+  const backBtn=(!t&&!MAIN.includes(S.tab))?`<div style="padding:4px 14px 0">${S.tab==='tools'&&S.tool?`<button class="back" data-a="tool" data-v="">${I('back')}Tools</button>`:`<button class="back" data-a="tab" data-v="more">${I('back')}More</button>`}</div>`:'';
   dev.innerHTML=`<div class="scr">${rail}<div class="col"><div class="sb"><span>9:41</span><span>${t?'Tue Oct 13':'5G ▮▮▮'}</span></div>${backBtn}<div class="body" id="body">${SCR[S.tab]()}</div>${tabs}</div>${modal}${S.toast?`<div class="toast" role="status">${S.toast}</div>`:''}</div>`;
   const b=dev.querySelector('.body');
   if(b&&S._keep)b.scrollTop=prev;
   S._keep=false;
-  for(const id of ['q']){const q=document.getElementById(id);if(q&&S._focus===id){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
+  if(S._focus){const q=document.getElementById(S._focus);if(q&&document.activeElement!==q){q.focus();try{q.setSelectionRange(q.value.length,q.value.length)}catch(x){}}}
   S._focus=null;
   document.getElementById('bp').setAttribute('aria-pressed',!t);
   document.getElementById('bt').setAttribute('aria-pressed',t);
-  fit();
+  tick();fit();
 }
 let tt;
 function toast(m){S.toast=m;S._keep=true;render();clearTimeout(tt);tt=setTimeout(()=>{S.toast='';S._keep=true;render()},1500)}
@@ -507,7 +666,7 @@ document.addEventListener('click',e=>{
   const el=e.target.closest('[data-a]');
   if(!el)return;
   const a=el.dataset.a,v=el.dataset.v;
-  if(a==='tab'){S.tab=v;S.sheet=false;render()}
+  if(a==='tab'){S.tab=v;S.sheet=false;if(v==='tools')S.tool=null;render()}
   else if(a==='set'){S[el.dataset.k]=v;keep()}
   else if(a==='sel'){S.sel=+v;S.sheet=!T();keep()}
   else if(a==='pin'){S.sel=+v;keep()}
@@ -530,10 +689,15 @@ document.addEventListener('click',e=>{
   else if(a==='safe'){S.safe=!S.safe;toast(S.safe?'Marked safe, contacts notified':'Status cleared')}
   else if(a==='shareloc'){S.share=!S.share;toast(S.share?'Sharing location with net control':'Location sharing off')}
   else if(a==='kit'){S.kit=S.kit||{};S.kit[v]=!S.kit[v];keep()}
+  else if(a==='tool'){S.tool=v||null;render()}
+  else if(a==='exp'){S.exp[v]=S.exp[v]===false;keep()}
+  else if(a==='copycsv'){try{navigator.clipboard.writeText(S._csv).then(()=>toast('CSV copied')).catch(()=>toast('Copy is blocked here. Select the text instead.'))}catch(x){toast('Copy is blocked here. Select the text instead.')}}
+  else if(a==='morse'){playMorse()}
   else if(a==='toast'){toast(v)}
 });
 document.addEventListener('input',e=>{
   if(e.target.id==='q'){S.q=e.target.value;S._focus='q';keep()}
+  else if(e.target.dataset.t!==undefined){S.tl[e.target.id]=e.target.value;S._focus=e.target.id;keep()}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='mi'){e.preventDefault();document.querySelector('[data-a=send]').click()}});
 document.getElementById('bp').onclick=()=>{S.dev='phone';S.sheet=false;render()};
@@ -547,5 +711,6 @@ function fit(){
   f.style.width=(w*sc)+'px';f.style.height=(h*sc)+'px';
 }
 window.addEventListener('resize',fit);
+setInterval(()=>{if(typeof tick==='function')tick()},1000);
 render();
 </script>
