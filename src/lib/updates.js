@@ -92,6 +92,33 @@ export function openRelease(release){
   return openUrl(asset?.browser_download_url||release?.html_url||"https://github.com/WSIQ838/repeater-nation-radio/releases");
 }
 
+// One click: download the signed update for this computer, install it and restart. Falls back
+// to the download page when there is none to install here (phones, a build made without the
+// signing key, a .deb or .rpm install). onProgress gets short texts for the button.
+export async function installUpdate(release,onProgress=()=>{}){
+  try{
+    const {check}=await import("@tauri-apps/plugin-updater");
+    const update=await check();
+    if(update){
+      let total=0,got=0;
+      onProgress("Downloading…");
+      await update.downloadAndInstall(e=>{
+        if(e.event==="Started")total=e.data.contentLength||0;
+        else if(e.event==="Progress"){got+=e.data.chunkLength||0;if(total)onProgress(`Downloading… ${Math.min(100,Math.round(got*100/total))}%`)}
+        else if(e.event==="Finished")onProgress("Installing…");
+      });
+      // Windows closes the app itself to run the installer; elsewhere restart into the new version.
+      onProgress("Restarting…");
+      const {relaunch}=await import("@tauri-apps/plugin-process");
+      await relaunch();
+      return "installed";
+    }
+  }catch(e){console.warn("[update] one-click update not available, opening the download page",e)}
+  onProgress("");
+  await openRelease(release);
+  return "opened";
+}
+
 // Runs the automatic checks: once when the app opens (unless set to never), then on the
 // chosen schedule. The time of the last check is kept, so restarting the app doesn't
 // reset an hourly or daily schedule.

@@ -1,7 +1,7 @@
 {
   "name": "repeater-nation-radio",
   "private": true,
-  "version": "0.2.68",
+  "version": "0.2.69",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,6 +17,8 @@
     "@tauri-apps/plugin-http": "^2.8.0",
     "@tauri-apps/plugin-notification": "^2.5.1",
     "@tauri-apps/plugin-opener": "^2.5.0",
+    "@tauri-apps/plugin-process": "^2.4.0",
+    "@tauri-apps/plugin-updater": "^2.13.3",
     "livekit-client": "^2.22.3",
     "lucide-react": "^0.468.0",
     "maplibre-gl": "^4.7.1",
