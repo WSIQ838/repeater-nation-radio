@@ -208,6 +208,22 @@ const ic={
  battery:'<rect x="2" y="7" width="18" height="10" rx="2"/><path d="M22 11v2M6 10v4M10 10v4"/>',
  file:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6"/>',
  flag:'<path d="M5 21V4M5 4h13l-2 4 2 4H5"/>',
+ megaphone:'<path d="M3 11v2a1 1 0 0 0 1 1h3l8 5V5L7 10H4a1 1 0 0 0-1 1zM19 9a4 4 0 0 1 0 6"/>',
+ tree:'<path d="M12 22v-5M12 17H6l4-5H7l5-7 5 7h-3l4 5z"/>',
+ cpu:'<rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 9h6v6H9zM9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>',
+ download:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+ cloud:'<path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19.5 11 3.5 3.5 0 0 1 18 18z"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ plane:'<path d="M17.8 19.2L16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2 3.4 7.6l6.4 3.4-3 3-3-.5L2.5 15l4 1.5L8 20.5l1.4-.9-.5-3 3-3 3.4 6.4z"/>',
+ sat:'<path d="M9 3l4 4-6 6-4-4zM17 11l4 4-6 6-4-4zM5 19l4-4M13 7l4 4"/>',
+ net:'<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5V13M12 13l-6 4M12 13l6 4"/>',
+ pin:'<path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/>',
+ music:'<path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-3-3 3 3 0 0 1 3 3zM21 16a3 3 0 1 1-3-3 3 3 0 0 1 3 3z"/>',
+ ruler:'<path d="M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2"/>',
+ zap:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+ binary:'<path d="M4 4h3v6H4zM12 4h4v6h-4zM4 14h5v6H4zM13 14h2v6h-2z"/>',
+ cap:'<path d="M2 9l10-5 10 5-10 5zM6 11v5c3 2.5 9 2.5 12 0v-5"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17v.5"/>',
  back:'<path d="M15 18l-6-6 6-6"/>',
  send:'<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>',
  play:'<path d="M7 4l13 8-13 8z"/>',
@@ -296,7 +312,7 @@ const FRIENDS=[
 ];
 
 const S={dev:'phone',tab:'home',filter:'All',q:'',sel:1,sheet:false,view:'list',liked:{},checked:false,joined:{1:true},club:1,park:'All',fav:{1:true,3:true},
-  evf:'All',cat:'All',eq:{},sdr:null,log:LOG.slice(),tl:{},tool:null,cls:'Technician',issue:'Down',exp:{},sos:0,safe:false,share:false,conv:'KD5JAX',msgs:{KD5JAX:[['them','Heading to the ridge Saturday, want to try for 80 miles?'],['me','Count me in. 446.000 simplex?'],['them','Yes. 9 AM.']],W5ABC:[['them','Thanks for hosting the net.']],N5TOM:[['them','Can you cover next Tuesday?']]},
+  evf:'All',cat:'All',eq:{},sdr:null,log:LOG.slice(),tl:{},tool:null,tcat:'All',exp:{},sos:0,safe:false,share:false,conv:'KD5JAX',msgs:{KD5JAX:[['them','Heading to the ridge Saturday, want to try for 80 miles?'],['me','Count me in. 446.000 simplex?'],['them','Yes. 9 AM.']],W5ABC:[['them','Thanks for hosting the net.']],N5TOM:[['them','Can you cover next Tuesday?']]},
   notif:{push:true,nets:true,dm:true,loc:false,bio:true,offline:true},toast:''};
 
 /* navigation */
@@ -314,7 +330,7 @@ const MORE=[
  ['trips','Trips','route','Plan a route with repeaters along it'],
  ['sdr','SDR Streams','wave','Listen to receivers in your area'],
  ['log','Logbook','book','Your contacts, ready to export'],
- ['tools','Tools','tool','Calculators, clocks and field helpers'],
+ ['tools','Tools','tool','Operator tools: nets, logging, propagation, calculators'],
  ['msgs','Messages','mail','Friends and direct messages'],
  ['emerg','Emergency & Situational Awareness','alert','Alerts, emergency nets and check-in'],
  ['me','Me','user','Profile, privacy and notifications']
@@ -494,7 +510,74 @@ function me(){
 function more(){
   return `<div class="pad">${head('Everything else','More')}<div class="tiles">${MORE.map(m=>`<button class="tile" data-a="tab" data-v="${m[0]}">${I(m[2])}<b>${m[1]}</b><span>${m[3]}</span></button>`).join('')}</div></div>`;
 }
-/* tools: working calculators and field helpers */
+/* Operator Tools: same categories and tools as the website's Tools page */
+const CATS=[
+ {id:'most',t:'Most Used',b:'The tools members reach for most.',i:[
+  ['netctl','Net Control','Run live nets, manage check-ins, and track attendance.','megaphone',{go:'nets'}],
+  ['pota','POTA: Parks on the Air','Plan park activations, log contacts, and track POTA activity.','tree',{go:'parks',set:{park:'POTA'}}],
+  ['equip','Equipment Manager','Track your radios, antennas, and gear.','cpu',{go:'equip'}],
+  ['logger','QSO / Contact Logger','Log contacts and manage your radio activity.','book',{go:'log'}],
+  ['emerg','Emergency & Situational Awareness','Live alerts, earthquakes, and nearby GMRS/HAM infrastructure.','alert',{go:'emerg'}],
+  ['sota','SOTA: Summits on the Air','Summit directory and map, activations, chases, and SOTA CSV.','mount',{go:'parks',set:{park:'SOTA'}}]]},
+ {id:'dir',t:'Repeaters & Directories',b:'Find repeaters, look up callsigns, and listen in.',i:[
+  ['gmrs','GMRS Directory','Browse GMRS repeaters on the map and in the directory.','tower',{go:'dir'}],
+  ['ham','HAM Directory','Browse amateur radio repeaters on the map and in the directory.','tower',{go:'dir'}],
+  ['fcc','FCC / Callsign Lookup','FCC ULS and callsign lookup.','id'],
+  ['sdr','SDR Streams','Browse and submit member-run SDR web receivers.','wave',{go:'sdr'}]]},
+ {id:'log',t:'Logbook & Awards',b:'Log contacts, confirm them, and track your progress.',i:[
+  ['logger','QSO / Contact Logger','Log contacts and manage your radio activity.','book',{go:'log'}],
+  ['adif','ADIF Import / Export','Move contacts between your logbook and other loggers.','download'],
+  ['qsl','QSL Management','Track QSLs sent, requested, and received.','chat'],
+  ['awards','HAM Awards Tracker','Worked All States, grids, counties, and bands from your log.','trophy'],
+  ['contest','Contest Logging','Fast logging with dupe checks and Cabrillo export.','file'],
+  ['qrz','QRZ Logbook Sync','Upload contacts to your QRZ Logbook or bring your QRZ log in.','book'],
+  ['lotw','LoTW Confirmations','Mark contacts confirmed in Logbook of The World.','trophy'],
+  ['eqsl','eQSL Confirmations','Mark contacts confirmed by eQSL cards.','chat']]},
+ {id:'ops',t:'On the Air & Nets',b:'Run nets, activate parks, and plan trips.',i:[
+  ['netctl','Net Control','Run live nets, manage check-ins, and track attendance.','megaphone',{go:'nets'}],
+  ['pota','POTA: Parks on the Air','Plan park activations, log contacts, and track POTA activity.','tree',{go:'parks',set:{park:'POTA'}}],
+  ['sota','SOTA: Summits on the Air','Summit directory and map, activations, chases, and SOTA CSV.','mount',{go:'parks',set:{park:'SOTA'}}],
+  ['trips','Trip Planner','Plan routes and find repeaters along the way.','route',{go:'trips'}],
+  ['gps','GPS Navigation','Turn-by-turn navigation with live repeater detection.','nav'],
+  ['equip','Equipment Manager','Track your radios, antennas, and gear.','cpu',{go:'equip'}]]},
+ {id:'prop',t:'Propagation & Spotting',b:'Band conditions and where signals are being heard.',i:[
+  ['spacewx','Solar / Space Weather','Solar flux, sunspots, Kp, and NOAA space-weather scales.','sun'],
+  ['hfprop','HF Propagation','Day and night HF band conditions and VHF openings.','wave'],
+  ['dx','DX Cluster','Live DX spots, filterable by band.','wave'],
+  ['psk','PSK Reporter','See where your digital signals are being heard.','tower'],
+  ['wspr','WSPR Propagation','Map where a WSPR beacon was heard over the last day.','wave'],
+  ['rbn','Reverse Beacon Network','Which skimmers heard your CW, RTTY or FT8 signal.','wave']]},
+ {id:'sat',t:'Satellites',b:'Track satellites and predict passes over you.',i:[
+  ['iss','ISS Pass Tracker','Where the ISS is now and when it passes over you.','sat'],
+  ['sats','Amateur Satellite Tracker','Live positions and passes for amateur satellites.','sat']]},
+ {id:'digital',t:'Digital Radio Networks',b:'DMR, D-STAR, AllStarLink, EchoLink, and WIRES-X.',i:[
+  ['bm','DMR / BrandMeister','Map and list of BrandMeister DMR repeaters.','net'],
+  ['dstar','D-STAR / Reflectors','XLX multi-mode reflectors and their dashboards.','net'],
+  ['allstar','AllStarLink Nodes','Search AllStarLink nodes and check live status.','net'],
+  ['echolink','EchoLink Nodes','EchoLink repeaters, links, and conferences online now.','net'],
+  ['wiresx','WIRES-X Nodes','Map and list of active WIRES-X nodes and rooms.','net'],
+  ['aprs','APRS','Latest APRS position or weather report for a station.','pin']]},
+ {id:'aware',t:'Weather & Situational Awareness',b:'Conditions, alerts, and what is overhead.',i:[
+  ['emerg','Emergency & Situational Awareness','Live alerts, earthquakes, and nearby GMRS/HAM infrastructure.','alert',{go:'emerg'}],
+  ['weather','Weather','Current conditions and forecast.','cloud'],
+  ['sunrise','Sunrise & Sunset','Sun times and civil twilight.','sun'],
+  ['flight','Flight Radar','View live aircraft positions and search ADS-B traffic.','plane']]},
+ {id:'calc',t:'Calculators & Reference',b:'Quick math and look-ups for building and tuning a station.',i:[
+  ['freq','Frequency Calculator','Repeater input/output and offset math.','tower'],
+  ['tone','CTCSS / DCS Tones','Search and copy tones and codes.','music'],
+  ['channels','Channel Planner','Build, save, and export channel lists.','file'],
+  ['antenna','Antenna Calculator','Estimate 1/4, 1/2, and 5/8 wave lengths.','ruler'],
+  ['coax','Coax Loss Calculator','Estimate feedline loss and remaining power.','route'],
+  ['power','Power & ERP Calculator','Estimate EIRP and ERP from your system.','zap'],
+  ['distance','Distance Calculator','Measure distance between two locations.','pin'],
+  ['morse','Morse Code Chart','Reference chart plus a text to Morse converter.','binary']]},
+ {id:'learn',t:'HAM Learning',b:'Study for your license and practice the exam.',i:[
+  ['study','HAM Study / Flashcards','Learn the question pool by topic and track what you know.','cap'],
+  ['exam','HAM License Practice Exams','Technician, General, and Extra practice tests from the official pools.','cap'],
+  ['help','Help & Guides','Guides for the tools and features on Repeater Nation.','help']]}
+];
+const ITEMS={};CATS.forEach(c=>c.i.forEach(x=>{ITEMS[x[0]]={id:x[0],t:x[1],d:x[2],ic:x[3],...(x[4]||{})}}));
+
 const esc=x=>String(x).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const val=(id,d)=>S.tl[id]??d;
 const num=(id,d)=>{const x=parseFloat(val(id,d));return isNaN(x)?null:x};
@@ -503,23 +586,10 @@ const sel=(id,label,opts,def)=>`<div class="fld"><label for="${id}">${label}</la
 const ro=(l,v)=>`<div class="ro"><span class="mute">${l}</span><b>${v}</b></div>`;
 const ftin=ft=>{const f=Math.floor(ft),i=(ft-f)*12;return `${f} ft ${i.toFixed(1)} in`};
 const bad=m=>`<div class="card mute">${m}</div>`;
+const TONES=['67.0','69.3','71.9','74.4','77.0','79.7','82.5','85.4','88.5','91.5','94.8','97.4','100.0','103.5','107.2','110.9','114.8','118.8','123.0','127.3','131.8','136.5','141.3','146.2','151.4','156.7','162.2','167.9','173.8','179.9','186.2','192.8','203.5','210.7','218.1','225.7','233.6','241.8','250.3'];
+const DCS=['023','025','026','031','032','036','043','047','051','053','054','065','071','072','073','074','114','115','116','122','125','131','132','134','143','145','152','155','156','162','165','172','174','205','212','223','225','226','243','244','245','246','251','252','255','261','263','265','266','271','274','306','311','315','325','331','332','343','346','351','356','364','365','371','411','412','413','423','431','432','445','446','452','454','455','462','464','465','466','503','506','516','523','565','532','546','565','606','612','624','627','631','632','654','662','664','703','712','723','731','732','734','743','754'];
 
-const TOOLS=[
- ['offset','Offset & Tone','tower','Repeater input frequency and tone'],
- ['antenna','Antenna Length','wave','Dipole, quarter-wave and 5/8 wave'],
- ['coax','Coax Loss & SWR','route','Cable loss, power at the antenna'],
- ['range','Range','nav','Radio horizon from antenna heights'],
- ['grid','Grid Square','map','Maidenhead locator from lat/long'],
- ['battery','Battery Runtime','battery','How long a pack lasts'],
- ['clock','UTC Clock','clock','UTC, local time and net times'],
- ['phon','Phonetics','mic','Spell a callsign'],
- ['morse','Morse','wave','Text to code, with sound'],
- ['band','Band Plan','book','What your license class allows'],
- ['chirp','Export for CHIRP','file','Saved repeaters as a CSV'],
- ['report','Report a Repeater','flag','Tell the owner what changed']
-];
-
-function t_offset(){
+function t_freq(){
   const f=num('of',146.94);
   if(f===null)return fld('of','Repeater output frequency',146.94,'MHz')+bad('Enter a frequency in MHz.');
   let off=null;
@@ -527,10 +597,18 @@ function t_offset(){
   else if(f>=146.0&&f<146.4||f>=147.0&&f<147.4)off=0.6;
   else if(f>=442&&f<445)off=5;
   else if(f>=447&&f<450)off=-5;
-  const tones=['67.0','71.9','74.4','77.0','79.7','82.5','85.4','88.5','91.5','94.8','97.4','100.0','103.5','107.2','110.9','114.8','118.8','123.0','127.3','131.8','136.5','141.3','146.2','151.4','156.7','162.2','167.9','173.8','179.9','186.2','192.8','203.5','210.7','218.1','225.7','233.6','241.8','250.3'];
-  return fld('of','Repeater output frequency',146.94,'MHz')+sel('tn','CTCSS tone',tones.map(t=>[t,t+' Hz']),'100.0')+
+  return fld('of','Repeater output frequency',146.94,'MHz')+sel('tn','CTCSS tone',TONES.map(t=>[t,t+' Hz']),'100.0')+
    (off===null?bad('That frequency has no standard offset in the US band plan. Treat it as simplex, or check the repeater listing.'):
    `<div class="card" style="padding:2px 14px">${ro('Receive (repeater output)',f.toFixed(3)+' MHz')}${ro('Transmit (repeater input)',(f+off).toFixed(3)+' MHz')}${ro('Offset',(off>0?'+':'−')+Math.abs(off)+' MHz')}${ro('Tone (transmit)',val('tn','100.0')+' Hz')}</div>`);
+}
+function t_tone(){
+  const q=val('tq2','').trim().toLowerCase();
+  const m=(arr)=>arr.filter(x=>!q||x.includes(q));
+  const c=m(TONES),d=m(DCS);
+  const chips=(arr,u)=>arr.map(x=>`<button class="chip" data-a="copytone" data-v="${x}${u}">${x}</button>`).join('');
+  return `<label class="search">${I('search')}<input id="tq2" data-t placeholder="Search a tone or code, like 100 or 023" value="${esc(val('tq2',''))}" aria-label="Search tones"></label>
+   <div class="eyebrow" style="margin:4px 0 8px">CTCSS (Hz)</div><div class="row wrap" style="gap:8px">${c.length?chips(c,' Hz'):'<span class="mute sm">No match</span>'}</div>
+   <div class="eyebrow" style="margin:16px 0 8px">DCS codes</div><div class="row wrap" style="gap:8px">${d.length?chips(d,''):'<span class="mute sm">No match</span>'}</div><div class="sm mute" style="margin-top:10px">Tap a tone to copy it.</div>`;
 }
 function t_antenna(){
   const f=num('af',146.52);
@@ -540,92 +618,81 @@ function t_antenna(){
 }
 function t_coax(){
   const LOSS={'RG-58':[2.2,5.0,9.5],'RG-8X':[1.4,3.7,6.7],'RG-213':[0.7,1.9,3.8],'LMR-400':[0.6,1.5,2.7]};
-  const cab=val('cc','RG-58'),b=+val('cb',1),len=num('cl',50),p=num('cp',50),s=num('sw',1.5);
-  let out=fld('cl','Cable length',50,'ft')+fld('cp','Transmitter power',50,'W');
+  const cab=val('cc','RG-58'),b=+val('cb',1),len=num('cl',50),p=num('cp',50);
   const body=len===null||p===null?bad('Enter a length and power.'):(()=>{const dB=LOSS[cab][b]*len/100,po=p*Math.pow(10,-dB/10);return `<div class="card" style="padding:2px 14px">${ro('Loss',dB.toFixed(2)+' dB')}${ro('Power at the antenna',po.toFixed(1)+' W')}${ro('Lost as heat',(p-po).toFixed(1)+' W')}</div>`})();
-  let swr=bad('Enter an SWR of 1.0 or higher.');
-  if(s!==null&&s>=1){const g=(s-1)/(s+1);swr=`<div class="card" style="padding:2px 14px">${ro('Reflected power',(g*g*100).toFixed(1)+' %')}${ro('Return loss',g===0?'∞':(-20*Math.log10(g)).toFixed(1)+' dB')}${ro('Mismatch loss',(-10*Math.log10(1-g*g)).toFixed(2)+' dB')}</div>`}
-  return sel('cc','Cable',Object.keys(LOSS).map(k=>[k,k]),'RG-58')+sel('cb','Band',[[0,'10 m (28 MHz)'],[1,'2 m (146 MHz)'],[2,'70 cm (446 MHz)']],1)+out+body+`<div class="sec"><h3>SWR check</h3></div>`+fld('sw','SWR at the antenna',1.5)+swr+`<div class="sm mute" style="margin-top:8px">Loss figures are typical values for new cable. Real cable varies.</div>`;
+  return sel('cc','Cable',Object.keys(LOSS).map(k=>[k,k]),'RG-58')+sel('cb','Band',[[0,'10 m (28 MHz)'],[1,'2 m (146 MHz)'],[2,'70 cm (446 MHz)']],1)+fld('cl','Cable length',50,'ft')+fld('cp','Transmitter power',50,'W')+body+`<div class="sm mute" style="margin-top:8px">Loss figures are typical values for new cable. Real cable varies.</div>`;
 }
-function t_range(){
-  const a=num('h1',6),b=num('h2',200);
-  const body=a===null||b===null||a<0||b<0?bad('Enter two heights in feet.'):(()=>{const mi=1.415*(Math.sqrt(a)+Math.sqrt(b));return `<div class="card" style="padding:2px 14px">${ro('Line of sight',mi.toFixed(1)+' mi')}${ro('In kilometers',(mi*1.609).toFixed(1)+' km')}</div>`})();
-  return fld('h1','Your antenna height',6,'ft')+fld('h2','Other antenna height (repeater tower)',200,'ft')+body+`<div class="sm mute" style="margin-top:8px">Radio horizon on flat ground. Hills, buildings and trees shorten it.</div>`;
+function t_power(){
+  const p=num('pw',50),l=num('pl',2.5),g=num('pg',3);
+  const body=[p,l,g].some(x=>x===null)||p<=0?bad('Enter power, feedline loss and antenna gain.'):(()=>{const erp=p*Math.pow(10,(g-l)/10);return `<div class="card" style="padding:2px 14px">${ro('ERP (vs. a dipole)',erp.toFixed(1)+' W')}${ro('EIRP (vs. isotropic)',(erp*1.64).toFixed(1)+' W')}${ro('Net system gain',(g-l>=0?'+':'−')+Math.abs(g-l).toFixed(1)+' dB')}</div>`})();
+  return fld('pw','Transmitter power',50,'W')+fld('pl','Feedline loss',2.5,'dB')+fld('pg','Antenna gain',3,'dBd')+body;
 }
-function t_grid(){
-  const lat=num('la',32.78),lng=num('lo',-96.8);
-  let body=bad('Latitude is −90 to 90 and longitude is −180 to 180.');
-  if(lat!==null&&lng!==null&&Math.abs(lat)<=90&&Math.abs(lng)<=180){
-    let x=lng+180,y=lat+90;const A='ABCDEFGHIJKLMNOPQR',a='abcdefghijklmnopqrstuvwx';
-    const f1=Math.min(17,Math.floor(x/20)),f2=Math.min(17,Math.floor(y/10));x-=f1*20;y-=f2*10;
-    const s1=Math.min(9,Math.floor(x/2)),s2=Math.min(9,Math.floor(y));x-=s1*2;y-=s2;
-    const u1=Math.min(23,Math.floor(x*12)),u2=Math.min(23,Math.floor(y*24));
-    const g=A[f1]+A[f2]+s1+s2+a[u1]+a[u2];
-    body=`<div class="card" style="padding:2px 14px">${ro('Grid square (6 characters)',g)}${ro('4 characters',g.slice(0,4))}</div>`;
-  }
-  return fld('la','Latitude',32.78,'degrees')+fld('lo','Longitude',-96.8,'degrees, west is negative')+body;
+function t_distance(){
+  const a=num('d1',32.78),b=num('d2',-96.8),c=num('d3',36.15),d=num('d4',-95.99);
+  if([a,b,c,d].some(x=>x===null))return bad('Enter four coordinates.');
+  const R=3958.8,r=x=>x*Math.PI/180,dl=r(d-b),p1=r(a),p2=r(c);
+  const h=Math.sin(r(c-a)/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2,mi=2*R*Math.asin(Math.sqrt(h));
+  const br=(Math.atan2(Math.sin(dl)*Math.cos(p2),Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl))*180/Math.PI+360)%360;
+  const dir=['N','NE','E','SE','S','SW','W','NW'][Math.round(br/45)%8];
+  return `<div class="eyebrow" style="margin-bottom:6px">From</div><div class="grid2" style="gap:10px">${fld('d1','Latitude',32.78)}${fld('d2','Longitude',-96.8)}</div><div class="eyebrow" style="margin:4px 0 6px">To</div><div class="grid2" style="gap:10px">${fld('d3','Latitude',36.15)}${fld('d4','Longitude',-95.99)}</div><div class="card" style="padding:2px 14px">${ro('Distance',mi.toFixed(1)+' mi')}${ro('In kilometers',(mi*1.609).toFixed(1)+' km')}${ro('Bearing',br.toFixed(0)+'° '+dir)}</div>`;
 }
-function t_battery(){
-  const c=num('batc',2000),tx=num('batx',1500),rx=num('barx',180),sb=num('bast',60),tp=num('batp',5),rp=num('barp',10);
-  const ok=[c,tx,rx,sb,tp,rp].every(x=>x!==null)&&tp+rp<=100&&c>0;
-  const body=!ok?bad('Fill every box. Transmit and receive time can add up to 100 % at most.'):(()=>{const avg=tp/100*tx+rp/100*rx+(100-tp-rp)/100*sb,h=c/avg;return `<div class="card" style="padding:2px 14px">${ro('Average draw',avg.toFixed(0)+' mA')}${ro('Runtime',h.toFixed(1)+' hours')}${ro('About',(h/24).toFixed(1)+' days')}</div>`})();
-  return `<div class="grid2" style="gap:10px">${fld('batc','Battery','2000','mAh')}${fld('batx','Transmit draw',1500,'mA')}${fld('barx','Receive draw',180,'mA')}${fld('bast','Standby draw',60,'mA')}${fld('batp','Time transmitting',5,'%')}${fld('barp','Time receiving',10,'%')}</div>`+body;
-}
-function t_clock(){
-  const t=val('ct','20:00'),z=+val('cz',-5);
-  const m=/^(\d{1,2}):(\d{2})$/.exec(t.trim());
-  let body=bad('Enter a time like 20:00.');
-  if(m&&+m[1]<24&&+m[2]<60){let mins=+m[1]*60+ +m[2]-z*60,day='same day';if(mins>=1440){mins-=1440;day='next day'}if(mins<0){mins+=1440;day='previous day'}
-    body=`<div class="card" style="padding:2px 14px">${ro('UTC',String(Math.floor(mins/60)).padStart(2,'0')+':'+String(mins%60).padStart(2,'0')+' Z')}${ro('Date in UTC',day)}</div>`}
-  return `<div class="card hero" style="text-align:center"><div class="eyebrow" style="color:#ffb066">UTC</div><div class="mono" data-clock="utc" style="font-size:40px;letter-spacing:-.02em">--:--:--</div><div class="eyebrow" style="margin-top:10px">Local</div><div class="mono mute" data-clock="local" style="font-size:20px">--:--:--</div></div><div class="sec"><h3>Net time to UTC</h3></div>`+
-   fld('ct','Local time (24 hour)','20:00')+sel('cz','Local time zone',[[-4,'Eastern daylight, UTC−4'],[-5,'Central daylight or Eastern standard, UTC−5'],[-6,'Mountain daylight or Central standard, UTC−6'],[-7,'Pacific daylight or Mountain standard, UTC−7'],[-8,'Pacific standard, UTC−8']],-5)+body;
-}
-const PH={A:'Alfa',B:'Bravo',C:'Charlie',D:'Delta',E:'Echo',F:'Foxtrot',G:'Golf',H:'Hotel',I:'India',J:'Juliett',K:'Kilo',L:'Lima',M:'Mike',N:'November',O:'Oscar',P:'Papa',Q:'Quebec',R:'Romeo',S:'Sierra',T:'Tango',U:'Uniform',V:'Victor',W:'Whiskey',X:'X-ray',Y:'Yankee',Z:'Zulu',0:'Zero',1:'One',2:'Two',3:'Three',4:'Four',5:'Five',6:'Six',7:'Seven',8:'Eight',9:'Nine','/':'Stroke'};
-function t_phon(){
-  const t=val('pt','WSIQ838').toUpperCase().replace(/[^A-Z0-9/]/g,'');
-  return `<div class="fld"><label for="pt">Callsign or text</label><input id="pt" data-t value="${esc(val('pt','WSIQ838'))}" autocapitalize="characters" autocomplete="off"></div>`+(t?`<div class="ph">${[...t].map(c=>`<div><b>${c}</b><span>${PH[c]}</span></div>`).join('')}</div><div class="card" style="margin-top:12px"><div class="sm mute">Say it as</div><div style="font-weight:600;margin-top:4px">${[...t].map(c=>PH[c]).join(' ')}</div></div>`:bad('Type a callsign above.'));
+const FCCDB=[
+ {c:'WSIQ838',nm:'Sean',cl:'General',st:'Active',exp:'Mar 2034',city:'Dallas, TX'},
+ {c:'W5ABC',nm:'Alice Reyes',cl:'Extra',st:'Active',exp:'Jun 2031',city:'Garland, TX'},
+ {c:'N5TOM',nm:'Tom Hale',cl:'General',st:'Active',exp:'Jan 2029',city:'Irving, TX'}
+];
+function t_fcc(){
+  const q=val('fq','').trim().toUpperCase(),r=q?FCCDB.find(x=>x.c===q):null;
+  const res=!q?bad('Type a callsign. Try WSIQ838 or W5ABC.'):r?`<div class="card"><div class="row"><div class="grow"><div class="mono" style="font-size:22px;color:var(--accent)">${r.c}</div><b>${r.nm}</b></div><span class="tag g">${r.st}</span></div><div class="stat"><div><b>${r.cl}</b><span>Class</span></div><div><b>${r.exp}</b><span>Expires</span></div><div><b>${r.city.split(', ')[1]}</b><span>State</span></div></div><div class="sm mute">${r.city} · FCC ULS record</div></div>`:bad(`No license found for ${esc(q)}. Check the spelling.`);
+  return `<label class="search">${I('search')}<input id="fq" data-t placeholder="Enter a callsign" value="${esc(val('fq',''))}" autocapitalize="characters" aria-label="Callsign"></label>${res}`;
 }
 const MC={A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.','/':'-..-.','?':'..--..','.':'.-.-.-',',':'--..--'};
 const morseOf=t=>t.toUpperCase().split('').map(c=>c===' '?'/':MC[c]||'').filter(Boolean);
+const dd=s=>s.replace(/\./g,'·').replace(/-/g,'−');
 function t_morse(){
   const m=morseOf(val('mt','CQ CQ DE WSIQ838'));
   return `<div class="fld"><label for="mt">Text</label><input id="mt" data-t value="${esc(val('mt','CQ CQ DE WSIQ838'))}" autocomplete="off"></div>`+sel('mw','Speed',[[12,'12 words per minute'],[15,'15 words per minute'],[20,'20 words per minute']],15)+
-   `<div class="card"><div class="mo">${m.length?m.join('&nbsp;&nbsp; ').replace(/\./g,'·').replace(/-/g,'−').replace(/\/ /g,'/ '):'<span class="mute">Type some text.</span>'}</div></div><div class="row" style="margin-top:12px"><button class="btn" data-a="morse">${I('play')}Play</button><span class="sm mute">Sound starts when you tap Play.</span></div>`;
+   `<div class="card"><div class="mo">${m.length?m.map(dd).join('&nbsp;&nbsp; '):'<span class="mute">Type some text.</span>'}</div></div><div class="row" style="margin:12px 0 18px"><button class="btn" data-a="morse">${I('play')}Play</button><span class="sm mute">Sound starts when you tap Play.</span></div>
+   <div class="eyebrow" style="margin-bottom:8px">Chart</div><div class="ph">${Object.keys(MC).filter(k=>/[A-Z0-9]/.test(k)).map(k=>`<div><b>${k}</b><span class="mono">${dd(MC[k])}</span></div>`).join('')}</div>`;
 }
-const BANDS=[
- ['80 m','3.5–4.0',['p','p','f']],['40 m','7.0–7.3',['p','p','f']],['20 m','14.0–14.35',['n','p','f']],['15 m','21.0–21.45',['p','p','f']],['10 m','28.0–29.7',['p','f','f']],
- ['6 m','50–54',['f','f','f']],['2 m','144–148',['f','f','f']],['1.25 m','222–225',['f','f','f']],['70 cm','420–450',['f','f','f']]
-];
-function t_band(){
-  const k=['Technician','General','Extra'].indexOf(S.cls);const i=k<0?0:k;
-  const sym={f:'<span class="tag g">Full</span>',p:'<span class="tag" style="color:var(--warn);border-color:#6b5420">Part</span>',n:'<span class="tag">None</span>'};
-  return ch(['Technician','General','Extra'],'cls')+`<div class="card" style="padding:2px 14px;overflow-x:auto"><table class="bp"><thead><tr><th>Band</th><th>MHz</th><th>${S.cls||'Technician'}</th></tr></thead><tbody>${BANDS.map(b=>`<tr><td><b>${b[0]}</b></td><td class="mono">${b[1]}</td><td>${sym[b[2][i]]}</td></tr>`).join('')}</tbody></table></div><div class="sm mute" style="margin-top:8px">Part means some modes or segments only. Always check the current FCC rules and the ARRL band chart before you transmit.</div>`;
-}
-function t_chirp(){
+function t_channels(){
   const fm=REPS.filter(r=>r.mode==='FM');
   const on=r=>S.exp[r.id]!==false;
-  const rows=fm.filter(on).map((r,i)=>[i,r.call,r.f,r.off.startsWith('−')?'-':'+',Math.abs(parseFloat(r.off.replace('−','-'))).toFixed(6),'Tone',r.tone,r.tone,'023','NN','FM','5.00','','' ].join(','));
+  const rows=fm.filter(on).map((r,i)=>[i,r.call,r.f,r.off.startsWith('−')?'-':'+',Math.abs(parseFloat(r.off.replace('−','-'))).toFixed(6),'Tone',r.tone,r.tone,'023','NN','FM','5.00','',''].join(','));
   const csv='Location,Name,Frequency,Duplex,Offset,Tone,rToneFreq,cToneFreq,DtcsCode,DtcsPolarity,Mode,TStep,Skip,Comment\n'+rows.join('\n');
   S._csv=csv;
-  return `<div class="card" style="padding:2px 14px">${fm.map(r=>`<div class="set" style="justify-content:flex-start"><button class="sw" role="switch" aria-checked="${on(r)}" aria-label="${r.call}" data-a="exp" data-v="${r.id}" style="width:38px;height:24px"></button><div class="grow"><b>${r.call}</b> <span class="mono mute">${r.f}</span></div></div>`).join('')}</div><div class="sm mute" style="margin:8px 0 12px">Digital repeaters (DMR, Fusion) are left out. CHIRP FM files cannot hold them.</div><pre class="code" tabindex="0">${esc(csv)}</pre><div class="row" style="margin-top:12px"><button class="btn" data-a="copycsv">Copy CSV</button><span class="sm mute">Paste into a file and open it in CHIRP.</span></div>`;
+  return `<div class="eyebrow" style="margin-bottom:8px">Channels in this list</div><div class="card" style="padding:2px 14px">${fm.map(r=>`<div class="set" style="justify-content:flex-start"><button class="sw" role="switch" aria-checked="${on(r)}" aria-label="${r.call}" data-a="exp" data-v="${r.id}" style="width:38px;height:24px"></button><div class="grow"><b>${r.call}</b> <span class="mono mute">${r.f}</span></div></div>`).join('')}</div><div class="sm mute" style="margin:8px 0 12px">Digital repeaters (DMR, Fusion) are left out of FM exports.</div><pre class="code" tabindex="0">${esc(csv)}</pre><div class="row" style="margin-top:12px"><button class="btn" data-a="copycsv">Copy CSV</button><span class="sm mute">Paste into a file and open it in CHIRP.</span></div>`;
 }
-function t_report(){
-  const r=REPS.find(x=>x.id==(val('rr',1)))||REPS[0];
-  return sel('rr','Repeater',REPS.map(x=>[x.id,`${x.call} · ${x.f}`]),1)+`<div class="eyebrow" style="margin:4px 0 8px">What happened</div>`+ch(['Down','Noisy','Wrong tone','Frequency changed','Other'],'issue')+`<div class="fld"><label for="rn">Notes</label><input id="rn" data-t value="${esc(val('rn',''))}" placeholder="What did you hear, and where were you?"></div><button class="btn" style="width:100%" data-a="toast" data-v="Report sent to the ${r.call} owner">${I('send')}Send report</button>`;
+/* tools without a full screen in the mockup show an example readout */
+const SAMPLE={
+ spacewx:()=>`<div class="stat"><div><b>142</b><span>Solar flux</span></div><div><b>2</b><span>Kp index</span></div><div><b>6</b><span>A index</span></div></div><div class="card"><span class="tag g">Quiet</span><div class="sm mute" style="margin-top:6px">No geomagnetic storm watches. HF paths are stable.</div></div>`,
+ hfprop:()=>`<div class="card" style="padding:2px 14px;overflow-x:auto"><table class="bp"><thead><tr><th>Band</th><th>Day</th><th>Night</th></tr></thead><tbody>${[['80–40 m','Fair','Good'],['30–20 m','Good','Fair'],['17–15 m','Good','Poor'],['12–10 m','Fair','Poor'],['6 m','Poor','Poor']].map(r=>`<tr><td><b>${r[0]}</b></td>${[r[1],r[2]].map(x=>`<td><span class="tag ${x==='Good'?'g':''}" ${x==='Fair'?'style="color:var(--warn);border-color:#6b5420"':''}>${x}</span></td>`).join('')}</tr>`).join('')}</tbody></table></div>`,
+ dx:()=>`<div class="card" style="padding:2px 14px">${[['JA1ABC','14.025','CW','20 m','01:12 Z'],['VK3XYZ','21.280','SSB','15 m','01:09 Z'],['EA8TT','7.150','SSB','40 m','01:03 Z'],['ZL2AA','28.490','SSB','10 m','00:58 Z']].map(s=>`<div class="ro"><div><b class="mono">${s[0]}</b><div class="sm mute">${s[3]} · ${s[2]} · ${s[4]}</div></div><span class="mono">${s[1]}</span></div>`).join('')}</div>`,
+ iss:()=>`<div class="card"><div class="eyebrow">Next pass over Dallas</div><div style="font:700 28px var(--display);margin:4px 0">In 42 minutes</div><div class="sm mute">Max elevation 61° · lasts 6 min · rises in the northwest</div></div>`,
+ weather:()=>`<div class="stat"><div><b>72°F</b><span>Now</span></div><div><b>40%</b><span>Rain chance</span></div><div><b>12 mph</b><span>Wind SSE</span></div></div><div class="card"><div class="sm mute">Thunderstorms likely after 7 PM. Gusts to 35 mph.</div></div>`,
+ sunrise:()=>`<div class="card" style="padding:2px 14px">${ro('Sunrise','7:28 AM')}${ro('Sunset','6:58 PM')}${ro('Civil twilight ends','7:23 PM')}</div>`,
+ flight:()=>`<div class="card" style="padding:2px 14px">${[['AAL1432','DFW → ORD','32,000 ft'],['SWA881','DAL → HOU','28,000 ft'],['UAL455','DFW → DEN','35,000 ft']].map(f=>`<div class="ro"><div><b class="mono">${f[0]}</b><div class="sm mute">${f[1]}</div></div><span class="mono">${f[2]}</span></div>`).join('')}</div>`,
+ allstar:()=>`<div class="card" style="padding:2px 14px">${[['43210','Dallas Hub','Online'],['52871','Plano Link','Online'],['61204','Lakeside','Offline']].map(n=>`<div class="ro"><div><b class="mono">${n[0]}</b><div class="sm mute">${n[1]}</div></div><span class="tag ${n[2]==='Online'?'g':''}">${n[2]}</span></div>`).join('')}</div>`
+};
+function t_stub(id){
+  const it=ITEMS[id];
+  return (SAMPLE[id]?`<div class="eyebrow" style="margin-bottom:8px">Example readout</div>${SAMPLE[id]()}<div style="height:12px"></div>`:'')+
+   `<div class="card"><div class="mute">${it.d}</div><div class="sm mute" style="margin-top:6px">${SAMPLE[id]?'Example data. The live tool uses the same data as the website.':'This screen opens the same tool as the website.'}</div></div><button class="btn" style="margin-top:12px" data-a="toast" data-v="Opens ${esc(it.t)}">Open full tool</button>`;
 }
-const TFN={offset:t_offset,antenna:t_antenna,coax:t_coax,range:t_range,grid:t_grid,battery:t_battery,clock:t_clock,phon:t_phon,morse:t_morse,band:t_band,chirp:t_chirp,report:t_report};
+const TFN={freq:t_freq,tone:t_tone,channels:t_channels,antenna:t_antenna,coax:t_coax,power:t_power,distance:t_distance,fcc:t_fcc,morse:t_morse};
 function tools(){
-  const cur=S.tool||(T()?'offset':null);
-  const info=TOOLS.find(x=>x[0]===cur);
-  const detail=info?`<div class="eyebrow">${info[3]}</div><h2 class="title" style="margin-bottom:14px">${info[1]}</h2>${TFN[cur]()}`:'';
-  const tiles=`<div class="tiles">${TOOLS.map(x=>`<button class="tile" data-a="tool" data-v="${x[0]}">${I(x[2])}<b>${x[1]}</b><span>${x[3]}</span></button>`).join('')}</div>`;
-  if(T())return `<div class="two" style="grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)"><div class="l"><div class="pad">${head('Calculators and helpers','Tools')}${TOOLS.map(x=>`<button class="item" data-a="tool" data-v="${x[0]}" aria-selected="${cur===x[0]}">${I(x[2])}<div class="grow"><b>${x[1]}</b><div class="sm mute">${x[3]}</div></div></button>`).join('')}</div></div><div class="r"><div class="pad" style="padding-top:26px">${detail}</div></div></div>`;
-  return info?`<div class="pad">${detail}</div>`:`<div class="pad">${head('Calculators and helpers','Tools')}${tiles}</div>`;
+  if(S.tool&&ITEMS[S.tool]){
+    const it=ITEMS[S.tool];
+    return `<div class="pad">${T()?`<button class="back" data-a="tool" data-v="">${I('back')}All tools</button>`:''}<div class="eyebrow">${it.d}</div><h2 class="title" style="margin-bottom:14px">${it.t}</h2>${(TFN[S.tool]||(()=>t_stub(S.tool)))()}</div>`;
+  }
+  const q=val('tq','').trim().toLowerCase();
+  const cats=CATS.filter(c=>S.tcat==='All'||S.tcat===c.t).map(c=>({...c,i:c.i.filter(x=>!q||(x[1]+' '+x[2]+' '+c.t).toLowerCase().includes(q))})).filter(c=>c.i.length);
+  const body=cats.map(c=>`<div class="sec" style="margin-bottom:4px"><div><h3 style="text-transform:uppercase;font-size:13px;letter-spacing:.1em;color:var(--mute)">${c.t}</h3><div class="sm mute">${c.b}</div></div></div><div style="height:8px"></div>${T()
+    ?`<div class="tiles" style="grid-template-columns:repeat(3,1fr)">${c.i.map(x=>`<button class="tile" data-a="tool" data-v="${x[0]}">${I(x[3])}<b>${x[1]}</b><span>${x[2]}</span></button>`).join('')}</div>`
+    :c.i.map(x=>`<button class="item" data-a="tool" data-v="${x[0]}"><span style="color:var(--accent)">${I(x[3])}</span><div class="grow"><b>${x[1]}</b><div class="sm mute">${x[2]}</div></div></button>`).join('')}`).join('');
+  return `<div class="pad">${head('Operator Tools','Tools')}<div class="mute" style="margin:-8px 0 14px">GMRS, HAM, digital radio, and other tools for everyday radio use.</div><label class="search">${I('search')}<input id="tq" data-t placeholder="Search tools" value="${esc(val('tq',''))}" aria-label="Search tools"></label>${q?'':ch(['All',...CATS.map(c=>c.t)],'tcat')}${body||bad(`No tools match “${esc(q)}”.`)}</div>`;
 }
-function tick(){
-  const n=new Date();
-  document.querySelectorAll('[data-clock]').forEach(e=>{e.textContent=e.dataset.clock==='utc'?n.toISOString().slice(11,19)+' Z':n.toLocaleTimeString([], {hour12:false})});
-}
+function tick(){}
 function playMorse(){
   try{
     const m=morseOf(val('mt','CQ CQ DE WSIQ838')),u=1.2/(+val('mw',15)),AC=window.AudioContext||window.webkitAudioContext,c=new AC();
@@ -689,7 +756,8 @@ document.addEventListener('click',e=>{
   else if(a==='safe'){S.safe=!S.safe;toast(S.safe?'Marked safe, contacts notified':'Status cleared')}
   else if(a==='shareloc'){S.share=!S.share;toast(S.share?'Sharing location with net control':'Location sharing off')}
   else if(a==='kit'){S.kit=S.kit||{};S.kit[v]=!S.kit[v];keep()}
-  else if(a==='tool'){S.tool=v||null;render()}
+  else if(a==='tool'){const it=ITEMS[v];if(it&&it.go){Object.assign(S,it.set||{});S.tab=it.go;S.tool=null;S.sheet=false;render()}else{S.tool=v||null;render()}}
+  else if(a==='copytone'){try{navigator.clipboard.writeText(v).then(()=>toast('Copied '+v)).catch(()=>toast(v+' (copy is blocked here)'))}catch(x){toast(v+' (copy is blocked here)')}}
   else if(a==='exp'){S.exp[v]=S.exp[v]===false;keep()}
   else if(a==='copycsv'){try{navigator.clipboard.writeText(S._csv).then(()=>toast('CSV copied')).catch(()=>toast('Copy is blocked here. Select the text instead.'))}catch(x){toast('Copy is blocked here. Select the text instead.')}}
   else if(a==='morse'){playMorse()}
