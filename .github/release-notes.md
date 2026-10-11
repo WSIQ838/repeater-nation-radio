@@ -22,3 +22,7 @@ Download the `x64-setup.exe` (or the `.msi`) and run it.
 ## Mac
 
 Use `aarch64.dmg` for Apple Silicon Macs and `x64.dmg` for Intel Macs. The app isn't signed, so the first time, right-click it and choose **Open**.
+
+## iPhone
+
+Download the `unsigned.ipa`. Without an Apple developer account it is installed from a Windows PC with Sideloadly and your Apple ID, and has to be reinstalled every 7 days. The steps are on the [iPhone test build](https://github.com/WSIQ838/repeater-nation-radio/releases/tag/ios-test) page.
