@@ -1,5 +1,9 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.70 — Listen-only channels
+
+- A channel or zone set to listen only (in the Control console) can't be talked on. Pressing PTT shows "This channel is listen only." Everyone can still listen, so audio feeds can be piped in.
+
 ## 0.2.69 — One-click updates
 
 **"Update now" installs the new version and restarts the radio, instead of opening the download page.**
