@@ -388,7 +388,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
     setError("");
     if(!roomRef.current||!session){setPttError("Connect to the radio first.");return "error"}
     if(roomRef.current.state!=="connected"){setPttError("Reconnecting to the voice server. Try again in a moment.");return "error"}
-    if(!session.canTransmit){setPttError("You are not authorized to transmit on this channel.");return "denied"}
+    if(!session.canTransmit){setPttError(session.listenOnly?"This channel is listen only.":"You are not authorized to transmit on this channel.");return "denied"}
     const stale=()=>requestId!==pttRequestRef.current;
     // A floor granted after key-up needs no release here: releasePTT already queued one
     // behind this request (see callPTT). Sending another could end the next PTT's floor.
@@ -398,7 +398,7 @@ export function useRadio(channelId, channelInfo=null, outputDeviceId="", volume=
       const room=roomRef.current,pub=pubRef.current;
       // The server can leave this radio's turned-down claim behind; releasing it is safe
       // (the server only removes this connection's own claims).
-      const deny=r=>{floorAskedRef.current=false;callPTT("release").catch(()=>{});setPttError(r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return r.reason==="busy"?"busy":"denied"};
+      const deny=r=>{floorAskedRef.current=false;callPTT("release").catch(()=>{});setPttError(r.reason==="listen_only"?"This channel is listen only.":r.reason==="busy"?"Channel is busy — someone else is transmitting.":r.reason==="muted"?"You are muted on this channel.":"You are not authorized to transmit.");return r.reason==="busy"?"busy":"denied"};
       const askOnce=()=>withTimeout(callPTT("request"),PTT_TIMEOUT_MS,"The radio server didn't answer the PTT request.");
       // A "Channel not found" lookup hiccup gets one quick second try while PTT is held.
       const ask=()=>askOnce().catch(async err=>{if(!lookupHiccup(err)||stale())throw err;await sleep(PTT_LOOKUP_RETRY_MS);if(stale())throw err;return askOnce()});
