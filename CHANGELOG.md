@@ -1,5 +1,15 @@
 # Repeater Nation Radio — Changelog
 
+## 0.2.71 — Mac: no more "damaged" message
+
+**A downloaded Mac app no longer says it "is damaged and can't be opened".**
+
+- The Mac build now gives the whole app an ad-hoc signature (`bundle.macOS.signingIdentity: "-"`). macOS then treats the download as an app from an unidentified developer: the first time it says it can't check it, and **System Settings → Privacy & Security → Open Anyway** opens it. Before, the app had no signature over the bundle, which macOS reports as "damaged".
+- Hardened runtime stays off (it's only needed for Apple notarization, and would need extra entitlements for the microphone and Bluetooth).
+- The release notes' Mac section explains Open Anyway, and the Terminal command for anyone with an older "damaged" download.
+- A full fix (no warning at all) still needs an Apple Developer account to sign and notarize.
+- Version set to 0.2.71 in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`.
+
 ## 0.2.70 — Listen-only channels
 
 - A channel or zone set to listen only (in the Control console) can't be talked on. Pressing PTT shows "This channel is listen only." Everyone can still listen, so audio feeds can be piped in.
