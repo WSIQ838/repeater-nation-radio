@@ -21,7 +21,17 @@ Download the `x64-setup.exe` (or the `.msi`) and run it.
 
 ## Mac
 
-Use `aarch64.dmg` for Apple Silicon Macs and `x64.dmg` for Intel Macs. The app isn't signed, so the first time, right-click it and choose **Open**.
+Use `aarch64.dmg` for Apple Silicon Macs and `x64.dmg` for Intel Macs. Drag the app into **Applications**.
+
+The app isn't signed by an Apple developer account, so the first time macOS says it can't check it. Click **Done**, open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**.
+
+**If macOS says the app "is damaged"** (older downloads): it isn't. Open **Terminal** and paste:
+
+```
+xattr -cr "/Applications/Repeater Nation Radio.app"
+```
+
+Then open the app again.
 
 ## iPhone
 
