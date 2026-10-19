@@ -65,15 +65,15 @@ export async function restoreSession() {
   }
 }
 
-export async function loginWithGoogle() {
-  // Google refuses sign-in inside an embedded WebView, so start Base44's Google
-  // login in the system browser. Base44 returns the token to the website's
-  // /oauth/callback page, which hands it to this app via repeaternation://.
-  const base = config.base44AppBaseUrl || config.appUrl;
-  const fromUrl = `${config.appUrl}/oauth/callback`;
-  const loginUrl = `${base}/api/apps/auth/login?app_id=${encodeURIComponent(config.base44AppId)}&from_url=${encodeURIComponent(fromUrl)}`;
+export async function loginInBrowser() {
+  // Sign in on the website's own login page in the system browser, so every way the
+  // website offers works here too: Google, Apple, Microsoft, Facebook, email and
+  // password, and the emailed code for an email that was never verified. (Google
+  // also refuses sign-in inside an embedded WebView.) After sign-in the website goes
+  // to /oauth/callback, which hands the token to this app via repeaternation://.
+  const loginUrl = `${config.appUrl}/login?returnTo=${encodeURIComponent("/oauth/callback")}`;
   await openUrl(loginUrl);
-  reportAuthStatus("Google sign-in opened in your browser. Finish there, then allow it to open Repeater Nation Radio.");
+  reportAuthStatus("The Repeater Nation sign-in page opened in your browser. Sign in there, then allow it to open Repeater Nation Radio.");
 }
 
 // Sign-in progress for the login screen, so a failed browser hand-off says where it stopped.

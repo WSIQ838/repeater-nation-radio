@@ -9,6 +9,7 @@
 .google-login{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#202124;border:1px solid #dadce0;border-radius:8px;padding:11px 14px;font-weight:600;cursor:pointer}
 .google-login:disabled{opacity:.65;cursor:not-allowed}
 .google-g{font-weight:700;font-size:18px}
+.browser-login-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2;text-align:left}.browser-login-text small{font-size:11px;font-weight:400;color:#5f6368}
 .login-divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:#606b77;font-size:12px}
 .login-divider:before,.login-divider:after{content:"";height:1px;background:#252d36;flex:1}
 

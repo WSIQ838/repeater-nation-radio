@@ -1,8 +1,8 @@
 import {useEffect,useMemo,useRef,useState} from "react";
 import {zoneLabel,controllerLabel} from "./lib/labels";
-import {MapPin,Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
+import {Globe,MapPin,Radio,Users,Phone,Settings,LogIn,ChevronDown,Flag,PhoneCall,PhoneOff,RefreshCw,Minimize2,LayoutGrid,Volume2,VolumeX,Mic,History,Play,Square,Trash2} from "lucide-react";
 import {config} from "./lib/config";
-import {loginWithPassword,loginWithGoogle,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels,reportLocation,stopLocation} from "./lib/auth";
+import {loginWithPassword,loginInBrowser,restoreSession,restoreSessionFromOAuth,reportAuthStatus,clearSession,listRadioChannels,reportLocation,stopLocation} from "./lib/auth";
 import {CAN_INSTALL_UPDATES,UPDATE_EVERY,checkForUpdates,installUpdate,loadUpdateEvery,saveUpdateEvery,skipVersion,skippedVersion,useAutoUpdateCheck,useUpdateState} from "./lib/updates";
 import {getCurrent,onOpenUrl} from "@tauri-apps/plugin-deep-link";
 import {useRadio} from "./hooks/useRadio";
@@ -54,15 +54,16 @@ function Login({notice=""}){
     }finally{setBusy(false)}
   };
 
-  const googleLogin=async()=>{
-    if(googleBusy||busy)return;
+  // Pressing it again reopens the sign-in page (say the browser tab was closed).
+  const browserLogin=async()=>{
+    if(busy)return;
     setError("");setGoogleBusy(true);
     try{
-      await loginWithGoogle();
+      await loginInBrowser();
       // The OAuth result returns through the repeaternation:// deep link.
       // The app-level deep-link listener below completes the sign-in.
     }catch(err){
-      const message=err?.response?.data?.message||err?.response?.data?.error||err?.message||"Unable to start Google sign-in.";
+      const message=err?.response?.data?.message||err?.response?.data?.error||err?.message||"Unable to open the sign-in page.";
       setError(String(message));
       setGoogleBusy(false);
     }
@@ -72,7 +73,7 @@ function Login({notice=""}){
     <div className="brand-mark"><Radio size={30}/></div>
     <h1>Repeater Nation Radio</h1>
     <p className="muted">Sign in with your existing Repeater Nation account.</p>
-    <button type="button" className="google-login" onClick={googleLogin} disabled={busy||googleBusy}><span className="google-g">G</span>{googleBusy?"Signing in with Google…":"Continue with Google"}</button>
+    <button type="button" className="google-login" onClick={browserLogin} disabled={busy}><Globe size={18}/><span className="browser-login-text"><b>{googleBusy?"Finish signing in in your browser…":"Sign in with your browser"}</b><small>Google, Apple, Microsoft, Facebook or email</small></span></button>
     {authStatus&&<div className={authStatus.error?"error":"auth-status"}>{authStatus.message}</div>}
     <div className="login-divider"><span>or</span></div>
     <form onSubmit={submit} className="login-form">
