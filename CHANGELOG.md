@@ -1,6 +1,8 @@
 # Repeater Nation Radio — Changelog
 
-## 0.2.71 — Mac: no more "damaged" message
+## 0.2.71 — Sign in every way the website does; Mac: no more "damaged" message
+
+**Sign in with your browser.** "Continue with Google" is now **Sign in with your browser**. It opens the website's own sign-in page, so every option there works in the radio: Google, Apple, Microsoft, Facebook, email and password, and the emailed code for an account whose email was never verified. Once signed in, the browser hands you back to the radio as before. The email and password boxes stay as a quick way in. The button can be pressed again if the browser tab was closed (before, it stayed greyed out until the radio was restarted).
 
 **A downloaded Mac app no longer says it "is damaged and can't be opened".**
 
