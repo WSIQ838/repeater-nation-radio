@@ -160,6 +160,7 @@ def extras(app_id, folder, z, problems):
 
 
 def main():
+    print("Base44 export script v3 (retries on rate limits)")
     pick_auth()
     ids = sys.argv[1:] or list(APPS)
     stamp = datetime.date.today().isoformat()
