@@ -87,6 +87,68 @@ def all_users(app_id):
         skip += 500
 
 
+# Everything else in the app's sidebar. Each one is best-effort: a failure goes
+# in PROBLEMS.txt and never stops the rest. Secret VALUES cannot be exported.
+EXTRAS = {
+    "emails": "/api/apps/{a}/emails",
+    "workflows": "/api/apps/{a}/workflows?limit=200&include_archived=true",
+    "workflow_runs": "/api/apps/{a}/workflows/runs",
+    "domains": "/api/apps/{a}/custom-domains",
+    "url_redirects": "/api/apps/{a}/url-redirects",
+    "secret_names": "/api/apps/{a}/secrets",
+    "backend_functions": "/api/apps/{a}/backend-functions",
+    "analytics_event_names": "/api/apps/{a}/analytics/names",
+    "sso_settings": "/api/apps/{a}/sso/settings",
+    "mcp_config": "/api/apps/platform/{a}/mcp/config",
+    "published_url": "/api/apps/platform/{a}/published-url",
+    "api_reference": "/api/apps/{a}/openapi-spec",
+    "app_info": "/api/apps/{a}",
+    "github_connection": "/api/apps/{a}/github/connection",
+    "checkpoints": "/api/apps/{a}/checkpoints",
+}
+
+
+def extras(app_id, folder, z, problems):
+    got = {}
+    for name, path in EXTRAS.items():
+        try:
+            got[name] = get_json(path.format(a=app_id))
+            z.writestr(f"{folder}/settings/{name}.json", json.dumps(got[name], indent=1))
+            print(f"   {name} ok")
+        except Exception as e:
+            problems.append(f"{folder}: {name}: {e}")
+            print(f"   {name} FAILED:", e)
+    items = got.get("workflows")
+    for w in (items if isinstance(items, list) else []):  # full workflow definitions
+        try:
+            d = get_json(f"/api/apps/{app_id}/workflows/{w['id']}")
+            z.writestr(f"{folder}/settings/workflows/{w.get('file_key') or w['id']}.json", json.dumps(d, indent=1))
+        except Exception as e:
+            problems.append(f"{folder}: workflow {w.get('id')}: {e}")
+    for d in (got.get("domains") if isinstance(got.get("domains"), list) else []):
+        try:
+            dns = get_json(f"/api/apps/{app_id}/custom-domains/{d['id']}/dns-records")
+            z.writestr(f"{folder}/settings/domain_dns_{d['id']}.json", json.dumps(dns, indent=1))
+        except Exception as e:
+            problems.append(f"{folder}: dns {d.get('id')}: {e}")
+    try:  # uploaded files / media library
+        assets = get_json(f"/api/apps/{app_id}/assets")
+        z.writestr(f"{folder}/files/_assets.json", json.dumps(assets, indent=1))
+        for a in assets:
+            try:
+                data = urllib.request.urlopen(urllib.request.Request(a["file_url"]), timeout=300).read()
+            except Exception:
+                data = get(a["file_url"][len(BASE):]) if a["file_url"].startswith(BASE) else None
+            if data is None:
+                problems.append(f"{folder}: file {a['file_name']}: could not download")
+                continue
+            z.writestr(f"{folder}/files/{a['id']}_{a['file_name']}", data)
+        print(f"   files: {len(assets)}")
+    except Exception as e:
+        problems.append(f"{folder}: assets: {e}")
+        print("   assets FAILED:", e)
+
+
 def main():
     pick_auth()
     ids = sys.argv[1:] or list(APPS)
@@ -128,6 +190,7 @@ def main():
             except Exception as e:
                 problems.append(f"{folder}: users: {e}")
                 print("   users FAILED:", e)
+            extras(app_id, folder, z, problems)
         if problems:
             z.writestr("PROBLEMS.txt", "\n".join(problems))
     print(f"\nWrote {zname}" + (f" with {len(problems)} problem(s) - see PROBLEMS.txt" if problems else ""))
