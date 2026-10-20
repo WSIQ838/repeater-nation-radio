@@ -8,7 +8,7 @@ With no app ids it exports all seven apps listed below.
 Output: base44-export-<date>.zip in the current directory.
 Needs only the Python standard library.
 """
-import datetime, io, json, os, sys, urllib.error, urllib.parse, urllib.request, zipfile
+import datetime, io, json, os, sys, time, urllib.error, urllib.parse, urllib.request, zipfile
 
 BASE = "https://base44.app"
 APPS = {
@@ -33,11 +33,18 @@ def get(path, **params):
     if params:
         url += "?" + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
     req = urllib.request.Request(url, headers=AUTH)
-    try:
-        with urllib.request.urlopen(req, timeout=300) as r:
-            return r.read()
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"HTTP {e.code}: {e.read()[:300].decode('utf-8', 'replace')}") from None
+    for attempt in range(10):
+        time.sleep(0.4)  # stay under Base44's rate limit
+        try:
+            with urllib.request.urlopen(req, timeout=300) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            if e.code == 429 and attempt < 9:
+                wait = min(90, int(e.headers.get("Retry-After") or 0) or 5 * (attempt + 1))
+                print(f"   rate limited, waiting {wait}s ...")
+                time.sleep(wait)
+                continue
+            raise RuntimeError(f"HTTP {e.code}: {e.read()[:300].decode('utf-8', 'replace')}") from None
 
 
 def pick_auth():
@@ -175,7 +182,7 @@ def main():
             try:  # schemas + records
                 names, schemas = entity_names(app_id)
                 z.writestr(f"{folder}/data/_entity_schemas.json", json.dumps(schemas, indent=1))
-                for n in names:
+                for n in [n for n in names if n != "User"]:  # users are fetched separately
                     try:
                         recs = all_records(app_id, n)
                         z.writestr(f"{folder}/data/{n}.json", json.dumps(recs, indent=1))
