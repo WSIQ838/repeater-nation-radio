@@ -25,13 +25,36 @@ if not KEY:
     sys.exit("Set BASE44_API_KEY to your Base44 personal API key first.")
 
 
+AUTH = {"Authorization": "Bearer " + KEY}
+
+
 def get(path, **params):
     url = BASE + path
     if params:
         url += "?" + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
-    req = urllib.request.Request(url, headers={"api_key": KEY, "Authorization": "Bearer " + KEY})
-    with urllib.request.urlopen(req, timeout=300) as r:
-        return r.read()
+    req = urllib.request.Request(url, headers=AUTH)
+    try:
+        with urllib.request.urlopen(req, timeout=300) as r:
+            return r.read()
+    except urllib.error.HTTPError as e:
+        raise RuntimeError(f"HTTP {e.code}: {e.read()[:300].decode('utf-8', 'replace')}") from None
+
+
+def pick_auth():
+    """Find which way of sending the key Base44 accepts, or stop."""
+    global AUTH
+    if KEY == "paste_key_here" or "your_real" in KEY:
+        sys.exit("That is the placeholder text, not a real key. Paste your actual key.")
+    for hdr in ({"Authorization": "Bearer " + KEY}, {"api_key": KEY}):
+        AUTH = hdr
+        try:
+            get("/api/apps")
+            print("Key accepted via", list(hdr)[0])
+            return
+        except Exception as e:
+            print("Tried", list(hdr)[0], "->", e)
+    sys.exit("Base44 rejected the key both ways. It is probably the wrong kind of key, "
+             "expired, or not copied fully. Create a personal access token and try again.")
 
 
 def get_json(path, **params):
@@ -65,6 +88,7 @@ def all_users(app_id):
 
 
 def main():
+    pick_auth()
     ids = sys.argv[1:] or list(APPS)
     stamp = datetime.date.today().isoformat()
     zname = f"base44-export-{stamp}.zip"
