@@ -64,7 +64,11 @@ def get_json(path, **params):
 def entity_names(app_id):
     data = get_json(f"/api/apps/{app_id}/entity-schemas")
     items = data if isinstance(data, list) else data.get("schemas") or data.get("items") or []
-    return [s.get("name") or s.get("title") for s in items if s.get("name") or s.get("title")], items
+    keys = ("entity_name", "name", "title")
+    names = [next(s[k] for k in keys if s.get(k)) for s in items if any(s.get(k) for k in keys)]
+    if not names:
+        raise RuntimeError(f"no entity names found in schema response: {str(data)[:300]}")
+    return names, items
 
 
 def all_records(app_id, name):
@@ -104,7 +108,6 @@ EXTRAS = {
     "api_reference": "/api/apps/{a}/openapi-spec",
     "app_info": "/api/apps/{a}",
     "github_connection": "/api/apps/{a}/github/connection",
-    "checkpoints": "/api/apps/{a}/checkpoints",
 }
 
 
