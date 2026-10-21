@@ -1,0 +1,5 @@
+# exports contain personal data (emails, names) - never commit them
+*.zip
+export/
+data/
+.env

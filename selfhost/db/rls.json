@@ -1,0 +1,3581 @@
+{
+ "AdminNotification": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "AdminReport": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "editor"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "support_staff"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "AdminSetting": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ApiKey": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "ApiKeyUsage": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "AuditLog": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "editor"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "support_staff"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "Badge": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "Base44Purchase": {
+  "read": {
+   "$or": [
+    {
+     "data.appUserId": "{{user.id}}"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "Callsign": {
+  "read": {},
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "CallsignAccess": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "CallsignAccessRequest": {
+  "read": {
+   "$or": [
+    {
+     "data.requester_user_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "CallsignAuditLog": {
+  "read": {
+   "$or": [
+    {
+     "data.actor_user_id": "{{user.id}}"
+    },
+    {
+     "data.affected_user_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "Category": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ChangeLog": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ChannelPlan": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "Club": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ClubMembershipLog": {
+  "read": {
+   "$or": [
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "ClubPage": {
+  "create": {
+   "user_condition": {
+    "role": "super_admin"
+   }
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ClubStreakBadge": {
+  "read": null,
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ClubThread": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ClubThreadReply": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "ConnectedAccount": {
+  "read": {
+   "$or": [
+    {
+     "data.is_public": true
+    },
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "data.user_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "ContactLog": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "DispatchChat": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "DispatchPresence": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "Equipment": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "EquipmentCheckout": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "data.borrower_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "EquipmentHistory": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": false,
+  "delete": false
+ },
+ "EquipmentRecommendation": {
+  "read": null,
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ },
+ "EquipmentRepair": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "delete": {
+   "data.owner_id": "{{user.id}}"
+  }
+ },
+ "EquipmentReservation": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "delete": {
+   "data.owner_id": "{{user.id}}"
+  }
+ },
+ "EquipmentSubmission": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "EquipmentVote": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "Event": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ },
+ "EventType": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "FccImportRun": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "FccLicense": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "FeedChannelRequest": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "ForumPost": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ },
+ "ForumReply": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ },
+ "Friendship": {
+  "read": {
+   "$or": [
+    {
+     "data.requester_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  },
+  "create": {
+   "data.requester_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "data.requester_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.requester_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  }
+ },
+ "LeaderboardAdjustment": {
+  "read": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ },
+ "LinkPreview": {
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "MarketplaceListing": {
+  "read": null,
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "Membership": {
+  "create": false,
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "MerchOrder": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "MerchProduct": {
+  "read": {
+   "$or": [
+    {
+     "data.active": true
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "MerchSettings": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "Message": {
+  "read": {
+   "$or": [
+    {
+     "data.sender_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  },
+  "create": {
+   "data.sender_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "data.sender_id": "{{user.id}}"
+  }
+ },
+ "NetControlCheckIn": {
+  "read": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "data.session_host_ids": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "NetControlHost": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "NetControlRoster": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "NetControlSession": {
+  "read": {
+   "$or": [
+    {
+     "data.is_public": true
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "data.host_user_ids": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "NetStreak": {
+  "read": null,
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "PotaActivation": {
+  "read": {
+   "$or": [
+    {
+     "data.is_public": true
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.co_host_ids": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.co_host_ids": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "PotaFavorite": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "PotaPark": {
+  "read": {
+   "$or": [
+    {
+     "data.verification_status": "approved"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "user_condition": {
+    "role": "super_admin"
+   }
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "PotaSyncRun": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "Profile": {
+  "read": {},
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "ProfilePost": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "ProfilePostComment": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ },
+ "PublicSiteStats": {
+  "read": null,
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ },
+ "RadioChannel": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RadioDSPSettings": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RadioDirectCall": {
+  "read": {
+   "$or": [
+    {
+     "data.caller_user_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ },
+ "RadioFloorState": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RadioIdentity": {
+  "read": {},
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "RadioLayout": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RadioLocation": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ },
+ "RadioMonitorConfig": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RadioMute": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ },
+ "RadioRogerBeep": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RadioUserSettings": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "RadioZone": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "Repeater": {
+  "create": {
+   "user_condition": {
+    "role": "super_admin"
+   }
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.owner_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RepeaterAccessRequest": {
+  "read": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.owner_id": "{{user.id}}"
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.owner_id": "{{user.id}}"
+    }
+   ]
+  }
+ },
+ "RepeaterBookSync": {
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "RepeaterComment": {
+  "read": {},
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "RepeaterPhoto": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "RolePermission": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "SdrStream": {
+  "read": {
+   "$or": [
+    {
+     "data.verification_status": "approved"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "SeoSetting": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "editor"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "support_staff"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "SotaActivation": {
+  "read": {
+   "$or": [
+    {
+     "data.is_public": true
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.co_host_ids": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.co_host_ids": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "SotaFavorite": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "SotaSummit": {
+  "read": {
+   "$or": [
+    {
+     "data.verification_status": "approved"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "user_condition": {
+    "role": "super_admin"
+   }
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "SotaSyncRun": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "Tag": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "Trip": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ },
+ "UserBadge": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ },
+ "UserNotification": {
+  "read": {
+   "data.user_id": "{{user.id}}"
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "data.user_id": "{{user.id}}"
+  },
+  "delete": {
+   "data.user_id": "{{user.id}}"
+  }
+ },
+ "UserPermissionOverride": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "XpAdjustment": {
+  "read": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ },
+ "XpBalance": {
+  "read": {},
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ }
+}
