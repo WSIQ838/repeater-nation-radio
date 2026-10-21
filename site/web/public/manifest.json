@@ -1,0 +1,31 @@
+{
+  "name": "Repeater Nation",
+  "short_name": "Repeater Nation",
+  "description": "Community-driven GMRS platform for repeaters, logs, equipment, clubs, events, and operator tools.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a1a1a",
+  "theme_color": "#ff8000",
+  "icons": [
+    {
+      "src": "/branding/logo-badge-192.png?v=2",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/branding/logo-badge-512.png?v=2",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/branding/logo-badge-maskable-512.png?v=2",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

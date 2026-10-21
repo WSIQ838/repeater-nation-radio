@@ -1,0 +1,137 @@
+{
+ "name": "AdminReport",
+ "type": "object",
+ "properties": {
+  "title": {
+   "type": "string"
+  },
+  "reason": {
+   "type": "string"
+  },
+  "category": {
+   "type": "string",
+   "enum": [
+    "User",
+    "Repeater",
+    "ForumPost",
+    "ForumReply",
+    "Club",
+    "Event",
+    "Marketplace",
+    "Other"
+   ],
+   "default": "Other"
+  },
+  "target_type": {
+   "type": "string"
+  },
+  "target_id": {
+   "type": "string"
+  },
+  "target_label": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Open",
+    "Investigating",
+    "Resolved",
+    "Dismissed"
+   ],
+   "default": "Open"
+  },
+  "priority": {
+   "type": "string",
+   "enum": [
+    "Low",
+    "Medium",
+    "High",
+    "Critical"
+   ],
+   "default": "Medium"
+  },
+  "assigned_to": {
+   "type": "string"
+  },
+  "assigned_name": {
+   "type": "string"
+  },
+  "resolution": {
+   "type": "string"
+  },
+  "created_by_name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000
+  }
+ },
+ "required": [
+  "title",
+  "reason"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "editor"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "support_staff"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

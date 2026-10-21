@@ -1,0 +1,65 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6acefff3e3b182c3034f63c6",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Discord Events - Hourly Sync",
+ "name": "Discord Events - Hourly Sync",
+ "description": "Hourly: adds upcoming events the instant sync missed, applies edits, and removes Discord copies of events deleted on the site. Does nothing until DISCORD_BOT_TOKEN is set.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "6464c1256f2234b7fea8131c3dab14148146391c5784a5421fc3a958c35a1be9",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "scheduled",
+   "events": [],
+   "schedule_mode": "recurring",
+   "cron_expression": "41 * * * *",
+   "one_time_date": null,
+   "timezone": "UTC",
+   "interval_value": null,
+   "interval_unit": null,
+   "interval_anchor": null,
+   "ends_type": "never",
+   "ends_on_date": null,
+   "ends_after_count": null
+  },
+  "id": "e1d29d87e8964a0a"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-20T22:46:25.732000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 162,
+ "successful_runs": 162,
+ "failed_runs": 0,
+ "created_date": "2026-10-14T04:07:15.242000Z",
+ "updated_date": "2026-10-20T22:46:25.732000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "discord_events_hourly",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "reconcile": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "discord-events-sync",
+      "args": {
+       "action": "reconcile"
+      }
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Sync events with Discord"
+     }
+    }
+   }
+  ]
+ }
+}

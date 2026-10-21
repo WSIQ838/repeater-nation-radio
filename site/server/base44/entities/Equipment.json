@@ -1,0 +1,209 @@
+{
+ "name": "Equipment",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string"
+  },
+  "type": {
+   "type": "string",
+   "enum": [
+    "GMRS Radio",
+    "Mobile Radio",
+    "Base Station",
+    "Repeater Equipment",
+    "Antenna",
+    "Power Supply",
+    "Battery",
+    "Microphone",
+    "Speaker",
+    "Programming Cable",
+    "Portable Repeater",
+    "Emergency Equipment",
+    "Other"
+   ],
+   "default": "GMRS Radio"
+  },
+  "manufacturer": {
+   "type": "string"
+  },
+  "model": {
+   "type": "string"
+  },
+  "serial_number": {
+   "type": "string"
+  },
+  "asset_number": {
+   "type": "string"
+  },
+  "callsign": {
+   "type": "string",
+   "description": "Callsign assigned to this equipment, if applicable."
+  },
+  "purchase_date": {
+   "type": "string",
+   "format": "date"
+  },
+  "purchase_price": {
+   "type": "number"
+  },
+  "description": {
+   "type": "string"
+  },
+  "condition": {
+   "type": "string",
+   "enum": [
+    "New",
+    "Excellent",
+    "Good",
+    "Fair",
+    "Poor",
+    "Broken"
+   ],
+   "default": "Good"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Available",
+    "Checked Out",
+    "In Use",
+    "Reserved",
+    "In Shop",
+    "Under Repair",
+    "Working",
+    "Not Working",
+    "Damaged",
+    "Lost",
+    "Missing",
+    "Retired",
+    "Disposed"
+   ],
+   "default": "Available"
+  },
+  "location": {
+   "type": "string",
+   "enum": [
+    "Home",
+    "Vehicle",
+    "Field",
+    "Storage",
+    "Repeater Site",
+    "Shop",
+    "With Another Operator",
+    "Other"
+   ],
+   "default": "Home"
+  },
+  "location_detail": {
+   "type": "string"
+  },
+  "notes": {
+   "type": "string"
+  },
+  "photo_urls": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": []
+  },
+  "warranty_expiry": {
+   "type": "string",
+   "format": "date"
+  },
+  "current_borrower_id": {
+   "type": "string",
+   "description": "User id of current borrower when checked out."
+  },
+  "current_borrower_name": {
+   "type": "string"
+  },
+  "current_borrower_callsign": {
+   "type": "string"
+  },
+  "checkout_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "expected_return_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "checkout_purpose": {
+   "type": "string"
+  },
+  "checkout_location": {
+   "type": "string"
+  },
+  "checkout_notes": {
+   "type": "string"
+  },
+  "checkout_condition": {
+   "type": "string"
+  },
+  "problem_description": {
+   "type": "string",
+   "description": "Description of the problem when marked Not Working."
+  },
+  "problem_reported_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "tag_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": []
+  },
+  "category_id": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "name",
+  "type"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

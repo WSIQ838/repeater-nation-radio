@@ -1,0 +1,36 @@
+{
+ "name": "XpBalance",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string"
+  },
+  "manual_xp": {
+   "type": "number",
+   "default": 0,
+   "description": "Net administrator-granted XP adjustment. May be positive or negative."
+  }
+ },
+ "required": [
+  "user_id",
+  "manual_xp"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ }
+}

@@ -1,0 +1,233 @@
+{
+ "name": "ContactLog",
+ "type": "object",
+ "properties": {
+  "date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "callsign": {
+   "type": "string"
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ],
+   "default": "GMRS"
+  },
+  "band": {
+   "type": "string",
+   "description": "HAM band identifier when radio_service is HAM."
+  },
+  "callsign_used": {
+   "type": "string",
+   "description": "The callsign used for this QSO. May differ from the user's own callsign when using a shared/authorized callsign. Retained historically even if authorization is later revoked."
+  },
+  "contact_name": {
+   "type": "string",
+   "description": "Name of the operator contacted (optional, complements the callsign)."
+  },
+  "frequency": {
+   "type": "number"
+  },
+  "channel": {
+   "type": "string"
+  },
+  "mode": {
+   "type": "string",
+   "enum": [
+    "Simplex",
+    "Repeater"
+   ],
+   "default": "Simplex"
+  },
+  "repeater_id": {
+   "type": "string"
+  },
+  "lat": {
+   "type": "number"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "city": {
+   "type": "string"
+  },
+  "state": {
+   "type": "string"
+  },
+  "zip": {
+   "type": "string"
+  },
+  "county": {
+   "type": "string"
+  },
+  "signal_report": {
+   "type": "string"
+  },
+  "radio_used": {
+   "type": "string"
+  },
+  "antenna": {
+   "type": "string"
+  },
+  "power_level": {
+   "type": "string"
+  },
+  "weather": {
+   "type": "string"
+  },
+  "notes": {
+   "type": "string"
+  },
+  "distance": {
+   "type": "number"
+  },
+  "pota_activation_id": {
+   "type": "string",
+   "description": "The PotaActivation this contact was logged during, if any. Links POTA contacts back to the main logbook."
+  },
+  "pota_park_name": {
+   "type": "string",
+   "description": "Snapshot of the POTA park name when this contact was logged during an activation."
+  },
+  "sota_activation_id": {
+   "type": "string",
+   "description": "SotaActivation this contact was logged during, if any."
+  },
+  "qsl_sent": {
+   "type": "string",
+   "enum": [
+    "No",
+    "Queued",
+    "Sent"
+   ],
+   "description": "QSL Management: whether a QSL has been sent for this contact."
+  },
+  "qsl_sent_via": {
+   "type": "string",
+   "enum": [
+    "Bureau",
+    "Direct",
+    "Electronic",
+    "Manager"
+   ],
+   "description": "How the QSL was sent (ADIF QSL_SENT_VIA)."
+  },
+  "qsl_sent_date": {
+   "type": "string",
+   "format": "date",
+   "description": "Date the QSL was sent."
+  },
+  "qsl_received": {
+   "type": "string",
+   "enum": [
+    "No",
+    "Requested",
+    "Received"
+   ],
+   "description": "QSL Management: whether the other station's QSL has been received. Received contacts count as confirmed in the Awards Tracker."
+  },
+  "qsl_received_via": {
+   "type": "string",
+   "enum": [
+    "Bureau",
+    "Direct",
+    "Electronic",
+    "Manager"
+   ],
+   "description": "How the QSL was received (ADIF QSL_RCVD_VIA)."
+  },
+  "qsl_received_date": {
+   "type": "string",
+   "format": "date",
+   "description": "Date the QSL was received."
+  },
+  "contest_name": {
+   "type": "string",
+   "description": "Contest Logging: contest identifier (ADIF CONTEST_ID / Cabrillo CONTEST), when logged in contest mode."
+  },
+  "contest_exchange_sent": {
+   "type": "string",
+   "description": "Contest exchange sent, including any serial number (ADIF STX_STRING)."
+  },
+  "contest_exchange_rcvd": {
+   "type": "string",
+   "description": "Contest exchange received (ADIF SRX_STRING)."
+  },
+  "sota_ref": {
+   "type": "string",
+   "description": "SOTA: summit reference of the OTHER station (summit-to-summit or chaser contact), e.g. W7W/KG-001 (ADIF SOTA_REF)."
+  },
+  "my_sota_ref": {
+   "type": "string",
+   "description": "SOTA: summit this member was activating when the contact was made, e.g. W7W/KG-001 (ADIF MY_SOTA_REF)."
+  },
+  "qrz_logid": {
+   "type": "string",
+   "description": "QRZ Logbook sync: the QRZ logid once this contact is in the member's QRZ logbook (or 'duplicate' when QRZ already had it). Empty means not uploaded."
+  }
+ },
+ "required": [
+  "date",
+  "callsign"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

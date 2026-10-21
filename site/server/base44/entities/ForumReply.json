@@ -1,0 +1,101 @@
+{
+ "name": "ForumReply",
+ "type": "object",
+ "properties": {
+  "post_id": {
+   "type": "string"
+  },
+  "body": {
+   "type": "string"
+  },
+  "author_name": {
+   "type": "string"
+  },
+  "author_callsign": {
+   "type": "string"
+  },
+  "liked_by": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "User ids who upvoted this reply."
+  },
+  "disliked_by": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "User ids who downvoted this reply."
+  },
+  "image_urls": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Uploaded photo URLs attached to the reply."
+  },
+  "notification_sent_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Timestamp when the forum reply notification was sent."
+  }
+ },
+ "required": [
+  "post_id",
+  "body"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,59 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6acefff3e3b182c3034f63c8",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Discord Events - New Event",
+ "name": "Discord Events - New Event",
+ "description": "Adds a new site event to the Discord server's Events tab and posts it to the events channel.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "a05a481208e432729e6c02ad9d9ac95b5b8f7c0e58720f008055a0d276e6c75b",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "entity",
+   "events": [
+    "create"
+   ],
+   "entity_name": "Event"
+  },
+  "id": "a1ce76d711be43b4"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-18T01:34:18.946000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 4,
+ "successful_runs": 4,
+ "failed_runs": 0,
+ "created_date": "2026-10-14T04:07:15.358000Z",
+ "updated_date": "2026-10-19T01:45:13.811000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "discord_events_new",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "sync_new_event": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "discord-events-sync",
+      "args": {
+       "entity_id": "${ .trigger.entity_id }",
+       "op": "create"
+      }
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Put new event on Discord"
+     }
+    }
+   }
+  ]
+ }
+}

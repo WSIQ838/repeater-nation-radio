@@ -1,0 +1,97 @@
+{
+ "name": "Profile",
+ "type": "object",
+ "properties": {
+  "display_name": {
+   "type": "string",
+   "description": "Public display name shown to other members."
+  },
+  "callsign": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  },
+  "city": {
+   "type": "string",
+   "description": "City auto-populated from the member's FCC license address when their callsign is verified."
+  },
+  "state": {
+   "type": "string",
+   "description": "State auto-populated from the member's FCC license address when their callsign is verified."
+  },
+  "bio": {
+   "type": "string"
+  },
+  "avatar_url": {
+   "type": "string"
+  },
+  "avatar_focal_x": {
+   "type": "number",
+   "description": "Horizontal focal point for the avatar (0-100)."
+  },
+  "avatar_focal_y": {
+   "type": "number",
+   "description": "Vertical focal point for the avatar (0-100)."
+  },
+  "avatar_zoom": {
+   "type": "number",
+   "description": "Zoom level for the avatar (1 = fit, higher = cropped in)."
+  },
+  "banner_url": {
+   "type": "string",
+   "description": "Optional cover photo shown as the profile header banner."
+  },
+  "banner_focal_x": {
+   "type": "number",
+   "description": "Horizontal focal point for the banner cover photo (0-100)."
+  },
+  "banner_focal_y": {
+   "type": "number",
+   "description": "Vertical focal point for the banner cover photo (0-100)."
+  },
+  "banner_zoom": {
+   "type": "number",
+   "description": "Zoom level for the banner cover photo (1 = fit, higher = cropped in)."
+  },
+  "website": {
+   "type": "string"
+  },
+  "social_twitter": {
+   "type": "string"
+  },
+  "social_instagram": {
+   "type": "string"
+  },
+  "social_youtube": {
+   "type": "string"
+  },
+  "social_facebook": {
+   "type": "string"
+  },
+  "social_discord": {
+   "type": "string",
+   "description": "Discord handle or username (e.g. username or username#1234)."
+  },
+  "license_number": {
+   "type": "string",
+   "description": "FCC Registration Number (FRN)."
+  },
+  "license_status": {
+   "type": "string"
+  }
+ },
+ "required": [],
+ "rls": {
+  "read": {},
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

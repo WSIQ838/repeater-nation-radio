@@ -1,0 +1,102 @@
+{
+ "name": "AdminNotification",
+ "type": "object",
+ "properties": {
+  "title": {
+   "type": "string"
+  },
+  "body": {
+   "type": "string"
+  },
+  "type": {
+   "type": "string",
+   "enum": [
+    "Announcement",
+    "Alert",
+    "Maintenance",
+    "System"
+   ],
+   "default": "Announcement"
+  },
+  "audience": {
+   "type": "string",
+   "enum": [
+    "All",
+    "Admins"
+   ],
+   "default": "All"
+  },
+  "active": {
+   "type": "boolean",
+   "default": true
+  },
+  "expires_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "image_url": {
+   "type": "string",
+   "description": "Optional image attached to the notification and shown to recipients."
+  },
+  "link_url": {
+   "type": "string",
+   "description": "Optional action link URL attached to the notification."
+  },
+  "link_label": {
+   "type": "string",
+   "description": "Optional label for the action link button."
+  },
+  "created_by_name": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "title",
+  "body"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

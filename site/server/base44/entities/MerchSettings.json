@@ -1,0 +1,142 @@
+{
+ "name": "MerchSettings",
+ "type": "object",
+ "description": "Merch store settings (one record). Readable by everyone because the store page needs it; holds no secrets. Edited through merch-admin.",
+ "properties": {
+  "enabled": {
+   "type": "boolean",
+   "default": false,
+   "description": "Store open to the public. While off, only admins can see and test it."
+  },
+  "store_name": {
+   "type": "string",
+   "default": "Repeater Nation Merch"
+  },
+  "tagline": {
+   "type": "string"
+  },
+  "contact_email": {
+   "type": "string"
+  },
+  "shipping_flat_rate": {
+   "type": "number",
+   "default": 5.99,
+   "description": "Shipping charged for the first item in an order."
+  },
+  "shipping_additional_item": {
+   "type": "number",
+   "default": 2.5,
+   "description": "Added for each item after the first, like Printful's own first-item + additional-item shipping."
+  },
+  "free_shipping_over": {
+   "type": "number",
+   "default": 0,
+   "description": "Free shipping when the order (after discounts) reaches this amount. 0 = never."
+  },
+  "ship_countries": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "ISO country codes Stripe Checkout accepts."
+  },
+  "collect_tax": {
+   "type": "boolean",
+   "default": false,
+   "description": "Stripe Tax must be turned on in the Stripe dashboard first."
+  },
+  "member_discount_percent": {
+   "type": "number",
+   "default": 0,
+   "description": "Off for signed-in verified operators."
+  },
+  "auto_submit": {
+   "type": "boolean",
+   "default": true,
+   "description": "Send paid orders straight to Printful for printing. Off = they wait as drafts in Printful for an admin to confirm."
+  },
+  "show_shipping_badge": {
+   "type": "boolean",
+   "default": true,
+   "description": "Merch page: show the 'Shipping from $X' badge at the top. Display only."
+  },
+  "show_member_badge": {
+   "type": "boolean",
+   "default": true,
+   "description": "Merch page: show the member-discount badge at the top. Display only."
+  },
+  "show_product_shipping": {
+   "type": "boolean",
+   "default": true,
+   "description": "Merch page: show the shipping line in each product's window. Display only."
+  },
+  "show_shipping_details": {
+   "type": "boolean",
+   "default": true,
+   "description": "Merch page: show how shipping is charged in the Shipping & returns box. Display only."
+  },
+  "show_tax_note": {
+   "type": "boolean",
+   "default": true,
+   "description": "Cart: show 'Sales tax is added at checkout' when tax is on. Display only."
+  },
+  "returns_policy": {
+   "type": "string"
+  },
+  "rates_refreshed_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Last run of the daily Printful shipping-rate refresh."
+  },
+  "rates_refresh_summary": {
+   "type": "string",
+   "description": "What the last shipping-rate refresh did."
+  }
+ },
+ "required": [],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

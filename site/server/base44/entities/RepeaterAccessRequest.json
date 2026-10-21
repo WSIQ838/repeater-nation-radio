@@ -1,0 +1,118 @@
+{
+ "name": "RepeaterAccessRequest",
+ "type": "object",
+ "properties": {
+  "repeater_id": {
+   "type": "string"
+  },
+  "repeater_name": {
+   "type": "string"
+  },
+  "repeater_callsign": {
+   "type": "string"
+  },
+  "repeater_frequency": {
+   "type": "number",
+   "description": "Snapshot of the repeater frequency (MHz) at request time."
+  },
+  "repeater_input_tone": {
+   "type": "string",
+   "description": "Snapshot of the repeater input (RX) tone at request time."
+  },
+  "repeater_output_tone": {
+   "type": "string",
+   "description": "Snapshot of the repeater output (TX) tone at request time."
+  },
+  "owner_id": {
+   "type": "string",
+   "description": "User id of the repeater owner (created_by_id or owner_user_id). Used for RLS and dashboard lookups."
+  },
+  "requester_callsign": {
+   "type": "string"
+  },
+  "licensee_name": {
+   "type": "string",
+   "description": "Full licensee name as entered by the requester."
+  },
+  "family_members": {
+   "type": "string",
+   "description": "Family members covered by the request, as entered by the requester."
+  },
+  "phone_number": {
+   "type": "string"
+  },
+  "email": {
+   "type": "string"
+  },
+  "usage_purpose": {
+   "type": "string",
+   "enum": [
+    "Personal",
+    "Family",
+    "Club / Group",
+    "Emergency / Public Service",
+    "Event Coordination",
+    "Business",
+    "Other"
+   ],
+   "default": "Personal"
+  },
+  "requester_name": {
+   "type": "string"
+  },
+  "message": {
+   "type": "string",
+   "description": "Additional notes the requester included when asking for access."
+  },
+  "owner_message": {
+   "type": "string",
+   "description": "Optional response note the owner writes when granting or denying access."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Pending",
+    "Granted",
+    "Denied"
+   ],
+   "default": "Pending"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this access request."
+  }
+ },
+ "required": [
+  "repeater_id",
+  "owner_id"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.owner_id": "{{user.id}}"
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.owner_id": "{{user.id}}"
+    }
+   ]
+  }
+ }
+}

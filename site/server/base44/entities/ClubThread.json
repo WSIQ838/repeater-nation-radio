@@ -1,0 +1,107 @@
+{
+ "name": "ClubThread",
+ "type": "object",
+ "properties": {
+  "club_id": {
+   "type": "string",
+   "description": "The club this discussion thread belongs to."
+  },
+  "title": {
+   "type": "string"
+  },
+  "body": {
+   "type": "string",
+   "description": "Markdown body of the thread post."
+  },
+  "category": {
+   "type": "string",
+   "enum": [
+    "General",
+    "Repeater News",
+    "Meetups",
+    "Technical",
+    "Off-Topic"
+   ],
+   "default": "General",
+   "description": "Discussion category for the thread."
+  },
+  "author_name": {
+   "type": "string"
+  },
+  "author_callsign": {
+   "type": "string"
+  },
+  "replies_count": {
+   "type": "number",
+   "default": 0
+  },
+  "pinned": {
+   "type": "boolean",
+   "default": false,
+   "description": "Pinned threads appear at the top of the list."
+  },
+  "image_urls": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Uploaded photo URLs attached to the thread."
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner (Club.created_by_id). Stamped at creation so the owner can moderate this thread via RLS."
+  }
+ },
+ "required": [
+  "club_id",
+  "title",
+  "body"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

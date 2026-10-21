@@ -1,0 +1,184 @@
+{
+ "name": "Badge",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "description": "Short description shown under the badge name."
+  },
+  "icon": {
+   "type": "string",
+   "description": "Emoji text (icon_type=emoji) or lucide-react icon name (icon_type=icon)."
+  },
+  "icon_type": {
+   "type": "string",
+   "enum": [
+    "emoji",
+    "icon",
+    "image"
+   ],
+   "default": "emoji"
+  },
+  "image_url": {
+   "type": "string",
+   "description": "Uploaded badge image used when icon_type=image."
+  },
+  "category": {
+   "type": "string",
+   "enum": [
+    "Activity",
+    "Contribution",
+    "Achievement",
+    "Social",
+    "Special",
+    "License"
+   ],
+   "default": "Achievement"
+  },
+  "rarity": {
+   "type": "string",
+   "enum": [
+    "Common",
+    "Uncommon",
+    "Rare",
+    "Epic",
+    "Legendary",
+    "Mythic"
+   ],
+   "default": "Common"
+  },
+  "color": {
+   "type": "string",
+   "default": "#f59e0b",
+   "description": "Hex accent color used for the badge styling."
+  },
+  "display_order": {
+   "type": "number",
+   "default": 0,
+   "description": "Lower numbers appear first in the catalog."
+  },
+  "enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Disabled badges cannot be earned or displayed."
+  },
+  "is_secret": {
+   "type": "boolean",
+   "default": false,
+   "description": "Secret badges are hidden from the public catalog until a user earns them."
+  },
+  "requirement_type": {
+   "type": "string",
+   "enum": [
+    "manual_only",
+    "contacts",
+    "repeater_contacts",
+    "unique_repeaters",
+    "equipment",
+    "repeater_contributions",
+    "repeater_access_requests",
+    "club_memberships",
+    "club_owner",
+    "profile_complete",
+    "forum_posts",
+    "forum_replies",
+    "bug_reports",
+    "feature_requests",
+    "accepted_feature_requests",
+    "directory_views",
+    "map_discoveries",
+    "helpful_interactions",
+    "account_age",
+    "net_checkins",
+    "net_nets_attended",
+    "net_streak",
+    "first_net_checkin",
+    "clubs_participated"
+   ],
+   "default": "manual_only",
+   "description": "The metric used to automatically evaluate whether a user earns this badge."
+  },
+  "requirement_amount": {
+   "type": "number",
+   "default": 1,
+   "description": "Minimum metric value required to earn the badge."
+  },
+  "requirement_period": {
+   "type": "string",
+   "enum": [
+    "all_time",
+    "daily",
+    "weekly",
+    "monthly",
+    "yearly"
+   ],
+   "default": "all_time",
+   "description": "Time window the metric is counted within."
+  },
+  "requirement_label": {
+   "type": "string",
+   "description": "Human-readable description of how the badge is earned, e.g. 'Contribute 25 approved repeater records.'"
+  },
+  "award_method": {
+   "type": "string",
+   "enum": [
+    "automatic",
+    "manual",
+    "both"
+   ],
+   "default": "manual",
+   "description": "Whether the badge is awarded automatically by the system, manually by an admin, or both."
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

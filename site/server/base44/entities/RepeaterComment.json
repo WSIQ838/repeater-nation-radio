@@ -1,0 +1,38 @@
+{
+ "name": "RepeaterComment",
+ "type": "object",
+ "properties": {
+  "repeater_id": {
+   "type": "string",
+   "description": "The repeater this comment belongs to."
+  },
+  "repeater_name": {
+   "type": "string"
+  },
+  "body": {
+   "type": "string"
+  },
+  "author_name": {
+   "type": "string"
+  },
+  "author_callsign": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "repeater_id",
+  "body"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

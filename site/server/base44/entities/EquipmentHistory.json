@@ -1,0 +1,85 @@
+{
+ "name": "EquipmentHistory",
+ "type": "object",
+ "properties": {
+  "equipment_id": {
+   "type": "string"
+  },
+  "equipment_name": {
+   "type": "string"
+  },
+  "owner_id": {
+   "type": "string",
+   "description": "User id of the equipment owner. Denormalized for RLS."
+  },
+  "actor_id": {
+   "type": "string"
+  },
+  "actor_name": {
+   "type": "string"
+  },
+  "action": {
+   "type": "string",
+   "enum": [
+    "created",
+    "edited",
+    "checked_out",
+    "returned",
+    "status_changed",
+    "location_changed",
+    "repair_started",
+    "repair_completed",
+    "maintenance",
+    "damage_reported",
+    "lost_reported",
+    "missing_reported",
+    "retired",
+    "disposed",
+    "reserved",
+    "reservation_cancelled",
+    "marked_working",
+    "marked_not_working",
+    "photo_added",
+    "notes_updated"
+   ]
+  },
+  "previous_status": {
+   "type": "string"
+  },
+  "new_status": {
+   "type": "string"
+  },
+  "previous_holder": {
+   "type": "string"
+  },
+  "new_holder": {
+   "type": "string"
+  },
+  "notes": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "equipment_id",
+  "action"
+ ],
+ "rls": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": false,
+  "delete": false
+ }
+}

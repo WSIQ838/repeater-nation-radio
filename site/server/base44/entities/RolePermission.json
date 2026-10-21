@@ -1,0 +1,107 @@
+{
+ "name": "RolePermission",
+ "type": "object",
+ "properties": {
+  "role_key": {
+   "type": "string",
+   "description": "Normalized lowercase role identifier used on User.role."
+  },
+  "role_name": {
+   "type": "string",
+   "description": "Display name of the role."
+  },
+  "description": {
+   "type": "string"
+  },
+  "permissions": {
+   "type": "string",
+   "description": "JSON object mapping permission keys (e.g. 'equipment.manage') to booleans."
+  },
+  "is_system": {
+   "type": "boolean",
+   "default": false,
+   "description": "System roles cannot be deleted. They can be renamed and have permissions edited."
+  },
+  "is_protected": {
+   "type": "boolean",
+   "default": false,
+   "description": "Protected roles can only be modified by Super Admins. The Super Admin role is always protected."
+  },
+  "enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Disabled roles cannot be assigned to new users."
+  },
+  "display_order": {
+   "type": "number",
+   "default": 0
+  },
+  "user_count": {
+   "type": "number",
+   "default": 0,
+   "description": "Denormalized count of users assigned to this role."
+  }
+ },
+ "required": [
+  "role_key",
+  "role_name"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

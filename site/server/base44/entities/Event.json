@@ -1,0 +1,125 @@
+{
+ "name": "Event",
+ "type": "object",
+ "properties": {
+  "title": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string"
+  },
+  "type": {
+   "type": "string",
+   "description": "Event type name managed from Admin \u2192 Tags & Categories \u2192 Event Types."
+  },
+  "image_url": {
+   "type": "string",
+   "description": "Optional cover image shown on the event list/card."
+  },
+  "date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "location": {
+   "type": "string"
+  },
+  "lat": {
+   "type": "number"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "organizer": {
+   "type": "string"
+  },
+  "club_id": {
+   "type": "string",
+   "description": "Owning club for club-scoped events (blank = community-wide event)."
+  },
+  "source_type": {
+   "type": "string",
+   "description": "Optional originating feature, such as pota_activation or net_control."
+  },
+  "source_id": {
+   "type": "string",
+   "description": "ID of the originating POTA activation or Net Control session."
+  },
+  "discord_event_id": {
+   "type": "string",
+   "description": "The copy in the Discord server's Events tab ('removed' if a moderator deleted it there)."
+  },
+  "discord_synced_hash": {
+   "type": "string",
+   "description": "Fingerprint of what was last sent to Discord, so unchanged edits aren't re-sent."
+  },
+  "discord_notified_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the new-event message was posted to the Discord events channel."
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner (Club.created_by_id). Stamped at creation so the owner can manage this event via RLS."
+  }
+ },
+ "required": [
+  "title",
+  "date"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ }
+}

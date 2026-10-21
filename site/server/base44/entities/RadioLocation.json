@@ -1,0 +1,71 @@
+{
+ "name": "RadioLocation",
+ "properties": {
+  "accuracy": {
+   "description": "Meters.",
+   "type": "number"
+  },
+  "callsign": {
+   "type": "string"
+  },
+  "channel_id": {
+   "description": "Channel the radio was on at the last report.",
+   "type": "string"
+  },
+  "display_name": {
+   "type": "string"
+  },
+  "heading": {
+   "description": "Degrees, when the device reports one.",
+   "type": "number"
+  },
+  "lat": {
+   "type": "number"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "reported_at": {
+   "format": "date-time",
+   "type": "string"
+  },
+  "user_id": {
+   "description": "Member account sharing this position. One row per member.",
+   "type": "string"
+  },
+  "visibility": {
+   "default": "dispatch",
+   "description": "Who may see this position: dispatch (staff) only, or also other members who share with members.",
+   "enum": [
+    "dispatch",
+    "members"
+   ],
+   "type": "string"
+  }
+ },
+ "required": [
+  "user_id",
+  "lat",
+  "lng"
+ ],
+ "type": "object",
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

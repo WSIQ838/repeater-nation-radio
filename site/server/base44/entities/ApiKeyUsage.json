@@ -1,0 +1,40 @@
+{
+ "name": "ApiKeyUsage",
+ "type": "object",
+ "properties": {
+  "bucket_key": {
+   "type": "string",
+   "description": "Unique lookup key for this window, e.g. 'key:<apiKeyId>:<windowStartISO>' or 'ip:<ip>:<windowStartISO>' for pre-auth throttling."
+  },
+  "scope": {
+   "type": "string",
+   "enum": [
+    "key",
+    "ip"
+   ],
+   "default": "key"
+  },
+  "api_key_id": {
+   "type": "string",
+   "description": "Set for scope=key rows; convenience reference for admin usage reporting."
+  },
+  "window_start": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Start of the 60-second bucket this row counts requests for."
+  },
+  "request_count": {
+   "type": "number",
+   "default": 0
+  }
+ },
+ "required": [
+  "bucket_key"
+ ],
+ "rls": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "name": "ClubThreadReply",
+ "type": "object",
+ "properties": {
+  "thread_id": {
+   "type": "string",
+   "description": "The ClubThread this reply belongs to."
+  },
+  "body": {
+   "type": "string"
+  },
+  "author_name": {
+   "type": "string"
+  },
+  "author_callsign": {
+   "type": "string"
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner (Club.created_by_id). Stamped at creation so the owner can moderate this reply via RLS."
+  }
+ },
+ "required": [
+  "thread_id",
+  "body"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

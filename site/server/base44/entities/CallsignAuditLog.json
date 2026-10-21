@@ -1,0 +1,85 @@
+{
+ "name": "CallsignAuditLog",
+ "type": "object",
+ "properties": {
+  "callsign_id": {
+   "type": "string"
+  },
+  "normalized_callsign": {
+   "type": "string"
+  },
+  "actor_user_id": {
+   "type": "string",
+   "description": "User who performed the action."
+  },
+  "actor_name": {
+   "type": "string"
+  },
+  "action": {
+   "type": "string",
+   "enum": [
+    "claimed",
+    "verification_completed",
+    "access_requested",
+    "access_approved",
+    "access_denied",
+    "access_revoked",
+    "primary_changed",
+    "admin_override",
+    "request_cancelled"
+   ]
+  },
+  "affected_user_id": {
+   "type": "string",
+   "description": "User affected by the action."
+  },
+  "affected_name": {
+   "type": "string"
+  },
+  "primary_user_id": {
+   "type": "string",
+   "description": "Primary account at the time of the action. Denormalized for RLS."
+  },
+  "reason": {
+   "type": "string",
+   "description": "Metadata/reason for the action."
+  },
+  "metadata": {
+   "type": "string",
+   "description": "JSON extra context."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this audit log entry."
+  }
+ },
+ "required": [
+  "callsign_id",
+  "actor_user_id",
+  "action"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.actor_user_id": "{{user.id}}"
+    },
+    {
+     "data.affected_user_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

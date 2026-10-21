@@ -1,0 +1,173 @@
+{
+ "name": "FccLicense",
+ "type": "object",
+ "properties": {
+  "callsign": {
+   "type": "string",
+   "description": "Display callsign exactly as the FCC ULS record has it, uppercase."
+  },
+  "normalized_callsign": {
+   "type": "string",
+   "description": "Uppercase, whitespace-stripped callsign. The lookup key -- every query filters on this field."
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ],
+   "description": "Derived from the FCC's radio_service_code: ZA -> GMRS; HA/HV -> HAM."
+  },
+  "radio_service_code": {
+   "type": "string",
+   "description": "Raw FCC ULS radio service code (e.g. ZA, HA, HV) -- kept for troubleshooting a misclassification."
+  },
+  "license_status_code": {
+   "type": "string",
+   "description": "Raw FCC ULS license status code from HD.dat position 5 (A, C, E, T, etc.)."
+  },
+  "license_status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "expired",
+    "cancelled",
+    "terminated",
+    "other"
+   ],
+   "description": "Normalized from license_status_code + expired_date, for direct use by verification."
+  },
+  "active": {
+   "type": "boolean",
+   "description": "true only when license_status is 'active'. Indexed shortcut so the verification path doesn't need to interpret the status field."
+  },
+  "grant_date": {
+   "type": "string",
+   "format": "date"
+  },
+  "expiration_date": {
+   "type": "string",
+   "format": "date"
+  },
+  "cancellation_date": {
+   "type": "string",
+   "format": "date"
+  },
+  "licensee_name": {
+   "type": "string",
+   "description": "Entity name from EN.dat (last, first for an individual; org name for a club/organization)."
+  },
+  "city": {
+   "type": "string"
+  },
+  "state": {
+   "type": "string"
+  },
+  "zip": {
+   "type": "string"
+  },
+  "frn": {
+   "type": "string",
+   "description": "FCC Registration Number, from EN.dat."
+  },
+  "unique_system_identifier": {
+   "type": "string",
+   "description": "FCC ULS's own join key across HD.dat/EN.dat/etc for this license. The reconciliation key for updates -- NOT unique across services (GMRS and HAM number from the same sequence), so always pair with radio_service_code when matching."
+  },
+  "license_key": {
+   "type": "string",
+   "description": "Stable composite reconciliation key: radio_service_code + ':' + unique_system_identifier. This is the primary identity used by full/daily FCC imports."
+  },
+  "uls_file_number": {
+   "type": "string"
+  },
+  "last_transaction_date": {
+   "type": "string",
+   "format": "date",
+   "description": "HD.dat's own last-action date within the FCC's data, when present. Distinct from updated_date, which is when Repeater Nation last touched this row."
+  },
+  "source": {
+   "type": "string",
+   "enum": [
+    "full_import",
+    "daily_transaction"
+   ],
+   "description": "Which importer last wrote this row."
+  },
+  "source_file": {
+   "type": "string",
+   "description": "e.g. l_gmrs.zip or l_gm_mon.zip -- the specific FCC file this row's data came from."
+  },
+  "imported_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "last_checked_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Last time this row was confirmed against an FCC source (full import or a daily transaction touching it)."
+  }
+ },
+ "required": [
+  "normalized_callsign",
+  "radio_service_code"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /messages
+Disallow: /profile
+Disallow: /callsign-management
+Disallow: /club-manager
+Disallow: /bug-report
+Disallow: /trips
+Disallow: /logbook
+Disallow: /equipment
+
+Sitemap: https://repeaternation.com/functions/sitemap-generator

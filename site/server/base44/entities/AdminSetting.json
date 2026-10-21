@@ -1,0 +1,281 @@
+{
+ "name": "AdminSetting",
+ "type": "object",
+ "properties": {
+  "maintenance_mode": {
+   "type": "boolean",
+   "default": false
+  },
+  "registration_open": {
+   "type": "boolean",
+   "default": true
+  },
+  "allow_new_repeaters": {
+   "type": "boolean",
+   "default": true
+  },
+  "fcc_auto_verify": {
+   "type": "boolean",
+   "default": false
+  },
+  "radio_default_voice_name": {
+   "type": "string",
+   "description": "Site default browser speech voice name for radio channel announcements."
+  },
+  "radio_enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Site-wide kill switch for the floating web radio / voice chat widget."
+  },
+  "map_default_zoom": {
+   "type": "number",
+   "default": 4
+  },
+  "announcement": {
+   "type": "string"
+  },
+  "changelog_webhook_url": {
+   "type": "string"
+  },
+  "bug_report_webhook_url": {
+   "type": "string"
+  },
+  "webhook_access_requests": {
+   "type": "string"
+  },
+  "webhook_friend_requests": {
+   "type": "string"
+  },
+  "webhook_messages": {
+   "type": "string"
+  },
+  "webhook_forum_replies": {
+   "type": "string"
+  },
+  "webhook_net_host_invites": {
+   "type": "string"
+  },
+  "webhook_repeater_submissions": {
+   "type": "string"
+  },
+  "webhook_club_joins": {
+   "type": "string"
+  },
+  "webhook_pota_submissions": {
+   "type": "string"
+  },
+  "webhook_badge_awards": {
+   "type": "string"
+  },
+  "webhook_payments": {
+   "type": "string"
+  },
+  "webhook_events": {
+   "type": "string",
+   "description": "Discord webhook for new site events."
+  },
+  "discord_events_enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Copy site events into the Discord server's Events tab (needs DISCORD_BOT_TOKEN)."
+  },
+  "discord_event_kinds": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "description": "Which events go to Discord: club, net_control, pota_activation, sota_activation, other. Empty or missing = all (turn everything off with discord_events_enabled)."
+  },
+  "discord_events_last_sync": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "discord_events_last_result": {
+   "type": "string"
+  },
+  "discord_message_templates": {
+   "type": "string",
+   "description": "JSON map of template id -> {title, description, color} admin overrides for Discord embed content."
+  },
+  "discord_bot_usernames": {
+   "type": "string",
+   "description": "JSON map of Discord channel type -> bot display name override."
+  },
+  "email_message_templates": {
+   "type": "string",
+   "description": "JSON map of template id -> {subject, body} admin overrides for outbound member email content."
+  },
+  "social_discord_url": {
+   "type": "string",
+   "description": "Public Discord invite link shown across the site."
+  },
+  "social_twitter_url": {
+   "type": "string",
+   "description": "Twitter / X profile or page URL."
+  },
+  "social_facebook_url": {
+   "type": "string",
+   "description": "Facebook page URL."
+  },
+  "social_instagram_url": {
+   "type": "string",
+   "description": "Instagram profile URL."
+  },
+  "social_youtube_url": {
+   "type": "string",
+   "description": "YouTube channel URL."
+  },
+  "social_tiktok_url": {
+   "type": "string",
+   "description": "TikTok profile URL."
+  },
+  "donation_url": {
+   "type": "string",
+   "description": "External donation link (e.g. PayPal.me or Ko-fi) shown as a Donate button when Stripe donations aren't enabled, or when STRIPE_SECRET_KEY isn't configured."
+  },
+  "donation_stripe_enabled": {
+   "type": "boolean",
+   "default": false,
+   "description": "Accept donations directly via Stripe Checkout on the platform's own connected Stripe account (the same one used for club membership payments)."
+  },
+  "nav_order": {
+   "type": "string"
+  },
+  "platform_fee_percent": {
+   "type": "number",
+   "default": 5,
+   "minimum": 0,
+   "maximum": 100
+  },
+  "tool_frequency_calc": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_tone_calc": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_channel_planner": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_antenna_calc": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_coax_calc": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_power_calc": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_distance_calc": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_weather": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_sunrise_sunset": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_morse_code": {
+   "type": "boolean",
+   "default": true
+  },
+  "tool_sdr": {
+   "type": "boolean",
+   "default": true
+  },
+  "gamification_enabled": {
+   "type": "boolean",
+   "default": true
+  },
+  "show_bug_report_link": {
+   "type": "boolean",
+   "default": true,
+   "description": "Show the \"Report a Bug\" link in the member sidebar."
+  },
+  "signup_announcement_enabled": {
+   "type": "boolean",
+   "default": false,
+   "description": "Show a popup notice on the registration page before someone signs up. Independent of the general Announcements popup shown elsewhere in the app."
+  },
+  "signup_announcement_title": {
+   "type": "string"
+  },
+  "signup_announcement_body": {
+   "type": "string"
+  },
+  "updated_by_name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000
+  }
+ },
+ "required": [],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,83 @@
+{
+ "name": "RadioMute",
+ "type": "object",
+ "properties": {
+  "channel_id": {
+   "type": "string",
+   "description": "The RadioChannel this mute applies to."
+  },
+  "user_id": {
+   "type": "string",
+   "description": "The muted user. Presence of a row for (channel_id, user_id) means they cannot transmit on that channel until a moderator removes it."
+  },
+  "callsign": {
+   "type": "string"
+  },
+  "muted_by_name": {
+   "type": "string"
+  },
+  "muted_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "channel_id",
+  "user_id"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ }
+}

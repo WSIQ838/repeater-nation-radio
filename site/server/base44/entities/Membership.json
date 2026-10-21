@@ -1,0 +1,119 @@
+{
+ "name": "Membership",
+ "type": "object",
+ "properties": {
+  "club_id": {
+   "type": "string"
+  },
+  "club_name": {
+   "type": "string"
+  },
+  "member_callsign": {
+   "type": "string"
+  },
+  "member_name": {
+   "type": "string"
+  },
+  "role": {
+   "type": "string",
+   "enum": [
+    "Member",
+    "Officer",
+    "Admin"
+   ],
+   "default": "Member",
+   "description": "Club-level role assigned by the owner. Officers and Admins help manage the club."
+  },
+  "fee_amount": {
+   "type": "number",
+   "default": 0
+  },
+  "fee_period": {
+   "type": "string",
+   "enum": [
+    "One-time",
+    "Monthly",
+    "Annual"
+   ],
+   "default": "One-time"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Active",
+    "Pending",
+    "Expired"
+   ],
+   "default": "Active"
+  },
+  "payment_status": {
+   "type": "string",
+   "enum": [
+    "Free",
+    "Paid",
+    "Pending",
+    "Disputed"
+   ],
+   "default": "Free"
+  },
+  "payment_note": {
+   "type": "string",
+   "maxLength": 500,
+   "description": "Free-form note about this member's payment, e.g. dispute details or a manual reconciliation note."
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner (Club.created_by_id). Stamped at creation so the owner can manage this membership via RLS."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this membership."
+  }
+ },
+ "required": [
+  "club_id",
+  "member_callsign"
+ ],
+ "rls": {
+  "create": false,
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

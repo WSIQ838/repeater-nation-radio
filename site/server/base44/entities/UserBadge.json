@@ -1,0 +1,95 @@
+{
+ "name": "UserBadge",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string",
+   "description": "The user who earned the badge."
+  },
+  "user_name": {
+   "type": "string"
+  },
+  "badge_id": {
+   "type": "string",
+   "description": "The Badge this award references."
+  },
+  "badge_name": {
+   "type": "string",
+   "description": "Snapshot of the badge name at award time."
+  },
+  "awarded_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the badge was awarded."
+  },
+  "award_method": {
+   "type": "string",
+   "enum": [
+    "automatic",
+    "manual"
+   ],
+   "default": "manual"
+  },
+  "awarded_by_id": {
+   "type": "string",
+   "description": "Admin user id who manually awarded the badge (blank for automatic)."
+  },
+  "awarded_by_name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this badge award."
+  }
+ },
+ "required": [
+  "user_id",
+  "badge_id"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,49 @@
+{
+ "name": "LeaderboardAdjustment",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string"
+  },
+  "amount": {
+   "type": "number"
+  },
+  "reason": {
+   "type": "string",
+   "maxLength": 1000
+  },
+  "admin_id": {
+   "type": "string"
+  },
+  "admin_name": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "user_id",
+  "amount",
+  "reason"
+ ],
+ "rls": {
+  "read": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ }
+}

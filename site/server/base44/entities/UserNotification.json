@@ -1,0 +1,94 @@
+{
+ "name": "UserNotification",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string",
+   "description": "The recipient user's ID."
+  },
+  "title": {
+   "type": "string"
+  },
+  "message": {
+   "type": "string",
+   "description": "Full notification message body."
+  },
+  "type": {
+   "type": "string",
+   "enum": [
+    "announcement",
+    "message",
+    "forum_reply",
+    "access_request",
+    "system",
+    "alert",
+    "mention"
+   ],
+   "default": "announcement"
+  },
+  "sender_name": {
+   "type": "string",
+   "description": "Name of the sender or source."
+  },
+  "image_url": {
+   "type": "string",
+   "description": "Optional image attached to the notification."
+  },
+  "link_url": {
+   "type": "string",
+   "description": "Optional action link URL."
+  },
+  "link_label": {
+   "type": "string",
+   "description": "Optional label for the action button."
+  },
+  "read": {
+   "type": "boolean",
+   "default": false
+  },
+  "read_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "scheduled_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Optional. Notification is hidden from the user until this date/time."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this notification."
+  }
+ },
+ "required": [
+  "user_id",
+  "title",
+  "message"
+ ],
+ "rls": {
+  "read": {
+   "data.user_id": "{{user.id}}"
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "data.user_id": "{{user.id}}"
+  },
+  "delete": {
+   "data.user_id": "{{user.id}}"
+  }
+ }
+}

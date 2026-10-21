@@ -1,0 +1,3 @@
+Question pools: NCVEC Question Pool Committee (public domain), via
+https://github.com/russolsen/ham_radio_question_pool (Apache License 2.0).
+Technician 2026-2030, General 2023-2027, Amateur Extra 2024-2028.

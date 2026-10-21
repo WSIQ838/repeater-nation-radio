@@ -1,0 +1,86 @@
+{
+ "name": "RadioLayout",
+ "type": "object",
+ "properties": {
+  "layout_name": {
+   "type": "string",
+   "default": "Default Radio",
+   "description": "Admin-defined name for this radio face/layout."
+  },
+  "is_default": {
+   "type": "boolean",
+   "default": false,
+   "description": "Site-wide default layout used when a member has not selected another layout."
+  },
+  "image_url": {
+   "type": "string",
+   "description": "Uploaded reference photo used as the radio widget's face."
+  },
+  "image_width": {
+   "type": "number",
+   "description": "Natural pixel width of the uploaded photo."
+  },
+  "image_height": {
+   "type": "number",
+   "description": "Natural pixel height of the uploaded photo."
+  },
+  "controls": {
+   "type": "string",
+   "maxLength": 10000,
+   "description": "JSON-encoded control layout, styles, and LED placements."
+  },
+  "widget_width": {
+   "type": "number",
+   "default": 440,
+   "description": "Rendered width in pixels of the floating radio widget."
+  }
+ },
+ "required": [
+  "image_url"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

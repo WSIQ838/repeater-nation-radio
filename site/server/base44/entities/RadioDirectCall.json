@@ -1,0 +1,85 @@
+{
+ "name": "RadioDirectCall",
+ "type": "object",
+ "properties": {
+  "caller_user_id": {
+   "type": "string"
+  },
+  "caller_callsign": {
+   "type": "string"
+  },
+  "caller_display_name": {
+   "type": "string"
+  },
+  "recipient_user_id": {
+   "type": "string"
+  },
+  "recipient_callsign": {
+   "type": "string"
+  },
+  "recipient_display_name": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "ringing",
+    "active",
+    "declined",
+    "ended",
+    "missed"
+   ],
+   "default": "ringing"
+  },
+  "room_name": {
+   "type": "string"
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "caller_user_id",
+  "recipient_user_id",
+  "status",
+  "room_name"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.caller_user_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ }
+}

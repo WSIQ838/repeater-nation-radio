@@ -1,0 +1,155 @@
+{
+ "name": "FccImportRun",
+ "type": "object",
+ "properties": {
+  "run_type": {
+   "type": "string",
+   "enum": [
+    "full_import",
+    "daily_update"
+   ]
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ]
+  },
+  "source": {
+   "type": "string",
+   "description": "Source URL fetched for this run."
+  },
+  "source_file": {
+   "type": "string",
+   "description": "e.g. l_gmrs.zip or l_gm_mon.zip."
+  },
+  "source_date": {
+   "type": "string",
+   "description": "The FCC file's own 'File Creation Date' from its counts file, used for idempotency: a daily_update run with a source_date already recorded as completed is skipped unless forced."
+  },
+  "dry_run": {
+   "type": "boolean",
+   "default": false
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "running",
+    "paused",
+    "completed",
+    "failed"
+   ],
+   "default": "running"
+  },
+  "cursor": {
+   "type": "string",
+   "description": "Resume position within the source file for a chunked full_import run. Empty/absent means the run is complete or hasn't started a chunk yet."
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "completed_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "records_scanned": {
+   "type": "number",
+   "default": 0
+  },
+  "records_created": {
+   "type": "number",
+   "default": 0
+  },
+  "records_updated": {
+   "type": "number",
+   "default": 0
+  },
+  "records_deactivated": {
+   "type": "number",
+   "default": 0
+  },
+  "malformed_records": {
+   "type": "number",
+   "default": 0
+  },
+  "skipped_records": {
+   "type": "number",
+   "default": 0
+  },
+  "duration_ms": {
+   "type": "number"
+  },
+  "errors": {
+   "type": "string",
+   "description": "Newline-joined error samples (capped), not every error -- for diagnosing a bad run, not exhaustive logging."
+  },
+  "error_count": {
+   "type": "number",
+   "default": 0
+  },
+  "triggered_by_name": {
+   "type": "string"
+  },
+  "notes": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "run_type"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

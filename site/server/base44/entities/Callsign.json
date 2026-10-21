@@ -1,0 +1,124 @@
+{
+ "name": "Callsign",
+ "type": "object",
+ "properties": {
+  "normalized_callsign": {
+   "type": "string",
+   "description": "Uppercase, trimmed, whitespace-free callsign used for uniqueness comparison."
+  },
+  "display_callsign": {
+   "type": "string",
+   "description": "Original callsign as entered by the primary account holder."
+  },
+  "primary_user_id": {
+   "type": "string",
+   "description": "User id of the primary callsign account holder. Exactly one per callsign."
+  },
+  "primary_user_name": {
+   "type": "string",
+   "description": "Display name of the primary account holder."
+  },
+  "verification_status": {
+   "type": "string",
+   "enum": [
+    "verified",
+    "pending"
+   ],
+   "default": "verified"
+  },
+  "verified_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "duplicate_flagged": {
+   "type": "boolean",
+   "default": false,
+   "description": "True when duplicate callsigns were detected among existing accounts during the scan."
+  },
+  "license_status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "expired",
+    "cancelled",
+    "suspended",
+    "pending",
+    "inactive"
+   ],
+   "default": "pending",
+   "description": "Current license status synced from the available licensing/callbook verification provider."
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ],
+   "description": "Which radio service this callsign is licensed under (GMRS or HAM/amateur), from the verification provider. Empty on older records, which are treated as GMRS."
+  },
+  "expiration_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "License expiration date from the verification provider, when available."
+  },
+  "licensee_name": {
+   "type": "string",
+   "description": "Licensee name from the FCC ULS record."
+  },
+  "frn": {
+   "type": "string",
+   "description": "FCC Registration Number from the ULS record."
+  },
+  "license_country": {
+   "type": "string",
+   "description": "Country associated with the verified amateur-radio or GMRS callsign."
+  },
+  "verification_source": {
+   "type": "string",
+   "description": "Provider used for the most recent callsign verification."
+  },
+  "verification_method": {
+   "type": "string",
+   "description": "Verification method used for the most recent callsign check."
+  },
+  "last_check_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the license status was last checked against the available verification providers."
+  },
+  "suspended": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, the callsign verification is administratively suspended."
+  },
+  "suspension_reason": {
+   "type": "string",
+   "description": "Reason recorded by the admin when suspending verification."
+  },
+  "suspended_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "suspended_by_user_id": {
+   "type": "string"
+  },
+  "suspended_by_name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this callsign record."
+  }
+ },
+ "required": [
+  "normalized_callsign",
+  "primary_user_id"
+ ],
+ "rls": {
+  "read": {},
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

@@ -1,0 +1,169 @@
+{
+ "name": "Repeater",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string"
+  },
+  "callsign": {
+   "type": "string"
+  },
+  "frequency": {
+   "type": "number"
+  },
+  "offset": {
+   "type": "number"
+  },
+  "tone": {
+   "type": "string",
+   "description": "Output (TX) tone \u2014 CTCSS Hz or DCS code prefixed with D."
+  },
+  "input_tone": {
+   "type": "string",
+   "description": "Input (RX) tone \u2014 CTCSS Hz or DCS code prefixed with D."
+  },
+  "mode": {
+   "type": "string",
+   "enum": [
+    "Analog",
+    "Digital",
+    "Mixed"
+   ],
+   "default": "Analog"
+  },
+  "access": {
+   "type": "string",
+   "enum": [
+    "Public",
+    "Closed"
+   ],
+   "default": "Public",
+   "description": "Public repeaters are open to all; Closed repeaters require the owner to grant access before tones are revealed."
+  },
+  "coverage_radius": {
+   "type": "number"
+  },
+  "lat": {
+   "type": "number"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "elevation": {
+   "type": "number"
+  },
+  "owner": {
+   "type": "string",
+   "description": "Callsign of the repeater operator. Matched against a joining member's callsign to link ownership."
+  },
+  "owner_user_id": {
+   "type": "string",
+   "description": "App user id of the linked owner, set automatically when a member with a matching callsign joins."
+  },
+  "linked_system": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Online",
+    "Offline",
+    "Maintenance"
+   ],
+   "default": "Online"
+  },
+  "verification": {
+   "type": "string",
+   "enum": [
+    "Verified",
+    "Pending",
+    "Needs Review",
+    "Rejected"
+   ],
+   "default": "Pending"
+  },
+  "hidden": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, the repeater is hidden from public maps and directories (incorrect/duplicate entries)."
+  },
+  "notes": {
+   "type": "string"
+  },
+  "rating": {
+   "type": "number",
+   "default": 0
+  },
+  "photo_url": {
+   "type": "string"
+  },
+  "tag_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "IDs of Tag records applied to this repeater for filtering and organization."
+  },
+  "category_id": {
+   "type": "string",
+   "description": "ID of the primary Category record for this repeater."
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ],
+   "default": "GMRS",
+   "description": "Radio service used by this repeater directory entry."
+  },
+  "discord_notified_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Timestamp when the community submission notification was posted to Discord."
+  }
+ },
+ "required": [
+  "name",
+  "callsign",
+  "frequency"
+ ],
+ "rls": {
+  "create": {
+   "user_condition": {
+    "role": "super_admin"
+   }
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.owner_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

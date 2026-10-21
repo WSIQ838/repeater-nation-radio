@@ -1,0 +1,55 @@
+{
+ "type": "object",
+ "properties": {
+  "members": {
+   "type": "number"
+  },
+  "pota_activations": {
+   "type": "number"
+  },
+  "clubs": {
+   "type": "number"
+  },
+  "qso_logs": {
+   "type": "number"
+  },
+  "gmrs_repeaters": {
+   "type": "number"
+  },
+  "ham_repeaters": {
+   "type": "number"
+  },
+  "nets": {
+   "type": "number"
+  },
+  "updated_at": {
+   "type": "string"
+  },
+  "stats_json": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string"
+  }
+ },
+ "rls": {
+  "read": null,
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ },
+ "required": [],
+ "name": "PublicSiteStats"
+}

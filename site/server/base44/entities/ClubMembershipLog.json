@@ -1,0 +1,68 @@
+{
+ "name": "ClubMembershipLog",
+ "type": "object",
+ "properties": {
+  "club_id": {
+   "type": "string"
+  },
+  "club_name": {
+   "type": "string"
+  },
+  "member_callsign": {
+   "type": "string"
+  },
+  "member_name": {
+   "type": "string"
+  },
+  "action": {
+   "type": "string",
+   "enum": [
+    "Joined",
+    "Left",
+    "Removed"
+   ],
+   "default": "Joined"
+  },
+  "reason": {
+   "type": "string",
+   "maxLength": 300,
+   "description": "Optional context, e.g. 'Paid via Stripe', 'Subscription ended', or who removed the member."
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner (Club.created_by_id). Stamped at creation so the owner can read this log via RLS."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this log entry."
+  }
+ },
+ "required": [
+  "club_id",
+  "member_callsign",
+  "action"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

@@ -1,0 +1,96 @@
+{
+ "name": "EquipmentRepair",
+ "type": "object",
+ "properties": {
+  "equipment_id": {
+   "type": "string"
+  },
+  "equipment_name": {
+   "type": "string"
+  },
+  "owner_id": {
+   "type": "string",
+   "description": "User id of the equipment owner. Denormalized for RLS."
+  },
+  "date_sent": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "reason": {
+   "type": "string"
+  },
+  "problem_description": {
+   "type": "string"
+  },
+  "shop_technician": {
+   "type": "string"
+  },
+  "repair_status": {
+   "type": "string",
+   "enum": [
+    "Awaiting Inspection",
+    "Diagnosing",
+    "Waiting for Parts",
+    "Being Repaired",
+    "Testing",
+    "Repair Complete",
+    "Returned to Service",
+    "Unable to Repair"
+   ],
+   "default": "Awaiting Inspection"
+  },
+  "estimated_cost": {
+   "type": "number"
+  },
+  "actual_cost": {
+   "type": "number"
+  },
+  "parts_used": {
+   "type": "string"
+  },
+  "work_performed": {
+   "type": "string"
+  },
+  "date_repair_started": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "date_repair_completed": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "technician_notes": {
+   "type": "string"
+  },
+  "return_to_service_date": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "equipment_id"
+ ],
+ "rls": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "delete": {
+   "data.owner_id": "{{user.id}}"
+  }
+ }
+}

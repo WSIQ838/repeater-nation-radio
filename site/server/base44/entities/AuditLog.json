@@ -1,0 +1,100 @@
+{
+ "name": "AuditLog",
+ "type": "object",
+ "properties": {
+  "admin_id": {
+   "type": "string",
+   "description": "User id of the administrator who performed the action."
+  },
+  "admin_name": {
+   "type": "string"
+  },
+  "action": {
+   "type": "string",
+   "description": "Machine action key, e.g. user.role_change, repeater.approve, report.resolve, settings.update."
+  },
+  "category": {
+   "type": "string",
+   "enum": [
+    "admin",
+    "user",
+    "repeater",
+    "report",
+    "settings",
+    "security",
+    "system",
+    "api"
+   ],
+   "default": "admin"
+  },
+  "target_type": {
+   "type": "string",
+   "description": "Entity type of the affected record, e.g. User, Repeater, AdminReport."
+  },
+  "target_id": {
+   "type": "string"
+  },
+  "target_label": {
+   "type": "string",
+   "description": "Human-readable label for the target (email, callsign, name)."
+  },
+  "before": {
+   "type": "string",
+   "description": "JSON snapshot of relevant fields before the change."
+  },
+  "after": {
+   "type": "string",
+   "description": "JSON snapshot of relevant fields after the change."
+  },
+  "ip": {
+   "type": "string"
+  },
+  "meta": {
+   "type": "string",
+   "description": "JSON extra context."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this audit entry."
+  }
+ },
+ "required": [
+  "admin_id",
+  "action"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "editor"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "support_staff"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

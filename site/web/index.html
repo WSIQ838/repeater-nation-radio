@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/branding/logo-badge-192.png?v=2" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/branding/logo-badge-32.png?v=2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ff8000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Repeater Nation" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="apple-touch-icon" href="/branding/logo-badge-180.png?v=2" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="https://repeaternation.com/functions/sitemap-generator" />
+    <title>Repeater Nation</title>
+    <meta name="description" content="Repeater Nation is a community-driven GMRS and HAM radio platform — find repeaters, log contacts, track equipment, join clubs, and connect with operators nationwide." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Repeater Nation" />
+    <meta property="og:title" content="Repeater Nation — GMRS & HAM Radio Community" />
+    <meta property="og:description" content="Community-driven GMRS and HAM radio platform for repeaters, logs, equipment, clubs, events, and operator tools." />
+    <meta property="og:url" content="https://repeaternation.com/" />
+    <meta property="og:image" content="https://repeaternation.com/branding/og-image.jpg?v=2" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Repeater Nation — Friends, Family, Community. Stay connected, stay prepared." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Repeater Nation — GMRS & HAM Radio Community" />
+    <meta name="twitter:description" content="Community-driven GMRS and HAM radio platform for repeaters, logs, equipment, clubs, events, and operator tools." />
+    <meta name="twitter:image" content="https://repeaternation.com/branding/og-image.jpg?v=2" />
+    <script>
+      // Dark by default; light only if picked with the theme toggle
+      // (src/lib/useTheme.js). Runs before first paint to avoid a flash.
+      (function () {
+        var light = false;
+        try { light = localStorage.getItem('rn-theme') === 'light'; } catch (e) {}
+        if (!light) document.documentElement.classList.add('dark');
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,95 @@
+{
+ "name": "RadioMonitorConfig",
+ "type": "object",
+ "properties": {
+  "slots": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Ordered list of up to 12 RadioChannel ids shown as embedded listen-only radios on the public /radio monitor page. An empty string in a slot means that slot is unassigned. Always exactly 12 entries once saved (padded/truncated by the admin UI)."
+  },
+  "status_light_idle_color": {
+   "type": "string",
+   "default": "#a1a1aa",
+   "description": "Monitor grid status-dot color while a tile is idle/listening (connected, no one transmitting)."
+  },
+  "status_light_connecting_color": {
+   "type": "string",
+   "default": "#f59e0b",
+   "description": "Monitor grid status-dot color while a tile is connecting or busy."
+  },
+  "status_light_receiving_color": {
+   "type": "string",
+   "default": "#22c55e",
+   "description": "Monitor grid status-dot color while a tile is actively receiving (someone is transmitting)."
+  },
+  "status_light_error_color": {
+   "type": "string",
+   "default": "#ef4444",
+   "description": "Monitor grid status-dot color when a tile's connection errors out."
+  },
+  "status_light_pulse": {
+   "type": "boolean",
+   "default": true,
+   "description": "Whether the status dot pulses while connecting or receiving, instead of staying solid."
+  },
+  "status_light_size": {
+   "type": "string",
+   "enum": [
+    "sm",
+    "md",
+    "lg"
+   ],
+   "default": "md",
+   "description": "Size of the status dot on each monitor grid tile."
+  }
+ },
+ "required": [],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

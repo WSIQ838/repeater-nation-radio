@@ -1,0 +1,79 @@
+{
+ "name": "RadioFloorState",
+ "type": "object",
+ "properties": {
+  "channel_id": {
+   "type": "string",
+   "description": "The RadioChannel this floor-control row belongs to."
+  },
+  "holder_user_id": {
+   "type": "string",
+   "description": "Base44 account holding the floor."
+  },
+  "holder_session_id": {
+   "type": "string",
+   "description": "Unique radio session identity holding the floor. Different browser/app sessions for the same account get different leases."
+  },
+  "holder_callsign": {
+   "type": "string"
+  },
+  "holder_display_name": {
+   "type": "string"
+  },
+  "since": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Last grant/renewal time. Rows older than radio-ptt's hold TTL are stale."
+  }
+ },
+ "required": [
+  "channel_id",
+  "holder_user_id",
+  "holder_session_id"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

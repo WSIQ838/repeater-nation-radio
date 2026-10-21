@@ -1,0 +1,217 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.emergency-map-icon { background: transparent !important; border: 0 !important; }
+.emergency-map-icon-inner { width: 18px; height: 18px; display: block; border-radius: 50%; background: var(--emergency-icon-color, #334155); border: 2px solid rgba(255,255,255,.98); box-shadow: 0 1px 5px rgba(15,23,42,.55), 0 0 0 1px rgba(15,23,42,.2); }
+.emergency-map-icon-inner svg { display: none; }
+.emergency-map-icon-location .emergency-map-icon-inner svg { display: block; width: 32px; height: 32px; fill: #2563eb; stroke: #fff; stroke-width: 2.75; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 1px 4px rgba(15,23,42,.8)); }
+.emergency-map-icon-location .emergency-map-icon-inner { width: 34px; height: 40px; display: grid; place-items: center; background: transparent; border: 0; box-shadow: none; }
+.emergency-map-icon-shelter { --emergency-icon-color: #16a34a; }
+.emergency-map-icon-repeater { --emergency-icon-color: #ea580c; }
+.emergency-map-icon-earthquake { --emergency-icon-color: #7c3aed; }
+.emergency-map-icon-location { --emergency-icon-color: #2563eb; }
+.emergency-map-icon-fire { --emergency-icon-color: #ef4444; }
+.emergency-map-icon-weather { --emergency-icon-color: #0f766e; }
+.emergency-map-icon-water { --emergency-icon-color: #0284c7; }
+.emergency-map-icon-evacuation { --emergency-icon-color: #dc2626; }
+.emergency-map-icon-airQuality { --emergency-icon-color: #64748b; }
+.emergency-map-icon-satellite { --emergency-icon-color: #f97316; }
+.emergency-satellite-hotspots { filter: brightness(1.35) saturate(2.4) contrast(1.45); mix-blend-mode: normal; }
+.emergency-map-legend { margin: 10px; z-index: 500; }
+.emergency-map-legend-dot { width: 10px; height: 10px; flex: 0 0 10px; display: block; border-radius: 50%; background: var(--emergency-icon-color, #334155); border: 1px solid #fff; box-shadow: 0 1px 3px rgba(15,23,42,.35); }
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --background: 0 0% 97%;
+    --foreground: 0 0% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 11%;
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 0 0% 15%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 24 100% 50%;
+    --success: 142 64% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --chart-1: 189 94% 43%;
+    --chart-2: 24 100% 50%;
+    --chart-3: 160 84% 39%;
+    --chart-4: 271 81% 56%;
+    --chart-5: 38 92% 50%;
+    --navy: 0 0% 11%;
+    --navy-light: 0 0% 18%;
+    --radius: 0.85rem;
+    --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 0 0% 78%;
+    --sidebar-primary: 24 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 16%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 24 100% 50%;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 92%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 92%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 92%;
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 92%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 92%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 24 100% 50%;
+    --success: 142 60% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 8%;
+    --chart-1: 189 94% 55%;
+    --chart-2: 24 100% 55%;
+    --chart-3: 160 84% 45%;
+    --chart-4: 271 81% 68%;
+    --chart-5: 38 92% 55%;
+    --navy: 0 0% 5%;
+    --navy-light: 0 0% 12%;
+    --sidebar-background: 0 0% 7%;
+    --sidebar-foreground: 0 0% 78%;
+    --sidebar-primary: 24 100% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 24 100% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@layer utilities {
+  /* Each page (and each fading-in panel) is its own layer, so z-indexes
+     inside it, like Leaflet's map panes (200-1000) or a map's floating
+     buttons, can't rise above pop-ups (dialogs, menus, selects at z-50).
+     The fade-in's leftover transform used to do this by accident; isolation
+     does it without trapping position:fixed children. */
+  .animate-fade-in { isolation: isolate; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+}
+
+/* A map keeps Leaflet's own z-indexes (tiles 200, markers 600, controls 1000)
+   to itself, wherever it's placed, so it never covers a pop-up card. */
+.leaflet-container { isolation: isolate; }
+
+/* User location marker on maps */
+.gmrs-loc-marker { background: transparent !important; border: none !important; }
+.gmrs-loc-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  position: relative;
+}
+.gmrs-loc-dot::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.4);
+  animation: gmrs-loc-pulse 2s ease-out infinite;
+}
+@keyframes rn-radio-icon-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+@keyframes rn-radio-icon-blink {
+  0%, 45%, 100% { opacity: 1; }
+  50%, 95% { opacity: .25; }
+}
+.rn-radio-icon-pulse { animation: pulse 1.6s ease-in-out infinite; }
+.rn-radio-icon-spin { animation: spin 1.4s linear infinite; }
+.rn-radio-icon-float { animation: rn-radio-icon-float 1.8s ease-in-out infinite; }
+.rn-radio-icon-blink { animation: rn-radio-icon-blink 1.2s steps(2, end) infinite; }
+
+@keyframes gmrs-loc-pulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+/* Admin "command center" shell -- always dark, subtle grid texture behind
+   content, and a faint top accent line + tighter border on every Card
+   rendered inside it, scoped so it never touches the rest of the site. */
+.admin-shell {
+  color-scheme: dark;
+}
+.admin-grid-bg {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%);
+}
+.admin-shell .rounded-xl.border.bg-card {
+  position: relative;
+  border-color: hsl(var(--border) / 0.9);
+  box-shadow: 0 10px 30px -20px rgba(0, 0, 0, 0.8);
+}
+.admin-shell .rounded-xl.border.bg-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.5), transparent);
+  pointer-events: none;
+}
+.admin-shell thead {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.admin-shell thead th {
+  font-size: 0.68rem;
+  font-weight: 600;
+}

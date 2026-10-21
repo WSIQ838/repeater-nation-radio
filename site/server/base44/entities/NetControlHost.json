@@ -1,0 +1,140 @@
+{
+ "name": "NetControlHost",
+ "type": "object",
+ "properties": {
+  "session_id": {
+   "type": "string",
+   "description": "The NetControlSession this host belongs to."
+  },
+  "user_id": {
+   "type": "string",
+   "description": "The app user ID of this co-host."
+  },
+  "user_name": {
+   "type": "string"
+  },
+  "user_callsign": {
+   "type": "string"
+  },
+  "permission_level": {
+   "type": "string",
+   "enum": [
+    "full",
+    "checkin",
+    "view"
+   ],
+   "default": "view",
+   "description": "full = all net control functions; checkin = check in/out + guests + notes; view = read only."
+  },
+  "is_primary": {
+   "type": "boolean",
+   "default": false,
+   "description": "True for the primary Net Control operator. Set when ownership is transferred."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "invited",
+    "accepted",
+    "declined",
+    "removed"
+   ],
+   "default": "invited"
+  },
+  "invited_by_id": {
+   "type": "string"
+  },
+  "invited_by_name": {
+   "type": "string"
+  },
+  "invited_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "accepted_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "session_owner_id": {
+   "type": "string",
+   "description": "User id of the session creator. Stamped for RLS so the primary can read host records."
+  }
+ },
+ "required": [
+  "session_id",
+  "user_id"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,132 @@
+{
+ "name": "PotaSyncRun",
+ "type": "object",
+ "properties": {
+  "started_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the synchronization run started."
+  },
+  "completed_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the synchronization run finished."
+  },
+  "source": {
+   "type": "string",
+   "description": "The data source URL or label used for the sync."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "running",
+    "completed",
+    "failed"
+   ],
+   "default": "running"
+  },
+  "dry_run": {
+   "type": "boolean",
+   "default": false,
+   "description": "Whether this was a dry run (no changes persisted)."
+  },
+  "parks_added": {
+   "type": "number",
+   "default": 0
+  },
+  "parks_updated": {
+   "type": "number",
+   "default": 0
+  },
+  "parks_unchanged": {
+   "type": "number",
+   "default": 0
+  },
+  "parks_removed": {
+   "type": "number",
+   "default": 0,
+   "description": "Parks flagged inactive because they were no longer present in the source."
+  },
+  "parks_total": {
+   "type": "number",
+   "default": 0,
+   "description": "Total parks processed from the source."
+  },
+  "errors": {
+   "type": "string",
+   "description": "Error messages and failed rows, truncated."
+  },
+  "error_count": {
+   "type": "number",
+   "default": 0
+  },
+  "triggered_by_name": {
+   "type": "string"
+  },
+  "duration_ms": {
+   "type": "number",
+   "default": 0
+  }
+ },
+ "required": [
+  "started_at"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

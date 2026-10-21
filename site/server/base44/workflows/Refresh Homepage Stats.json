@@ -1,0 +1,64 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6abfea7714ade7deef3fa74f",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Refresh Homepage Stats",
+ "name": "Refresh Homepage Stats",
+ "description": "Refreshes the public homepage community statistics cache every 10 minutes.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "0bab27f29af76241e05594b083349fbc0848615febdb673de78b51bbc2c4904a",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "scheduled",
+   "events": [],
+   "schedule_mode": "recurring",
+   "cron_expression": "*/10 * * * *",
+   "one_time_date": null,
+   "timezone": "UTC",
+   "interval_value": null,
+   "interval_unit": null,
+   "interval_anchor": null,
+   "ends_type": "never",
+   "ends_on_date": null,
+   "ends_after_count": null
+  },
+  "id": "79716ea2688a43af"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-20T23:10:51.158000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 2622,
+ "successful_runs": 2619,
+ "failed_runs": 3,
+ "created_date": "2026-10-02T17:31:35.246000Z",
+ "updated_date": "2026-10-20T23:10:51.158000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "refresh_homepage_stats",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "refresh": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "refresh-homepage-stats",
+      "args": {}
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Refresh homepage stats",
+      "description": "Recounts members, POTA activations, clubs, QSO logs, repeaters, and nets."
+     }
+    }
+   }
+  ]
+ }
+}

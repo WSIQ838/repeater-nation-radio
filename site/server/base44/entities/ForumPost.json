@@ -1,0 +1,128 @@
+{
+ "name": "ForumPost",
+ "type": "object",
+ "properties": {
+  "title": {
+   "type": "string"
+  },
+  "body": {
+   "type": "string"
+  },
+  "category": {
+   "type": "string",
+   "enum": [
+    "General",
+    "Technical",
+    "Equipment",
+    "Events",
+    "Swap",
+    "Off-Topic"
+   ],
+   "default": "General"
+  },
+  "author_name": {
+   "type": "string"
+  },
+  "author_callsign": {
+   "type": "string"
+  },
+  "replies_count": {
+   "type": "number",
+   "default": 0
+  },
+  "liked_by": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "User ids who upvoted this post."
+  },
+  "disliked_by": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "User ids who downvoted this post."
+  },
+  "image_urls": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Uploaded photo URLs attached to the post."
+  },
+  "mentions": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Callsigns of members tagged in the post."
+  },
+  "tag_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "IDs of Tag records applied to this forum post for filtering and organization."
+  }
+ },
+ "required": [
+  "title",
+  "body"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    }
+   ]
+  }
+ }
+}

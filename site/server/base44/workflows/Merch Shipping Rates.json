@@ -1,0 +1,64 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6aced529993a3de376fc8d5a",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Merch Shipping Rates",
+ "name": "Merch Shipping Rates",
+ "description": "Keeps Merch shipping charges matched to Printful's current US rates. Runs every 6 hours; each Printful product is re-quoted once its rates are 20 hours old, so every product updates about once a day. Products with shipping an admin typed in are left alone.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "47fe87301b92636f70066ff5704a7f56742828ce460be4c118ec7867da4dabcc",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "scheduled",
+   "events": [],
+   "schedule_mode": "recurring",
+   "cron_expression": "23 */6 * * *",
+   "one_time_date": null,
+   "timezone": "UTC",
+   "interval_value": null,
+   "interval_unit": null,
+   "interval_anchor": null,
+   "ends_type": "never",
+   "ends_on_date": null,
+   "ends_after_count": null
+  },
+  "id": "a8ef0e32cdce44f6"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-20T18:24:26.931000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 27,
+ "successful_runs": 27,
+ "failed_runs": 0,
+ "created_date": "2026-10-14T01:04:41.079000Z",
+ "updated_date": "2026-10-20T18:24:26.931000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "merch_shipping_rates",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "refresh_rates": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "merch-rates-refresh",
+      "args": {}
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Refresh shipping rates",
+      "description": "Pulls Printful's current US shipping for each size of every Printful product on automatic rates"
+     }
+    }
+   }
+  ]
+ }
+}

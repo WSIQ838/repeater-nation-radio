@@ -1,0 +1,78 @@
+{
+ "name": "Tag",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Normalized lowercase name used for uniqueness comparison."
+  },
+  "display_name": {
+   "type": "string",
+   "description": "Original-cased name as entered by the creator."
+  },
+  "color": {
+   "type": "string",
+   "default": "#f59e0b",
+   "description": "Hex accent color for the tag chip."
+  },
+  "enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Disabled tags cannot be selected on new records but remain on existing ones."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this tag."
+  }
+ },
+ "required": [
+  "name",
+  "display_name"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

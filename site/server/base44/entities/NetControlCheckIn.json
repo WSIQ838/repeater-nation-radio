@@ -1,0 +1,183 @@
+{
+ "name": "NetControlCheckIn",
+ "type": "object",
+ "properties": {
+  "session_id": {
+   "type": "string",
+   "description": "The NetControlSession this check-in belongs to."
+  },
+  "callsign": {
+   "type": "string"
+  },
+  "name": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  },
+  "lat": {
+   "type": "number",
+   "description": "Geocoded latitude for this check-in, looked up from the callsign. Used to plot the station on the live net map."
+  },
+  "lng": {
+   "type": "number",
+   "description": "Geocoded longitude for this check-in, looked up from the callsign. Used to plot the station on the live net map."
+  },
+  "signal_report": {
+   "type": "string",
+   "description": "Signal report given to this station (e.g. 5-9). Colors the station's pin on the live net map."
+  },
+  "station_type": {
+   "type": "string",
+   "description": "Base, mobile, portable, handheld, etc."
+  },
+  "club_role": {
+   "type": "string",
+   "description": "Snapshot of the member's club role at check-in time."
+  },
+  "membership_status": {
+   "type": "string"
+  },
+  "is_guest": {
+   "type": "boolean",
+   "default": false,
+   "description": "Guest stations are added during a live net and are not part of the underlying roster."
+  },
+  "checkin_type": {
+   "type": "string",
+   "enum": [
+    "standard",
+    "late",
+    "guest",
+    "mobile"
+   ],
+   "default": "standard",
+   "description": "The type of check-in. Club administrators configure which types count toward streaks."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "checked_in",
+    "checked_out",
+    "no_show"
+   ],
+   "default": "checked_in"
+  },
+  "assignment": {
+   "type": "string",
+   "description": "Emergency mode position assignment."
+  },
+  "check_in_time": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "check_out_time": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "notes": {
+   "type": "string",
+   "description": "Operator notes for this station during the net."
+  },
+  "session_owner_id": {
+   "type": "string",
+   "description": "User id of the net operator. Stamped at creation so the operator can manage check-ins via RLS."
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner when the net uses a club roster."
+  },
+  "checked_in_by_user_id": {
+   "type": "string",
+   "description": "User id of the operator who performed this check-in. Used for audit and attribution."
+  },
+  "checked_in_by_name": {
+   "type": "string",
+   "description": "Display name of the operator who performed this check-in."
+  },
+  "session_host_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Snapshot of all authorized host user ids at check-in time. Used for RLS read access by co-hosts."
+  }
+ },
+ "required": [
+  "session_id",
+  "callsign",
+  "check_in_time"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "data.session_host_ids": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.session_owner_id": "{{user.id}}"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

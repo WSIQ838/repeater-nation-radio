@@ -1,0 +1,71 @@
+{
+ "name": "EventType",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Event type name used by Event.type."
+  },
+  "color": {
+   "type": "string",
+   "description": "Tailwind class pair used for event badges/cards."
+  },
+  "enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Disabled event types cannot be selected for new events but remain on existing events."
+  },
+  "display_order": {
+   "type": "number",
+   "default": 0
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

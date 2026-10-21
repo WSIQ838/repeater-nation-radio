@@ -1,0 +1,64 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6ac42d83d98992258877f203",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "SOTA Summits Sync",
+ "name": "SOTA Summits Sync",
+ "description": "Monthly refresh of the SOTA summits directory from the official SOTA summits list. Does nothing (no network request) until an administrator sets the SOTA_SYNC_APPROVED secret to yes after the SOTA team approves automated access.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "441af6682b6910724451a8cfdb32735530e3b52b5df0eedcc0a1d472c971a1fb",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "scheduled",
+   "events": [],
+   "schedule_mode": "recurring",
+   "cron_expression": "17 7 3 * *",
+   "one_time_date": null,
+   "timezone": "UTC",
+   "interval_value": null,
+   "interval_unit": null,
+   "interval_anchor": null,
+   "ends_type": "never",
+   "ends_on_date": null,
+   "ends_after_count": null
+  },
+  "id": "8324171a27774ee0"
+ },
+ "app_type_context": null,
+ "last_run_at": null,
+ "last_run_status": null,
+ "consecutive_failures": 0,
+ "total_runs": 0,
+ "successful_runs": 0,
+ "failed_runs": 0,
+ "created_date": "2026-10-05T23:06:43.909000Z",
+ "updated_date": "2026-10-19T01:45:13.617000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "sota_summits_sync",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "run_sota_sync": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "sota-summits-sync",
+      "args": {}
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Sync SOTA summits",
+      "description": "Downloads the SOTA summits list (only when approved) and upserts it into SotaSummit"
+     }
+    }
+   }
+  ]
+ }
+}

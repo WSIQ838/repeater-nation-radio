@@ -1,0 +1,59 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6aa9c087e0a5f21d57af8f3d",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Evaluate Badges on Contact Log",
+ "name": "Evaluate Badges on Contact Log",
+ "description": "Automatically evaluates and awards badges when a user logs a QSO contact",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "072cede3cb99352fe4b085c20a2d5a98ddb60e6a0fd6f0fe8c02b0c0930ef775",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "entity",
+   "events": [
+    "create"
+   ],
+   "entity_name": "ContactLog"
+  },
+  "id": "37f7d44de92d40a2"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-17T16:04:04.213000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 102,
+ "successful_runs": 102,
+ "failed_runs": 0,
+ "created_date": "2026-09-15T22:02:47.261000Z",
+ "updated_date": "2026-10-19T01:45:14.269000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "evaluate_badges_contact",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "evaluate": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "evaluate-badges",
+      "args": {
+       "user_id": "${ .trigger.data.created_by_id }"
+      }
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Evaluate user badges",
+      "description": "Award any earned badges for this user"
+     }
+    }
+   }
+  ]
+ }
+}

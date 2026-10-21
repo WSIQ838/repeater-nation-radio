@@ -1,0 +1,132 @@
+{
+ "name": "MarketplaceListing",
+ "type": "object",
+ "properties": {
+  "title": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 5000
+  },
+  "listing_type": {
+   "type": "string",
+   "enum": [
+    "For Sale",
+    "Wanted",
+    "Trade",
+    "Free"
+   ],
+   "default": "For Sale"
+  },
+  "category": {
+   "type": "string",
+   "enum": [
+    "Radios",
+    "Antennas",
+    "Repeaters",
+    "Accessories",
+    "Parts",
+    "Cables",
+    "Power",
+    "Other"
+   ],
+   "default": "Other"
+  },
+  "condition": {
+   "type": "string",
+   "enum": [
+    "New",
+    "Like New",
+    "Good",
+    "Used",
+    "For Parts"
+   ],
+   "default": "Good"
+  },
+  "price": {
+   "type": "number"
+  },
+  "location": {
+   "type": "string"
+  },
+  "image_urls": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": []
+  },
+  "seller_name": {
+   "type": "string"
+  },
+  "seller_callsign": {
+   "type": "string"
+  },
+  "seller_user_id": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Active",
+    "Sold",
+    "Closed"
+   ],
+   "default": "Active"
+  },
+  "report_count": {
+   "type": "number",
+   "default": 0
+  },
+  "description_note": {
+   "type": "string",
+   "maxLength": 1000
+  }
+ },
+ "required": [
+  "title",
+  "description",
+  "listing_type"
+ ],
+ "rls": {
+  "read": null,
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

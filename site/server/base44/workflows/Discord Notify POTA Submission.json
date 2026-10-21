@@ -1,0 +1,59 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6aaa2cf7aeeb17bc04e89ad6",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Discord Notify POTA Submission",
+ "name": "Discord Notify POTA Submission",
+ "description": "Posts community POTA park submissions to Discord for moderation awareness.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "675b959b06129edebed9c529d230f6c25544b34c8a5bd0afe4516ba353007fb1",
+ "trigger": {
+  "condition": "${ .trigger.data.source == \"community\" }",
+  "config": {
+   "trigger_type": "entity",
+   "events": [
+    "create"
+   ],
+   "entity_name": "PotaPark"
+  },
+  "id": "06c7b08738024239"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-17T00:47:45.851000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 1,
+ "successful_runs": 1,
+ "failed_runs": 0,
+ "created_date": "2026-09-16T05:45:27.475000Z",
+ "updated_date": "2026-10-19T01:45:13.416000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "discord_notify_pota_submission",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "notify": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "discord-entity-notify",
+      "args": {
+       "type": "pota_submission",
+       "entity_id": "${ .trigger.entity_id }"
+      }
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Post POTA submission to Discord"
+     }
+    }
+   }
+  ]
+ }
+}

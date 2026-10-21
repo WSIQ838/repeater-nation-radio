@@ -1,0 +1,46 @@
+{
+ "name": "RadioIdentity",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string",
+   "description": "Base44 account permanently assigned this radio identity."
+  },
+  "normalized_callsign": {
+   "type": "string",
+   "description": "Normalized FCC callsign this radio identity belongs to."
+  },
+  "display_callsign": {
+   "type": "string",
+   "description": "Display callsign."
+  },
+  "radio_number": {
+   "type": "number",
+   "description": "Stable per-callsign radio number. Primary account is 1; additional accounts use 2, 3, etc."
+  },
+  "radio_callsign": {
+   "type": "string",
+   "description": "Stable radio identifier, for example 1-WSIQ838 or 2-WSIQ838."
+  },
+  "assigned_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "active": {
+   "type": "boolean",
+   "default": true
+  }
+ },
+ "required": [
+  "user_id",
+  "normalized_callsign",
+  "radio_number",
+  "radio_callsign"
+ ],
+ "rls": {
+  "read": {},
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

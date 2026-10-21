@@ -1,0 +1,131 @@
+{
+ "name": "Club",
+ "properties": {
+  "callsign": {
+   "type": "string"
+  },
+  "creator_callsign": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string"
+  },
+  "fee_period": {
+   "default": "One-time",
+   "enum": [
+    "One-time",
+    "Monthly",
+    "Annual"
+   ],
+   "type": "string"
+  },
+  "gamification_enabled": {
+   "default": true,
+   "description": "When enabled, net check-in streaks and achievements are tracked for this club.",
+   "type": "boolean"
+  },
+  "lat": {
+   "type": "number"
+  },
+  "leaderboard_enabled": {
+   "default": false,
+   "description": "When enabled, the net streak leaderboard is visible to club members.",
+   "type": "boolean"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "location": {
+   "type": "string"
+  },
+  "members_count": {
+   "default": 0,
+   "type": "number"
+  },
+  "membership_fee": {
+   "default": 0,
+   "type": "number"
+  },
+  "name": {
+   "type": "string"
+  },
+  "net_schedule": {
+   "default": "none",
+   "description": "The club's net cadence. Used to determine when a missed net resets a member's streak.",
+   "enum": [
+    "none",
+    "weekly",
+    "monthly"
+   ],
+   "type": "string"
+  },
+  "officers": {
+   "type": "string"
+  },
+  "photo_url": {
+   "type": "string"
+  },
+  "qualifying_checkin_types": {
+   "default": "[\"standard\",\"late\",\"guest\",\"mobile\"]",
+   "description": "JSON array of check-in types that count toward streaks: standard, late, guest, mobile. Defaults to all.",
+   "type": "string"
+  },
+  "radio_services": {
+   "default": [
+    "GMRS"
+   ],
+   "description": "Which radio service(s) this club is for. A club can be GMRS, HAM, or both.",
+   "items": {
+    "enum": [
+     "GMRS",
+     "HAM"
+    ],
+    "type": "string"
+   },
+   "type": "array"
+  },
+  "stripe_account_id": {
+   "description": "The club owner's connected Stripe account id (Express). Set by the onboarding function.",
+   "type": "string"
+  },
+  "stripe_charges_enabled": {
+   "default": false,
+   "description": "Whether the club's Stripe account is fully onboarded and can receive charges. Synced from Stripe via account.updated webhook.",
+   "type": "boolean"
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "type": "object",
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

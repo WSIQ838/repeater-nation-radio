@@ -1,0 +1,130 @@
+{
+ "name": "SotaSyncRun",
+ "type": "object",
+ "properties": {
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "completed_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "running",
+    "completed",
+    "failed"
+   ],
+   "default": "running"
+  },
+  "trigger": {
+   "type": "string",
+   "enum": [
+    "scheduled",
+    "manual"
+   ],
+   "description": "scheduled = monthly workflow, manual = an admin pressed Run now."
+  },
+  "source": {
+   "type": "string",
+   "description": "URL the summits list was downloaded from."
+  },
+  "prefixes": {
+   "type": "string",
+   "description": "Reference prefixes imported, e.g. W."
+  },
+  "dry_run": {
+   "type": "boolean",
+   "default": false
+  },
+  "summits_total": {
+   "type": "number",
+   "default": 0
+  },
+  "summits_added": {
+   "type": "number",
+   "default": 0
+  },
+  "summits_updated": {
+   "type": "number",
+   "default": 0
+  },
+  "summits_unchanged": {
+   "type": "number",
+   "default": 0
+  },
+  "error": {
+   "type": "string"
+  },
+  "duration_ms": {
+   "type": "number",
+   "default": 0
+  },
+  "triggered_by_name": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "started_at"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

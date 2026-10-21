@@ -1,0 +1,103 @@
+{
+ "name": "EquipmentSubmission",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string"
+  },
+  "manufacturer": {
+   "type": "string"
+  },
+  "model": {
+   "type": "string"
+  },
+  "category": {
+   "type": "string"
+  },
+  "service_type": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM",
+    "Both"
+   ],
+   "default": "Both"
+  },
+  "price": {
+   "type": "number"
+  },
+  "store": {
+   "type": "string"
+  },
+  "product_url": {
+   "type": "string"
+  },
+  "image_url": {
+   "type": "string"
+  },
+  "reason": {
+   "type": "string",
+   "maxLength": 2000
+  },
+  "submitted_by_name": {
+   "type": "string"
+  },
+  "submitted_by_callsign": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Pending",
+    "Under Review",
+    "Approved",
+    "Rejected"
+   ],
+   "default": "Pending"
+  },
+  "votes": {
+   "type": "number",
+   "default": 0
+  },
+  "admin_notes": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,74 @@
+{
+ "name": "RepeaterPhoto",
+ "type": "object",
+ "properties": {
+  "repeater_id": {
+   "type": "string"
+  },
+  "repeater_name": {
+   "type": "string"
+  },
+  "photo_url": {
+   "type": "string"
+  },
+  "caption": {
+   "type": "string",
+   "maxLength": 500
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Pending",
+    "Approved",
+    "Rejected"
+   ],
+   "default": "Pending"
+  },
+  "submitted_by_id": {
+   "type": "string"
+  },
+  "submitted_by_callsign": {
+   "type": "string"
+  },
+  "approved_by_id": {
+   "type": "string"
+  },
+  "approved_date": {
+   "type": "date-time"
+  }
+ },
+ "required": [
+  "repeater_id",
+  "photo_url"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": null,
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

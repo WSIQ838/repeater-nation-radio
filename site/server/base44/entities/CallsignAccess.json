@@ -1,0 +1,94 @@
+{
+ "name": "CallsignAccess",
+ "type": "object",
+ "properties": {
+  "callsign_id": {
+   "type": "string",
+   "description": "The Callsign record this access belongs to."
+  },
+  "normalized_callsign": {
+   "type": "string",
+   "description": "Snapshot of the normalized callsign for lookups."
+  },
+  "display_callsign": {
+   "type": "string"
+  },
+  "user_id": {
+   "type": "string",
+   "description": "The user granted access to use this callsign."
+  },
+  "user_name": {
+   "type": "string"
+  },
+  "primary_user_id": {
+   "type": "string",
+   "description": "User id of the callsign's primary account. Denormalized for RLS."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "approved",
+    "revoked"
+   ],
+   "default": "approved"
+  },
+  "approved_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "approved_by_user_id": {
+   "type": "string"
+  },
+  "approved_by_name": {
+   "type": "string"
+  },
+  "revoked_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "revoked_by_user_id": {
+   "type": "string"
+  },
+  "revoked_by_name": {
+   "type": "string"
+  },
+  "revoke_reason": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this callsign access grant."
+  }
+ },
+ "required": [
+  "callsign_id",
+  "user_id",
+  "status"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

@@ -1,0 +1,67 @@
+{
+ "name": "EquipmentReservation",
+ "type": "object",
+ "properties": {
+  "equipment_id": {
+   "type": "string"
+  },
+  "equipment_name": {
+   "type": "string"
+  },
+  "owner_id": {
+   "type": "string",
+   "description": "User id of the equipment owner. Denormalized for RLS."
+  },
+  "start_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "end_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "purpose": {
+   "type": "string"
+  },
+  "notes": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "cancelled",
+    "completed"
+   ],
+   "default": "active"
+  }
+ },
+ "required": [
+  "equipment_id",
+  "start_date",
+  "end_date"
+ ],
+ "rls": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "delete": {
+   "data.owner_id": "{{user.id}}"
+  }
+ }
+}

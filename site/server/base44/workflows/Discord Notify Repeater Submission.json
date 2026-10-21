@@ -1,0 +1,59 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6aaa2cf7aeeb17bc04e89ad8",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Discord Notify Repeater Submission",
+ "name": "Discord Notify Repeater Submission",
+ "description": "Posts new user-submitted repeaters to Discord (skips bulk imports).",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "f183e46f026a739e58655b6269f68c0a48b76ab71093eefd10361d1986495894",
+ "trigger": {
+  "condition": "${ .trigger.data.created_by_id != null and .trigger.data.created_by_id != \"\" }",
+  "config": {
+   "trigger_type": "entity",
+   "events": [
+    "create"
+   ],
+   "entity_name": "Repeater"
+  },
+  "id": "192aea02da69407d"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-19T01:17:23.202000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 269,
+ "successful_runs": 269,
+ "failed_runs": 0,
+ "created_date": "2026-09-16T05:45:27.540000Z",
+ "updated_date": "2026-10-19T01:45:13.490000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "discord_notify_repeater_submission",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "notify": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "discord-entity-notify",
+      "args": {
+       "type": "repeater_submission",
+       "entity_id": "${ .trigger.entity_id }"
+      }
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Post repeater submission to Discord"
+     }
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,355 @@
+{
+ "properties": {
+  "role": {
+   "type": "string",
+   "description": "The role of the user in the app",
+   "enum": [
+    "super_admin",
+    "admin",
+    "moderator",
+    "editor",
+    "support_staff",
+    "member",
+    "user"
+   ],
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "callsign": {
+   "type": "string",
+   "description": "GMRS callsign (validated at registration).",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "callsign_verified": {
+   "type": "boolean",
+   "default": false,
+   "description": "Whether the user has a verified, active GMRS callsign. Enforced by RLS on protected entities and by the requireVerifiedCallsign backend guard. Admins bypass this check.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "license_status": {
+   "type": "string",
+   "enum": [
+    "Active",
+    "Pending",
+    "Expired",
+    "Cancelled",
+    "Suspended",
+    "None"
+   ],
+   "default": "Pending",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "license_number": {
+   "type": "string",
+   "description": "FCC FRN (or equivalent) for the member's verified callsign.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "license_expiry": {
+   "type": "string",
+   "format": "date-time",
+   "description": "FCC license expiration date from the ULS lookup. Used by the dashboard to show a renewal warning banner when expiry approaches.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "license_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ],
+   "description": "Which radio service the member's verified primary callsign belongs to: GMRS or HAM (amateur radio). Empty on older accounts, which are treated as GMRS.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "license_country": {
+   "type": "string",
+   "description": "Country associated with the verified amateur-radio or GMRS callsign.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "verification_source": {
+   "type": "string",
+   "description": "Provider used for the most recent callsign verification, such as FCC/OpenCallbook, HamDB, or HamQTH.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "verification_method": {
+   "type": "string",
+   "description": "Verification method used for the most recent callsign check, such as official_fcc or international_callbook.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "last_callsign_check": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the callsign verification status was last checked against the available license/callbook verification providers.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "account_status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "callsign_restricted",
+    "suspended",
+    "investigation",
+    "deleted"
+   ],
+   "default": "active",
+   "description": "Administrative account status. Callsign-restricted accounts may access only their profile and callsign management until they add or verify a valid GMRS callsign. Suspended accounts are denied access app-wide. Investigation accounts are flagged for admin review and blocked from protected actions. Deleted accounts have had all user data removed and are deactivated.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "last_active": {
+   "type": "string",
+   "format": "date-time",
+   "description": "ISO timestamp of the user's last activity, updated via a heartbeat while the user is online. Used for online/offline presence."
+  },
+  "show_online_status": {
+   "type": "boolean",
+   "default": true,
+   "description": "Whether the user's online/last-active status is visible to other members. Admins can always see it for moderation."
+  },
+  "email_notifications": {
+   "type": "boolean",
+   "default": true,
+   "description": "Master switch for all email notifications. Turn off to stop every email."
+  },
+  "email_announcements": {
+   "type": "boolean",
+   "default": true,
+   "description": "Receive admin broadcasts and site-wide announcements by email."
+  },
+  "email_forum_replies": {
+   "type": "boolean",
+   "default": true,
+   "description": "Receive an email when someone replies to your forum post."
+  },
+  "email_messages": {
+   "type": "boolean",
+   "default": true,
+   "description": "Receive an email when another member sends you a direct message."
+  },
+  "email_access_requests": {
+   "type": "boolean",
+   "default": true,
+   "description": "Receive an email when a member requests access to your closed repeater."
+  },
+  "sound_notifications": {
+   "type": "boolean",
+   "default": true,
+   "description": "Play a sound chime in-app for new notifications and messages while the app is open."
+  },
+  "permissions": {
+   "type": "string",
+   "description": "JSON object of effective permission keys to booleans. Computed from the user's role permissions plus individual overrides. Updated automatically when role permissions or overrides change.",
+   "rls": {
+    "write": {
+     "$or": [
+      {
+       "user_condition": {
+        "role": "admin"
+       }
+      },
+      {
+       "user_condition": {
+        "role": "super_admin"
+       }
+      }
+     ]
+    }
+   }
+  },
+  "dev_api_agreed": {
+   "type": "boolean",
+   "default": false,
+   "description": "Whether this account has agreed to the Developer API Terms. Required, and checked server-side, before any API key can be created -- see api-key-manage's create action."
+  },
+  "dev_api_agreed_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the account agreed to the Developer API Terms."
+  },
+  "dev_api_agreed_version": {
+   "type": "string",
+   "description": "Which version of the Developer API Terms was agreed to (see DEV_API_TERMS_VERSION), for re-prompting if the terms change materially."
+  }
+ },
+ "required": [
+  "role"
+ ],
+ "name": "User",
+ "type": "object"
+}

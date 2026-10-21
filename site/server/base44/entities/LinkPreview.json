@@ -1,0 +1,95 @@
+{
+ "name": "LinkPreview",
+ "type": "object",
+ "description": "Cached title/description/picture of web pages linked in posts and messages, for preview cards. Written only by the link-preview function.",
+ "properties": {
+  "url": {
+   "type": "string",
+   "description": "The link as posted (normalized)."
+  },
+  "ok": {
+   "type": "boolean",
+   "description": "False when the page couldn't be previewed (cached so it isn't refetched constantly)."
+  },
+  "final_url": {
+   "type": "string"
+  },
+  "title": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string"
+  },
+  "image": {
+   "type": "string"
+  },
+  "site_name": {
+   "type": "string"
+  },
+  "fetched_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "url"
+ ],
+ "rls": {
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,104 @@
+{
+ "name": "NetStreak",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string",
+   "description": "The user this streak belongs to."
+  },
+  "user_name": {
+   "type": "string"
+  },
+  "user_callsign": {
+   "type": "string"
+  },
+  "club_id": {
+   "type": "string",
+   "description": "The club this streak is for. Each club has its own independent streak per member."
+  },
+  "club_name": {
+   "type": "string"
+  },
+  "current_streak": {
+   "type": "number",
+   "default": 0,
+   "description": "Current consecutive net check-in streak for this club. Resets when a qualifying net is missed."
+  },
+  "longest_streak": {
+   "type": "number",
+   "default": 0,
+   "description": "Highest streak ever achieved for this club. Permanently recorded even after the current streak resets."
+  },
+  "total_checkins": {
+   "type": "number",
+   "default": 0,
+   "description": "Total qualifying check-ins for this club."
+  },
+  "total_nets_attended": {
+   "type": "number",
+   "default": 0,
+   "description": "Total net sessions attended for this club."
+  },
+  "last_checkin_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "first_checkin_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "last_session_id": {
+   "type": "string",
+   "description": "The NetControlSession ID of the last check-in. Prevents duplicate check-ins from inflating the streak."
+  }
+ },
+ "required": [
+  "user_id",
+  "club_id"
+ ],
+ "rls": {
+  "read": null,
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

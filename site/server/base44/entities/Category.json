@@ -1,0 +1,86 @@
+{
+ "name": "Category",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Normalized lowercase name used for uniqueness comparison."
+  },
+  "display_name": {
+   "type": "string",
+   "description": "Original-cased name as entered by the creator."
+  },
+  "description": {
+   "type": "string",
+   "description": "Optional description shown in admin and selector."
+  },
+  "icon": {
+   "type": "string",
+   "description": "Lucide-react icon name for the category."
+  },
+  "color": {
+   "type": "string",
+   "default": "#3b82f6",
+   "description": "Hex accent color for the category badge."
+  },
+  "enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Disabled categories cannot be selected on new records."
+  },
+  "display_order": {
+   "type": "number",
+   "default": 0,
+   "description": "Lower numbers appear first in selectors and lists."
+  }
+ },
+ "required": [
+  "name",
+  "display_name"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,211 @@
+{
+ "name": "PotaActivation",
+ "type": "object",
+ "properties": {
+  "event_id": {
+   "type": "string",
+   "description": "Linked public Events page record for this activation, when one is published."
+  },
+  "park_id": {
+   "type": "string",
+   "description": "The PotaPark this activation takes place at."
+  },
+  "park_name": {
+   "type": "string",
+   "description": "Snapshot of the park name."
+  },
+  "park_number": {
+   "type": "string",
+   "description": "Snapshot of the POTA park reference number."
+  },
+  "park_location": {
+   "type": "string",
+   "description": "Snapshot of the park location (city, state)."
+  },
+  "lat": {
+   "type": "number",
+   "description": "Activation coordinates (park location)."
+  },
+  "lng": {
+   "type": "number"
+  },
+  "scheduled_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the activation is scheduled to begin."
+  },
+  "end_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Optional planned end time."
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ],
+   "default": "GMRS"
+  },
+  "band": {
+   "type": "string",
+   "description": "HAM band identifier when radio_service is HAM."
+  },
+  "frequency": {
+   "type": "number",
+   "description": "Current operating frequency in MHz."
+  },
+  "activation_log": {
+   "type": "string",
+   "description": "JSON array of operational events recorded during the activation, including frequency changes."
+  },
+  "channel": {
+   "type": "string",
+   "description": "GMRS channel number or label."
+  },
+  "mode": {
+   "type": "string",
+   "enum": [
+    "Simplex",
+    "Repeater"
+   ],
+   "default": "Simplex"
+  },
+  "repeater_id": {
+   "type": "string",
+   "description": "Linked repeater when mode is Repeater."
+  },
+  "notes": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "Upcoming",
+    "Active",
+    "Completed",
+    "Cancelled"
+   ],
+   "default": "Upcoming"
+  },
+  "club_id": {
+   "type": "string",
+   "description": "Associated club for club activations (blank = personal activation)."
+  },
+  "club_name": {
+   "type": "string"
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner. Stamped for RLS so the club owner can view club activations."
+  },
+  "operator_name": {
+   "type": "string",
+   "description": "Display name of the activation creator."
+  },
+  "operator_callsign": {
+   "type": "string"
+  },
+  "co_host_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "User ids of additional operators / co-hosts participating in the activation."
+  },
+  "co_host_names": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": []
+  },
+  "is_public": {
+   "type": "boolean",
+   "default": true,
+   "description": "Public activations are visible to all users. Private activations are only visible to the operator and co-hosts."
+  },
+  "contacts_count": {
+   "type": "number",
+   "default": 0,
+   "description": "Total contacts logged during this activation."
+  },
+  "roster_members": {
+   "type": "string",
+   "description": "JSON array of expected operators (callsign, name, location) planned for this activation."
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "ended_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "park_id",
+  "park_name",
+  "scheduled_date"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.is_public": true
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.co_host_ids": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.co_host_ids": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

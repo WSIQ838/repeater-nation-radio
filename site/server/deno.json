@@ -1,0 +1,28 @@
+{
+  "tasks": {
+    "start": "deno run --allow-all --unstable-sloppy-imports src/main.ts",
+    "dev": "deno run --allow-all --watch --unstable-sloppy-imports src/main.ts",
+    "import": "deno run --allow-all src/cli/import.ts",
+    "test": "deno test --allow-all src/"
+  },
+  "nodeModulesDir": "none",
+  "imports": {
+    "postgres": "npm:postgres@3.4.5",
+    "nodemailer": "npm:nodemailer@6.9.16",
+    "jose": "npm:jose@5.9.6",
+    "fflate": "npm:fflate@0.8.2",
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/path": "jsr:@std/path@1",
+    "@std/http": "jsr:@std/http@1/file-server",
+    "base44:runtime": "./src/runtime/index.ts",
+    "base44:runtime/actors": "./src/runtime/actors.ts",
+    "npm:@base44/sdk": "./src/sdk/server.ts",
+    "npm:@base44/sdk@0.8.31": "./src/sdk/server.ts",
+    "npm:@base44/sdk@0.8.40": "./src/sdk/server.ts",
+    "npm:@base44/sdk@0.8.44": "./src/sdk/server.ts",
+    "npm:@base44/sdk@0.8.48": "./src/sdk/server.ts",
+    "npm:@base44/sdk@0.8.51": "./src/sdk/server.ts",
+    "npm:@base44/sdk@0.8.52": "./src/sdk/server.ts"
+  },
+  "compilerOptions": { "strict": false }
+}

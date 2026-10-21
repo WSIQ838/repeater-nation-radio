@@ -1,0 +1,270 @@
+{
+ "name": "MerchOrder",
+ "type": "object",
+ "description": "A merch store order. Created by merch-checkout before payment (pending_payment), marked paid by stripe-webhook, then sent to Printful (or shipped by hand for manual items). Only backend functions write orders.",
+ "properties": {
+  "order_number": {
+   "type": "string",
+   "description": "Short code shown to buyers, e.g. RN-4F2A9C."
+  },
+  "user_id": {
+   "type": "string",
+   "description": "Buyer's account, when they were signed in."
+  },
+  "email": {
+   "type": "string"
+  },
+  "name": {
+   "type": "string"
+  },
+  "phone": {
+   "type": "string"
+  },
+  "items": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "product_id": {
+      "type": "string"
+     },
+     "product_name": {
+      "type": "string"
+     },
+     "variant_key": {
+      "type": "string"
+     },
+     "variant_label": {
+      "type": "string"
+     },
+     "quantity": {
+      "type": "integer"
+     },
+     "unit_price": {
+      "type": "number"
+     },
+     "image_url": {
+      "type": "string"
+     },
+     "source": {
+      "type": "string",
+      "enum": [
+       "printful",
+       "manual"
+      ]
+     },
+     "printful_sync_variant_id": {
+      "type": "integer"
+     }
+    }
+   }
+  },
+  "subtotal": {
+   "type": "number"
+  },
+  "discount": {
+   "type": "number",
+   "default": 0
+  },
+  "shipping": {
+   "type": "number",
+   "default": 0
+  },
+  "tax": {
+   "type": "number",
+   "default": 0
+  },
+  "total": {
+   "type": "number"
+  },
+  "currency": {
+   "type": "string",
+   "default": "USD"
+  },
+  "member_discount_percent": {
+   "type": "number",
+   "default": 0
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "pending_payment",
+    "paid",
+    "submitted",
+    "in_production",
+    "on_hold",
+    "partially_shipped",
+    "shipped",
+    "canceled",
+    "refunded",
+    "failed",
+    "needs_attention",
+    "abandoned"
+   ],
+   "default": "pending_payment"
+  },
+  "has_manual_items": {
+   "type": "boolean",
+   "default": false
+  },
+  "has_printful_items": {
+   "type": "boolean",
+   "default": false
+  },
+  "stripe_session_id": {
+   "type": "string"
+  },
+  "stripe_payment_intent_id": {
+   "type": "string"
+  },
+  "printful_order_id": {
+   "type": "integer"
+  },
+  "printful_status": {
+   "type": "string"
+  },
+  "shipping_address": {
+   "type": "object",
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "line1": {
+     "type": "string"
+    },
+    "line2": {
+     "type": "string"
+    },
+    "city": {
+     "type": "string"
+    },
+    "state": {
+     "type": "string"
+    },
+    "postal_code": {
+     "type": "string"
+    },
+    "country": {
+     "type": "string"
+    }
+   }
+  },
+  "shipments": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "carrier": {
+      "type": "string"
+     },
+     "service": {
+      "type": "string"
+     },
+     "tracking_number": {
+      "type": "string"
+     },
+     "tracking_url": {
+      "type": "string"
+     },
+     "shipped_at": {
+      "type": "string"
+     },
+     "note": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "error": {
+   "type": "string",
+   "description": "Last fulfillment problem, shown to admins."
+  },
+  "admin_notes": {
+   "type": "string"
+  },
+  "paid_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "submitted_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "shipped_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "shipped_email_sent": {
+   "type": "boolean",
+   "default": false
+  },
+  "confirmation_email_sent": {
+   "type": "boolean",
+   "default": false
+  }
+ },
+ "required": [
+  "status"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,216 @@
+{
+ "name": "PotaPark",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Official park name."
+  },
+  "park_number": {
+   "type": "string",
+   "description": "Official POTA park reference number (e.g. US-4157)."
+  },
+  "park_type": {
+   "type": "string",
+   "enum": [
+    "State Park",
+    "National Park",
+    "National Forest",
+    "Wildlife Area",
+    "Recreation Area",
+    "Historic Site",
+    "State Forest",
+    "Nature Preserve",
+    "National Historic Site",
+    "National Monument",
+    "National Recreation Area",
+    "National Wildlife Refuge",
+    "State Recreation Area",
+    "State Historic Site",
+    "State Nature Area",
+    "Other"
+   ],
+   "default": "Other"
+  },
+  "location": {
+   "type": "string",
+   "description": "General location description."
+  },
+  "city": {
+   "type": "string"
+  },
+  "state": {
+   "type": "string"
+  },
+  "county": {
+   "type": "string",
+   "description": "County where the park is located."
+  },
+  "address": {
+   "type": "string",
+   "description": "Street or area address for the park."
+  },
+  "lat": {
+   "type": "number"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "description": {
+   "type": "string"
+  },
+  "website": {
+   "type": "string",
+   "description": "Official park website URL."
+  },
+  "pota_url": {
+   "type": "string",
+   "description": "POTA program reference URL (e.g. https://pota.app/#/park/US-4157)."
+  },
+  "supporting_info": {
+   "type": "string",
+   "description": "Additional supporting information supplied with a community submission."
+  },
+  "photo_urls": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Optional photos attached to the park (community submissions or admin uploads)."
+  },
+  "search_keywords": {
+   "type": "string",
+   "description": "Concatenated searchable text (name, reference, location, keywords) used for park search."
+  },
+  "source": {
+   "type": "string",
+   "enum": [
+    "official",
+    "community"
+   ],
+   "default": "official",
+   "description": "official = synced from the official POTA database. community = submitted by a Repeater Nation user and awaiting or approved by moderation."
+  },
+  "verification_status": {
+   "type": "string",
+   "enum": [
+    "approved",
+    "pending",
+    "under_review",
+    "rejected"
+   ],
+   "default": "approved",
+   "description": "Moderation status. Only approved parks are visible publicly. Community submissions start as pending."
+  },
+  "pota_status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "inactive"
+   ],
+   "default": "active",
+   "description": "Whether the park is still active in the official POTA program. Parks no longer present in a sync are flagged inactive but retained to preserve activation history."
+  },
+  "review_notes": {
+   "type": "string",
+   "description": "Admin notes recorded during review of a community submission."
+  },
+  "submitted_by_name": {
+   "type": "string",
+   "description": "Display name of the user who submitted this community park."
+  },
+  "submitted_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the community submission was created."
+  },
+  "last_synced_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When this park was last touched by a database synchronization run."
+  },
+  "activation_count": {
+   "type": "number",
+   "default": 0,
+   "description": "Cached count of POTA activations recorded at this park."
+  },
+  "last_activation_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Date of the most recent activation at this park."
+  },
+  "favorites_count": {
+   "type": "number",
+   "default": 0,
+   "description": "Number of users who favorited this park."
+  },
+  "discord_notified_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "Timestamp when the community submission notification was posted to Discord."
+  }
+ },
+ "required": [
+  "name",
+  "park_number"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.verification_status": "approved"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "user_condition": {
+    "role": "super_admin"
+   }
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

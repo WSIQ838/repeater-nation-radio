@@ -1,0 +1,91 @@
+{
+ "name": "ApiKey",
+ "type": "object",
+ "properties": {
+  "owner_user_id": {
+   "type": "string",
+   "description": "App user id of the developer who owns this key."
+  },
+  "owner_callsign": {
+   "type": "string",
+   "description": "Snapshot of the owner's callsign, for admin display without joining Users."
+  },
+  "owner_name": {
+   "type": "string",
+   "description": "Snapshot of the owner's display name/email, for admin display."
+  },
+  "label": {
+   "type": "string",
+   "description": "Developer-supplied name, e.g. 'My weather dashboard'."
+  },
+  "key_prefix": {
+   "type": "string",
+   "description": "First ~12 characters of the raw key (e.g. rn_live_a1b2c3d4), plaintext, shown in lists so the owner can tell keys apart."
+  },
+  "key_hash": {
+   "type": "string",
+   "description": "SHA-256(pepper + raw key), hex. The raw key itself is never stored anywhere."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "revoked"
+   ],
+   "default": "active"
+  },
+  "scopes": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [
+    "read:public"
+   ],
+   "description": "Reserved for future per-resource scoping; v1 keys always carry the single read:public scope."
+  },
+  "rate_limit_tier": {
+   "type": "string",
+   "enum": [
+    "standard",
+    "elevated"
+   ],
+   "default": "standard"
+  },
+  "last_used_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "last_used_ip": {
+   "type": "string"
+  },
+  "total_requests": {
+   "type": "number",
+   "default": 0,
+   "description": "Approximate lifetime request count; updated on a throttled cadence, not per-request."
+  },
+  "revoked_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "revoked_by": {
+   "type": "string",
+   "description": "'self' or the admin user id who revoked it."
+  },
+  "revoked_reason": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "owner_user_id",
+  "label",
+  "key_prefix",
+  "key_hash"
+ ],
+ "rls": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

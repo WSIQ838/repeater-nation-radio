@@ -1,0 +1,72 @@
+{
+ "name": "ChangeLog",
+ "type": "object",
+ "properties": {
+  "version": {
+   "type": "string",
+   "description": "Optional version label or title for the release (e.g. v1.4.2)."
+  },
+  "notes": {
+   "type": "string",
+   "description": "What changed in this release."
+  },
+  "sent": {
+   "type": "boolean",
+   "default": false,
+   "description": "Whether this entry has been posted to Discord on a publish."
+  },
+  "sent_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the entry was posted to Discord."
+  }
+ },
+ "required": [
+  "notes"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

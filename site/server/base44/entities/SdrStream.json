@@ -1,0 +1,139 @@
+{
+ "name": "SdrStream",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Display name for this SDR receiver/stream."
+  },
+  "stream_url": {
+   "type": "string",
+   "description": "URL to open or listen to the stream."
+  },
+  "description": {
+   "type": "string",
+   "description": "What this receiver covers, antenna setup, usage notes, etc."
+  },
+  "location": {
+   "type": "string",
+   "description": "General location description."
+  },
+  "city": {
+   "type": "string"
+  },
+  "state": {
+   "type": "string"
+  },
+  "lat": {
+   "type": "number"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "frequency_info": {
+   "type": "string",
+   "description": "Frequency range or bands covered, e.g. \"0-30 MHz HF\" or \"144-148 MHz (2m)\"."
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM",
+    "Both",
+    "Other"
+   ],
+   "default": "Other"
+  },
+  "verification_status": {
+   "type": "string",
+   "enum": [
+    "approved",
+    "pending",
+    "rejected"
+   ],
+   "default": "pending",
+   "description": "Moderation status. Only approved streams are visible publicly. Submissions start as pending."
+  },
+  "review_notes": {
+   "type": "string",
+   "description": "Admin notes recorded during review of a submission."
+  },
+  "submitted_by_name": {
+   "type": "string",
+   "description": "Display name of the user who submitted this stream."
+  },
+  "submitted_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the submission was created."
+  },
+  "source_name": {
+   "type": "string",
+   "description": "Set when this record was imported from an external directory (e.g. \"rx-tx.info\") rather than submitted by a member. Drives an attribution link on the public listing."
+  },
+  "source_url": {
+   "type": "string",
+   "description": "Link back to the external directory this record was imported from, shown alongside source_name."
+  }
+ },
+ "required": [
+  "name",
+  "stream_url"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.verification_status": "approved"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

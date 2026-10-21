@@ -1,0 +1,170 @@
+{
+ "name": "SeoSetting",
+ "type": "object",
+ "properties": {
+  "site_title": {
+   "type": "string",
+   "description": "Global site title used as the default SEO title across public pages."
+  },
+  "site_description": {
+   "type": "string",
+   "description": "Global meta description for the homepage and pages without a custom description."
+  },
+  "default_keywords": {
+   "type": "string",
+   "description": "Comma-separated default keywords applied across public pages."
+  },
+  "social_image_url": {
+   "type": "string",
+   "description": "Default Open Graph / Twitter card image URL."
+  },
+  "twitter_card_type": {
+   "type": "string",
+   "enum": [
+    "summary",
+    "summary_large_image"
+   ],
+   "default": "summary_large_image"
+  },
+  "google_verification": {
+   "type": "string",
+   "description": "Google Search Console verification content value (without the meta tag wrapper)."
+  },
+  "bing_verification": {
+   "type": "string",
+   "description": "Bing Webmaster Tools verification content value."
+  },
+  "default_robots": {
+   "type": "string",
+   "default": "index, follow",
+   "description": "Default robots meta directive for indexable public pages."
+  },
+  "index_repeaters": {
+   "type": "boolean",
+   "default": true,
+   "description": "Whether public repeater pages are indexable by search engines."
+  },
+  "index_clubs": {
+   "type": "boolean",
+   "default": true,
+   "description": "Whether public club pages are indexable by search engines."
+  },
+  "index_nets": {
+   "type": "boolean",
+   "default": true,
+   "description": "Whether public net pages are indexable by search engines."
+  },
+  "index_events": {
+   "type": "boolean",
+   "default": true,
+   "description": "Whether public event pages are indexable by search engines."
+  },
+  "index_forum": {
+   "type": "boolean",
+   "default": true,
+   "description": "Whether forum pages are indexable by search engines."
+  },
+  "index_profiles": {
+   "type": "boolean",
+   "default": false,
+   "description": "Whether public member profile pages are indexable. Defaults to off for privacy."
+  },
+  "enable_structured_data": {
+   "type": "boolean",
+   "default": true,
+   "description": "Inject Schema.org JSON-LD structured data on public pages."
+  },
+  "enable_breadcrumbs": {
+   "type": "boolean",
+   "default": true,
+   "description": "Display breadcrumb navigation with BreadcrumbList schema on public pages."
+  },
+  "enable_sitemap": {
+   "type": "boolean",
+   "default": true,
+   "description": "Generate and serve the dynamic XML sitemap."
+  },
+  "updated_by_name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this SEO settings record."
+  }
+ },
+ "required": [],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "moderator"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "editor"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "support_staff"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

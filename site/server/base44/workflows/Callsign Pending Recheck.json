@@ -1,0 +1,64 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6ad569e1275af92755d66e5b",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Callsign Pending Recheck",
+ "name": "Callsign Pending Recheck",
+ "description": "Every day, after the FCC daily update, re-checks callsigns still marked pending (brand-new GMRS licenses, or sign-ups during a lookup outage). A callsign that now verifies unlocks its member's account and they're notified by email.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "e301331fad4d2db4d74bc57bd5982870e9de302ff8ab3feb754bec17d6fce658",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "scheduled",
+   "events": [],
+   "schedule_mode": "recurring",
+   "cron_expression": "37 13 * * *",
+   "one_time_date": null,
+   "timezone": "UTC",
+   "interval_value": null,
+   "interval_unit": null,
+   "interval_anchor": null,
+   "ends_type": "never",
+   "ends_on_date": null,
+   "ends_after_count": null
+  },
+  "id": "4746ba84c08a4e1e"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-20T13:38:57.096000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 2,
+ "successful_runs": 2,
+ "failed_runs": 0,
+ "created_date": "2026-10-19T00:52:49.282000Z",
+ "updated_date": "2026-10-20T13:38:57.096000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "callsign_pending_recheck",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "recheck_pending": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "callsign-pending-recheck",
+      "args": {}
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Re-check pending callsigns",
+      "description": "Looks up each pending callsign again and unlocks members whose license is now active"
+     }
+    }
+   }
+  ]
+ }
+}

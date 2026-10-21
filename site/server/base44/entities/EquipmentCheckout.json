@@ -1,0 +1,122 @@
+{
+ "name": "EquipmentCheckout",
+ "type": "object",
+ "properties": {
+  "equipment_id": {
+   "type": "string"
+  },
+  "equipment_name": {
+   "type": "string"
+  },
+  "owner_id": {
+   "type": "string",
+   "description": "User id of the equipment owner. Denormalized for RLS."
+  },
+  "borrower_id": {
+   "type": "string"
+  },
+  "borrower_name": {
+   "type": "string"
+  },
+  "borrower_callsign": {
+   "type": "string"
+  },
+  "checkout_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "expected_return_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "actual_return_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "purpose": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  },
+  "notes": {
+   "type": "string"
+  },
+  "checkout_condition": {
+   "type": "string"
+  },
+  "return_condition": {
+   "type": "string"
+  },
+  "damage_found": {
+   "type": "string"
+  },
+  "missing_accessories": {
+   "type": "string"
+  },
+  "battery_condition": {
+   "type": "string"
+  },
+  "return_notes": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "returned",
+    "overdue"
+   ],
+   "default": "active"
+  }
+ },
+ "required": [
+  "equipment_id",
+  "borrower_id",
+  "checkout_date"
+ ],
+ "rls": {
+  "create": {
+   "data.owner_id": "{{user.id}}"
+  },
+  "read": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "data.borrower_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.owner_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

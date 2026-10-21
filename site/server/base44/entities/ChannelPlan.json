@@ -1,0 +1,35 @@
+{
+ "name": "ChannelPlan",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Name of the saved channel list."
+  },
+  "description": {
+   "type": "string",
+   "description": "Optional notes about this channel plan."
+  },
+  "channels": {
+   "type": "string",
+   "description": "JSON array of channel objects: { ch, name, rx, tx, tone, tone_dir, repeater, notes }."
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

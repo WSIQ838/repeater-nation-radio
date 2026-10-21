@@ -1,0 +1,87 @@
+{
+ "name": "RadioZone",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Zone display name, e.g. \"Southern California\"."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000
+  },
+  "enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Disabled zones are hidden from the radio's zone selector but keep their channels/history intact."
+  },
+  "listen_only": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, every channel in this zone is listen only (nobody can transmit); the zone carries audio feeds."
+  },
+  "display_order": {
+   "type": "number",
+   "default": 0,
+   "description": "Sort order in the zone selector, lowest first."
+  },
+  "min_role": {
+   "type": "string",
+   "enum": [
+    "user",
+    "moderator",
+    "admin"
+   ],
+   "default": "user",
+   "description": "Minimum role required to see/join this zone. 'user' means any signed-in member."
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

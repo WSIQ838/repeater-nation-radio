@@ -1,0 +1,63 @@
+{
+ "name": "NetControlRoster",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Roster name."
+  },
+  "description": {
+   "type": "string"
+  },
+  "roster_type": {
+   "type": "string",
+   "enum": [
+    "custom",
+    "club_sync"
+   ],
+   "default": "custom",
+   "description": "custom = manually built list; club_sync = linked to a club and optionally auto-synced."
+  },
+  "club_id": {
+   "type": "string",
+   "description": "Linked club id when roster_type = club_sync."
+  },
+  "club_name": {
+   "type": "string"
+  },
+  "sync_enabled": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, the roster is kept in sync with the club's current member list."
+  },
+  "last_sync_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "members": {
+   "type": "string",
+   "description": "JSON array of member objects: { id, callsign, name, location, station_type, notes, club_role, membership_status, source }."
+  },
+  "member_count": {
+   "type": "number",
+   "default": 0
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

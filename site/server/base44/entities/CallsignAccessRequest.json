@@ -1,0 +1,84 @@
+{
+ "name": "CallsignAccessRequest",
+ "type": "object",
+ "properties": {
+  "callsign_id": {
+   "type": "string"
+  },
+  "normalized_callsign": {
+   "type": "string"
+  },
+  "display_callsign": {
+   "type": "string"
+  },
+  "requester_user_id": {
+   "type": "string",
+   "description": "The user requesting access to use this callsign."
+  },
+  "requester_name": {
+   "type": "string"
+  },
+  "primary_user_id": {
+   "type": "string",
+   "description": "Primary account holder who must approve. Denormalized for RLS."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "pending",
+    "approved",
+    "denied",
+    "cancelled"
+   ],
+   "default": "pending"
+  },
+  "message": {
+   "type": "string",
+   "description": "Message from the requester explaining why they need access."
+  },
+  "decision_reason": {
+   "type": "string",
+   "description": "Reason recorded by the approver/denier."
+  },
+  "decided_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "decided_by_user_id": {
+   "type": "string"
+  },
+  "decided_by_name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this access request."
+  }
+ },
+ "required": [
+  "callsign_id",
+  "requester_user_id",
+  "status"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.requester_user_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

@@ -1,0 +1,107 @@
+{
+ "name": "Message",
+ "type": "object",
+ "properties": {
+  "conversation_id": {
+   "type": "string",
+   "description": "Sorted pair of user ids joined with __ , used to group a thread."
+  },
+  "sender_id": {
+   "type": "string"
+  },
+  "sender_name": {
+   "type": "string"
+  },
+  "recipient_id": {
+   "type": "string"
+  },
+  "recipient_name": {
+   "type": "string"
+  },
+  "body": {
+   "type": "string"
+  },
+  "attachments": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "url": {
+      "type": "string",
+      "description": "Public URL of the uploaded file."
+     },
+     "type": {
+      "type": "string",
+      "enum": [
+       "image",
+       "video",
+       "file"
+      ],
+      "description": "Kind of attachment, derived from the file MIME type."
+     },
+     "name": {
+      "type": "string",
+      "description": "Original file name."
+     },
+     "mime": {
+      "type": "string",
+      "description": "File MIME type."
+     }
+    }
+   },
+   "default": [],
+   "description": "Photos, videos, or files attached to the message."
+  },
+  "read": {
+   "type": "boolean",
+   "default": false
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "sent",
+    "delivered",
+    "read"
+   ],
+   "default": "sent",
+   "description": "Delivery receipt: sent (created), delivered (recipient loaded the thread), read (recipient opened the conversation)."
+  }
+ },
+ "required": [
+  "conversation_id",
+  "sender_id",
+  "recipient_id"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.sender_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  },
+  "create": {
+   "data.sender_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "data.sender_id": "{{user.id}}"
+  }
+ }
+}

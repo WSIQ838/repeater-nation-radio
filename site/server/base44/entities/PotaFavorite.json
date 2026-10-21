@@ -1,0 +1,36 @@
+{
+ "name": "PotaFavorite",
+ "type": "object",
+ "properties": {
+  "park_id": {
+   "type": "string",
+   "description": "The favorited PotaPark."
+  },
+  "park_name": {
+   "type": "string"
+  },
+  "park_number": {
+   "type": "string"
+  },
+  "park_location": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "park_id"
+ ],
+ "rls": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

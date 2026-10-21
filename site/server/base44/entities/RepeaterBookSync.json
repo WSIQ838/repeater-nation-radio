@@ -1,0 +1,144 @@
+{
+ "type": "object",
+ "properties": {
+  "service": {
+   "type": "string",
+   "enum": [
+    "HAM"
+   ]
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "paused",
+    "completed",
+    "cancelled"
+   ],
+   "default": "active"
+  },
+  "current_index": {
+   "type": "number",
+   "default": 0
+  },
+  "states_total": {
+   "type": "number",
+   "default": 52
+  },
+  "states_completed": {
+   "type": "number",
+   "default": 0
+  },
+  "fetched": {
+   "type": "number",
+   "default": 0
+  },
+  "created": {
+   "type": "number",
+   "default": 0
+  },
+  "updated": {
+   "type": "number",
+   "default": 0
+  },
+  "skipped": {
+   "type": "number",
+   "default": 0
+  },
+  "errors": {
+   "type": "array",
+   "items": {
+    "type": "object"
+   },
+   "default": []
+  },
+  "next_retry_at": {
+   "type": "string"
+  },
+  "pause_reason": {
+   "type": "string",
+   "enum": [
+    "rate_limit",
+    "auth",
+    "error"
+   ]
+  },
+  "last_error": {
+   "type": "string"
+  },
+  "started_by": {
+   "type": "string"
+  },
+  "started_at": {
+   "type": "string"
+  },
+  "completed_at": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "service",
+  "status",
+  "current_index",
+  "states_total"
+ ],
+ "rls": {
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "read": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ },
+ "name": "RepeaterBookSync"
+}

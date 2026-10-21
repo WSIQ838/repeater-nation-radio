@@ -1,0 +1,36 @@
+{
+ "name": "SotaFavorite",
+ "type": "object",
+ "properties": {
+  "summit_id": {
+   "type": "string",
+   "description": "The favorited SotaSummit."
+  },
+  "summit_name": {
+   "type": "string"
+  },
+  "summit_ref": {
+   "type": "string"
+  },
+  "summit_location": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "summit_id"
+ ],
+ "rls": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

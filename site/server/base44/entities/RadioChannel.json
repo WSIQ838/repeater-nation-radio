@@ -1,0 +1,99 @@
+{
+ "name": "RadioChannel",
+ "type": "object",
+ "properties": {
+  "zone_id": {
+   "type": "string",
+   "description": "The RadioZone this channel belongs to."
+  },
+  "number": {
+   "type": "number",
+   "default": 1,
+   "description": "Display order within the zone, e.g. the \"3\" in \"CH 3 - Calling\"."
+  },
+  "name": {
+   "type": "string",
+   "description": "Channel display name, e.g. \"Calling\"."
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000
+  },
+  "enabled": {
+   "type": "boolean",
+   "default": true
+  },
+  "moderator_only": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, only moderators/admins may transmit on this channel; anyone with zone access can still listen."
+  },
+  "listen_only": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, nobody can transmit on this channel (it carries an audio feed); everyone with zone access can listen."
+  },
+  "feed_owner_user_id": {
+   "type": "string",
+   "description": "The member whose audio feed this stream channel carries. They (and admins) may connect a feed to it."
+  },
+  "admin_only": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, only admins may join this channel at all (listen or transmit)."
+  },
+  "max_users": {
+   "type": "number",
+   "description": "Optional cap on simultaneous listeners/participants. Blank/0 means unlimited."
+  }
+ },
+ "required": [
+  "zone_id",
+  "name"
+ ],
+ "rls": {
+  "read": {},
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6ab8a520e28031f02311b40a",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "FCC Daily Update",
+ "name": "FCC Daily Update",
+ "description": "Runs the FCC ULS daily transaction update (GMRS + HAM) Tuesday through Saturday after the FCC publishes the daily transaction files, so the local callsign database stays current without a third-party lookup mirror.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "92d6ed62b3af05bf8734b0e3c94c75932d64698f367c3aefc01698065a8fb6df",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "scheduled",
+   "events": [],
+   "schedule_mode": "recurring",
+   "cron_expression": "0 12 * * 2-6",
+   "one_time_date": null,
+   "timezone": "UTC",
+   "interval_value": null,
+   "interval_unit": null,
+   "interval_anchor": null,
+   "ends_type": "never",
+   "ends_on_date": null,
+   "ends_after_count": null
+  },
+  "id": "1e4d293ab95a43b6"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-20T12:05:09.250000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 16,
+ "successful_runs": 15,
+ "failed_runs": 1,
+ "created_date": "2026-09-27T05:09:52.894000Z",
+ "updated_date": "2026-10-20T12:05:09.250000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "fcc_daily_update",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "run_daily_update": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "fcc-daily-update",
+      "args": {}
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Run FCC daily update",
+      "description": "Fetches today's FCC ULS daily transaction files for GMRS and HAM and applies them to the local FccLicense table"
+     }
+    }
+   }
+  ]
+ }
+}

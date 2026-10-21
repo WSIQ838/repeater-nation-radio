@@ -1,0 +1,302 @@
+{
+ "name": "NetControlSession",
+ "type": "object",
+ "properties": {
+  "event_id": {
+   "type": "string",
+   "description": "Linked public Events page record for this net, when one is published."
+  },
+  "name": {
+   "type": "string",
+   "description": "Net name."
+  },
+  "description": {
+   "type": "string"
+  },
+  "net_type": {
+   "type": "string",
+   "enum": [
+    "Regular",
+    "Weekly",
+    "Community",
+    "Training",
+    "Special Event",
+    "Emergency",
+    "Other"
+   ],
+   "default": "Regular"
+  },
+  "radio_service": {
+   "type": "string",
+   "enum": [
+    "GMRS",
+    "HAM"
+   ],
+   "default": "GMRS"
+  },
+  "band": {
+   "type": "string",
+   "description": "HAM band identifier when radio_service is HAM."
+  },
+  "frequency": {
+   "type": "number",
+   "description": "Operating frequency in MHz."
+  },
+  "mode": {
+   "type": "string",
+   "enum": [
+    "Simplex",
+    "Repeater"
+   ],
+   "default": "Simplex"
+  },
+  "radio_used": {
+   "type": "string",
+   "description": "Radio/equipment used for the net."
+  },
+  "channel": {
+   "type": "string",
+   "description": "GMRS channel number or label."
+  },
+  "repeater_name": {
+   "type": "string"
+  },
+  "tone": {
+   "type": "string",
+   "description": "CTCSS Hz or DCS code."
+  },
+  "scheduled_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "start_time": {
+   "type": "string"
+  },
+  "end_time": {
+   "type": "string"
+  },
+  "location": {
+   "type": "string"
+  },
+  "latitude": {
+   "type": "number",
+   "description": "Latitude of the active Net Control operating position."
+  },
+  "longitude": {
+   "type": "number",
+   "description": "Longitude of the active Net Control operating position."
+  },
+  "notes": {
+   "type": "string"
+  },
+  "recurring": {
+   "type": "string",
+   "enum": [
+    "none",
+    "daily",
+    "weekly",
+    "monthly"
+   ],
+   "default": "none"
+  },
+  "is_public": {
+   "type": "boolean",
+   "default": false,
+   "description": "Public nets appear in the Net Directory. Private nets are only visible to the operator and admins."
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "scheduled",
+    "active",
+    "ended",
+    "cancelled"
+   ],
+   "default": "scheduled"
+  },
+  "operator_name": {
+   "type": "string"
+  },
+  "operator_callsign": {
+   "type": "string"
+  },
+  "primary_user_id": {
+   "type": "string",
+   "description": "User id of the current primary Net Control operator. Defaults to the creator; changes when ownership is transferred."
+  },
+  "primary_user_name": {
+   "type": "string",
+   "description": "Display name of the current primary Net Control operator."
+  },
+  "host_user_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "All authorized host user ids (primary + accepted co-hosts). Used for RLS read/update access."
+  },
+  "current_script_section": {
+   "type": "string",
+   "description": "The script section currently being read, synced live to all connected operators."
+  },
+  "club_id": {
+   "type": "string",
+   "description": "Associated club when a club roster is synced."
+  },
+  "club_name": {
+   "type": "string"
+  },
+  "club_owner_id": {
+   "type": "string",
+   "description": "User id of the club owner (Club.created_by_id). Stamped at creation so the club owner can view net attendance via RLS."
+  },
+  "roster_type": {
+   "type": "string",
+   "enum": [
+    "club",
+    "custom",
+    "saved",
+    "none"
+   ],
+   "default": "none"
+  },
+  "roster_members": {
+   "type": "string",
+   "description": "JSON array of roster member objects."
+  },
+  "roster_last_sync": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the club roster was last synced into this session."
+  },
+  "script_opening": {
+   "type": "string"
+  },
+  "script_purpose": {
+   "type": "string"
+  },
+  "script_roll_call": {
+   "type": "string"
+  },
+  "script_announcements": {
+   "type": "string"
+  },
+  "script_traffic": {
+   "type": "string"
+  },
+  "script_emergency": {
+   "type": "string"
+  },
+  "script_closing": {
+   "type": "string"
+  },
+  "emergency_mode": {
+   "type": "boolean",
+   "default": false
+  },
+  "emergency_positions": {
+   "type": "string",
+   "description": "JSON array of emergency position assignments."
+  },
+  "activation_events": {
+   "type": "string",
+   "description": "JSON array of emergency/activation events added to a live Net Control session."
+  },
+  "started_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "ended_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "duration_minutes": {
+   "type": "number",
+   "default": 0
+  },
+  "total_checkins": {
+   "type": "number",
+   "default": 0
+  },
+  "record_attendance": {
+   "type": "boolean",
+   "default": true,
+   "description": "When true and a club roster is used, net attendance is recorded for that club."
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.is_public": true
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.club_owner_id": "{{user.id}}"
+    },
+    {
+     "data.host_user_ids": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "data.primary_user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

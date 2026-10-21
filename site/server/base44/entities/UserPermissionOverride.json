@@ -1,0 +1,93 @@
+{
+ "name": "UserPermissionOverride",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string",
+   "description": "The user this override applies to."
+  },
+  "user_name": {
+   "type": "string"
+  },
+  "permission_key": {
+   "type": "string",
+   "description": "The permission key being overridden, e.g. 'equipment.manage'."
+  },
+  "allowed": {
+   "type": "boolean",
+   "description": "true grants the permission, false denies it, regardless of role."
+  },
+  "set_by_id": {
+   "type": "string"
+  },
+  "set_by_name": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "user_id",
+  "permission_key",
+  "allowed"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

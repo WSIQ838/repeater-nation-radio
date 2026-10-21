@@ -1,0 +1,58 @@
+{
+ "name": "FeedChannelRequest",
+ "properties": {
+  "requester_user_id": {
+   "type": "string"
+  },
+  "requester_name": {
+   "type": "string"
+  },
+  "requester_callsign": {
+   "type": "string"
+  },
+  "name": {
+   "description": "Channel name asked for.",
+   "type": "string"
+  },
+  "description": {
+   "description": "What the stream is (a scanner, a weather feed, a repeater link...).",
+   "type": "string",
+   "maxLength": 300
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "pending",
+    "approved",
+    "rejected"
+   ],
+   "default": "pending"
+  },
+  "channel_id": {
+   "description": "The channel created when approved.",
+   "type": "string"
+  },
+  "decided_by": {
+   "type": "string"
+  },
+  "decided_at": {
+   "format": "date-time",
+   "type": "string"
+  },
+  "reason": {
+   "description": "Why it was rejected.",
+   "type": "string"
+  }
+ },
+ "required": [
+  "requester_user_id",
+  "name"
+ ],
+ "type": "object",
+ "rls": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

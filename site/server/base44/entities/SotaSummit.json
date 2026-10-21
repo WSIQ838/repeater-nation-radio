@@ -1,0 +1,201 @@
+{
+ "name": "SotaSummit",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string",
+   "description": "Summit name."
+  },
+  "summit_ref": {
+   "type": "string",
+   "description": "SOTA summit reference, e.g. W7W/KG-001."
+  },
+  "association": {
+   "type": "string",
+   "description": "SOTA association code, e.g. W7W."
+  },
+  "association_name": {
+   "type": "string"
+  },
+  "region": {
+   "type": "string",
+   "description": "SOTA region code, e.g. KG."
+  },
+  "region_name": {
+   "type": "string"
+  },
+  "altitude_m": {
+   "type": "number"
+  },
+  "altitude_ft": {
+   "type": "number"
+  },
+  "points": {
+   "type": "number",
+   "description": "Activation points for the summit."
+  },
+  "bonus_points": {
+   "type": "number",
+   "description": "Seasonal (winter) bonus points."
+  },
+  "lat": {
+   "type": "number"
+  },
+  "lng": {
+   "type": "number"
+  },
+  "state": {
+   "type": "string"
+  },
+  "county": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string"
+  },
+  "access_notes": {
+   "type": "string",
+   "description": "Trailhead, parking, and route notes from the community."
+  },
+  "sota_url": {
+   "type": "string",
+   "description": "Link to the summit's page on the SOTA database (opened by the member; never fetched by the app)."
+  },
+  "supporting_info": {
+   "type": "string",
+   "description": "Additional supporting information supplied with a community submission."
+  },
+  "photo_urls": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   },
+   "default": [],
+   "description": "Optional photos attached to the park (community submissions or admin uploads)."
+  },
+  "search_keywords": {
+   "type": "string",
+   "description": "Concatenated searchable text (name, reference, region, state)."
+  },
+  "source": {
+   "type": "string",
+   "enum": [
+    "official",
+    "community"
+   ],
+   "default": "community",
+   "description": "official = imported by an administrator from the SOTA summits list file. community = submitted by a Repeater Nation member."
+  },
+  "verification_status": {
+   "type": "string",
+   "enum": [
+    "approved",
+    "pending",
+    "under_review",
+    "rejected"
+   ],
+   "default": "approved",
+   "description": "Moderation status. Only approved parks are visible publicly. Community submissions start as pending."
+  },
+  "summit_status": {
+   "type": "string",
+   "enum": [
+    "active",
+    "inactive"
+   ],
+   "default": "active",
+   "description": "inactive = no longer valid in the SOTA programme; kept to preserve activation history."
+  },
+  "review_notes": {
+   "type": "string",
+   "description": "Admin notes recorded during review of a community submission."
+  },
+  "submitted_by_name": {
+   "type": "string"
+  },
+  "submitted_at": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "last_imported_date": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When an administrator import last touched this summit."
+  },
+  "activation_count": {
+   "type": "number",
+   "default": 0,
+   "description": "Cached count of Repeater Nation activations of this summit."
+  },
+  "last_activation_date": {
+   "type": "string",
+   "format": "date-time"
+  },
+  "favorites_count": {
+   "type": "number",
+   "default": 0
+  }
+ },
+ "required": [
+  "name",
+  "summit_ref"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.verification_status": "approved"
+    },
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "user_condition": {
+    "role": "super_admin"
+   }
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "created_by_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "name": "Friendship",
+ "type": "object",
+ "properties": {
+  "requester_id": {
+   "type": "string",
+   "description": "User id of the member who sent the request."
+  },
+  "requester_name": {
+   "type": "string"
+  },
+  "recipient_id": {
+   "type": "string",
+   "description": "User id of the member who received the request."
+  },
+  "recipient_name": {
+   "type": "string"
+  },
+  "status": {
+   "type": "string",
+   "enum": [
+    "pending",
+    "accepted",
+    "declined"
+   ],
+   "default": "pending"
+  },
+  "description": {
+   "type": "string",
+   "maxLength": 1000,
+   "description": "Optional free-form note describing this friendship connection."
+  }
+ },
+ "required": [
+  "requester_id",
+  "recipient_id"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.requester_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  },
+  "create": {
+   "data.requester_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "data.requester_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.requester_id": "{{user.id}}"
+    },
+    {
+     "data.recipient_id": "{{user.id}}"
+    }
+   ]
+  }
+ }
+}

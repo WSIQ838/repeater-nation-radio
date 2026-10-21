@@ -1,0 +1,111 @@
+{
+ "name": "ConnectedAccount",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string",
+   "description": "The app user who connected this social account."
+  },
+  "platform": {
+   "type": "string",
+   "enum": [
+    "discord",
+    "facebook",
+    "youtube",
+    "twitch",
+    "instagram",
+    "x"
+   ],
+   "description": "The social platform this connection is for."
+  },
+  "platform_user_id": {
+   "type": "string",
+   "description": "The user's unique ID on the connected platform."
+  },
+  "username": {
+   "type": "string",
+   "description": "The user's handle/username on the connected platform."
+  },
+  "display_name": {
+   "type": "string",
+   "description": "The user's display name on the connected platform."
+  },
+  "avatar_url": {
+   "type": "string",
+   "description": "Profile picture URL from the connected platform."
+  },
+  "profile_url": {
+   "type": "string",
+   "description": "Direct link to the user's profile on the connected platform."
+  },
+  "is_public": {
+   "type": "boolean",
+   "default": false,
+   "description": "When true, this connected account is visible on the member's public profile."
+  }
+ },
+ "required": [
+  "user_id",
+  "platform",
+  "platform_user_id"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.is_public": true
+    },
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "data.user_id": "{{user.id}}"
+  },
+  "update": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "data.user_id": "{{user.id}}"
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

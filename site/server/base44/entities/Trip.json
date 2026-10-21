@@ -1,0 +1,97 @@
+{
+ "name": "Trip",
+ "type": "object",
+ "properties": {
+  "name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string"
+  },
+  "start_date": {
+   "type": "string",
+   "format": "date"
+  },
+  "end_date": {
+   "type": "string",
+   "format": "date"
+  },
+  "search_radius_km": {
+   "type": "number",
+   "default": 30,
+   "description": "Radius (km) around each waypoint used to find in-range repeaters."
+  },
+  "waypoints": {
+   "type": "string",
+   "description": "JSON array of intermediate stops: { id, label, lat, lng, type, repeater_id, address }."
+  },
+  "start_address": {
+   "type": "string",
+   "description": "Geocoded starting address text."
+  },
+  "end_address": {
+   "type": "string",
+   "description": "Geocoded ending address text."
+  },
+  "start_lat": {
+   "type": "number",
+   "description": "Geocoded start latitude."
+  },
+  "start_lng": {
+   "type": "number",
+   "description": "Geocoded start longitude."
+  },
+  "end_lat": {
+   "type": "number",
+   "description": "Geocoded end latitude."
+  },
+  "end_lng": {
+   "type": "number",
+   "description": "Geocoded end longitude."
+  },
+  "round_trip": {
+   "type": "boolean",
+   "default": false,
+   "description": "Whether the route returns to the starting point."
+  },
+  "optimization_method": {
+   "type": "string",
+   "enum": [
+    "manual",
+    "shortest_distance",
+    "shortest_time",
+    "auto"
+   ],
+   "default": "manual",
+   "description": "The route optimization method applied, if any."
+  },
+  "route_distance_km": {
+   "type": "number",
+   "description": "Total route driving distance in km."
+  },
+  "route_duration_min": {
+   "type": "number",
+   "description": "Total route driving duration in minutes."
+  },
+  "notes": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

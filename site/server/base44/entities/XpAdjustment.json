@@ -1,0 +1,62 @@
+{
+ "name": "XpAdjustment",
+ "type": "object",
+ "properties": {
+  "user_id": {
+   "type": "string",
+   "description": "User receiving the XP adjustment."
+  },
+  "user_name": {
+   "type": "string",
+   "description": "Snapshot of the user's name at the time of adjustment."
+  },
+  "user_callsign": {
+   "type": "string",
+   "description": "Snapshot of the user's callsign at the time of adjustment."
+  },
+  "amount": {
+   "type": "number",
+   "description": "Signed XP amount. Positive grants XP; negative removes XP."
+  },
+  "reason": {
+   "type": "string",
+   "description": "Reason for the manual XP adjustment.",
+   "maxLength": 1000
+  },
+  "admin_id": {
+   "type": "string",
+   "description": "Admin who made the adjustment."
+  },
+  "admin_name": {
+   "type": "string",
+   "description": "Snapshot of the admin name."
+  }
+ },
+ "required": [
+  "user_id",
+  "amount",
+  "reason"
+ ],
+ "rls": {
+  "read": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "create": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "update": {
+   "user_condition": {
+    "role": "admin"
+   }
+  },
+  "delete": {
+   "user_condition": {
+    "role": "admin"
+   }
+  }
+ }
+}

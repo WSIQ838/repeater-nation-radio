@@ -1,0 +1,87 @@
+{
+ "name": "RadioUserSettings",
+ "type": "object",
+ "properties": {
+  "ptt_key": {
+   "type": "string",
+   "default": "ControlLeft"
+  },
+  "volume": {
+   "type": "number",
+   "default": 80
+  },
+  "mic_muted": {
+   "type": "boolean",
+   "default": false
+  },
+  "speaker_muted": {
+   "type": "boolean",
+   "default": false
+  },
+  "echo_cancellation": {
+   "type": "boolean",
+   "default": true
+  },
+  "noise_suppression": {
+   "type": "boolean",
+   "default": true
+  },
+  "radio_filter": {
+   "type": "boolean",
+   "default": true,
+   "description": "Narrows received audio to a handheld-radio voice profile."
+  },
+  "roger_beep_enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Play a short local confirmation tone when someone releases PTT."
+  },
+  "roger_beep_style": {
+   "type": "string",
+   "default": "classic_up",
+   "description": "Which roger beep tone to play: classic_up, classic_down, single, or double."
+  },
+  "channel_voice_enabled": {
+   "type": "boolean",
+   "default": true,
+   "description": "Announce the zone and channel name aloud when the member manually changes channels."
+  },
+  "channel_voice_name": {
+   "type": "string",
+   "description": "Preferred browser speech synthesis voice name for channel announcements. Blank uses the browser/system default."
+  },
+  "last_zone_id": {
+   "type": "string"
+  },
+  "last_channel_id": {
+   "type": "string"
+  },
+  "radio_layout_id": {
+   "type": "string",
+   "description": "Member's selected radio layout ID. Blank uses the site default layout."
+  },
+  "mic_device_id": {
+   "type": "string",
+   "description": "Preferred microphone input device (MediaDeviceInfo.deviceId). Blank uses the browser/OS default device."
+  },
+  "speaker_device_id": {
+   "type": "string",
+   "description": "Preferred speaker/headphone output device (MediaDeviceInfo.deviceId), applied via HTMLMediaElement.setSinkId where the browser supports it. Blank uses the browser/OS default device."
+  }
+ },
+ "required": [],
+ "rls": {
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}

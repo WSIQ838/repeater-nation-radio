@@ -1,0 +1,209 @@
+{
+ "name": "MerchProduct",
+ "type": "object",
+ "description": "A product in the merch store. Printful products are pulled in by merch-admin's sync; manual products are ones the store owner ships themselves. Prices are always read from here at checkout, never from the browser.",
+ "properties": {
+  "name": {
+   "type": "string"
+  },
+  "description": {
+   "type": "string"
+  },
+  "category": {
+   "type": "string",
+   "enum": [
+    "Apparel",
+    "Headwear",
+    "Stickers",
+    "Drinkware",
+    "Accessories",
+    "Other"
+   ],
+   "default": "Other"
+  },
+  "image_url": {
+   "type": "string",
+   "description": "Main photo."
+  },
+  "images": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "variants": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "key": {
+      "type": "string",
+      "description": "Stable id within the product: pf-<sync variant id> for Printful, or a slug for manual products."
+     },
+     "label": {
+      "type": "string",
+      "description": "Shown to shoppers, e.g. 'Black / L'."
+     },
+     "size": {
+      "type": "string"
+     },
+     "color": {
+      "type": "string"
+     },
+     "price": {
+      "type": "number",
+      "description": "Selling price in USD. Set here; a Printful re-sync keeps it."
+     },
+     "image_url": {
+      "type": "string"
+     },
+     "available": {
+      "type": "boolean",
+      "default": true
+     },
+     "printful_sync_variant_id": {
+      "type": "integer"
+     },
+     "printful_variant_id": {
+      "type": "integer",
+      "description": "Printful catalog variant id."
+     },
+     "sku": {
+      "type": "string"
+     },
+     "ship_first": {
+      "type": "number",
+      "description": "Shipping for this option when it's the first item (overrides the product's). Empty = use the product's."
+     },
+     "ship_additional": {
+      "type": "number",
+      "description": "Shipping for this option as an extra item (overrides the product's)."
+     },
+     "pf_price_pending": {
+      "type": "boolean",
+      "description": "Price changed here and not yet copied to Printful's listing."
+     }
+    }
+   }
+  },
+  "price_from": {
+   "type": "number",
+   "description": "Lowest available variant price, for listings."
+  },
+  "ship_first": {
+   "type": "number",
+   "description": "Shipping when this product is the first item in an order. Empty = store default."
+  },
+  "ship_additional": {
+   "type": "number",
+   "description": "Shipping for each extra unit of this product. Empty = store default."
+  },
+  "ship_auto": {
+   "type": "boolean",
+   "default": true,
+   "description": "Printful products: refresh shipping from Printful's current US rates every day. Off once an admin types their own rates."
+  },
+  "ship_rates_updated_at": {
+   "type": "string",
+   "format": "date-time",
+   "description": "When the shipping rates were last pulled from Printful."
+  },
+  "active": {
+   "type": "boolean",
+   "default": false,
+   "description": "Shown in the store. New products start hidden until an admin reviews them."
+  },
+  "featured": {
+   "type": "boolean",
+   "default": false
+  },
+  "sort_order": {
+   "type": "integer",
+   "default": 100
+  },
+  "source": {
+   "type": "string",
+   "enum": [
+    "printful",
+    "manual"
+   ],
+   "default": "manual"
+  },
+  "printful_sync_product_id": {
+   "type": "integer"
+  },
+  "printful_missing": {
+   "type": "boolean",
+   "default": false,
+   "description": "Set when the product disappeared from Printful on the last sync."
+  },
+  "last_synced_at": {
+   "type": "string",
+   "format": "date-time"
+  }
+ },
+ "required": [
+  "name"
+ ],
+ "rls": {
+  "read": {
+   "$or": [
+    {
+     "data.active": true
+    },
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "create": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "update": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  },
+  "delete": {
+   "$or": [
+    {
+     "user_condition": {
+      "role": "admin"
+     }
+    },
+    {
+     "user_condition": {
+      "role": "super_admin"
+     }
+    }
+   ]
+  }
+ }
+}

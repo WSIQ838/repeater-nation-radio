@@ -1,0 +1,30 @@
+{
+ "name": "DispatchChat",
+ "properties": {
+  "user_id": {
+   "type": "string"
+  },
+  "name": {
+   "description": "Dispatcher's name when sent.",
+   "type": "string"
+  },
+  "text": {
+   "type": "string"
+  },
+  "sent_at": {
+   "format": "date-time",
+   "type": "string"
+  }
+ },
+ "required": [
+  "user_id",
+  "text"
+ ],
+ "type": "object",
+ "rls": {
+  "read": false,
+  "create": false,
+  "update": false,
+  "delete": false
+ }
+}

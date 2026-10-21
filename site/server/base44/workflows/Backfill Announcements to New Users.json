@@ -1,0 +1,58 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6a827bc85d08afbe1bbe1f07",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Backfill Announcements to New Users",
+ "name": "Backfill Announcements to New Users",
+ "description": "When a user signs up, copy all currently-active admin announcements into their notifications so new members see announcements created before they joined.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "0273f603d8998cae021905a74a9e93145814b2ef637213a19712fbb01b97b315",
+ "trigger": {
+  "condition": "${ .trigger.event_type == \"signup\" }",
+  "config": {
+   "trigger_type": "app_user_auth",
+   "events": [
+    "signup"
+   ]
+  },
+  "id": "87379c3d21d641c3"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-20T17:41:32.021000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 693,
+ "successful_runs": 693,
+ "failed_runs": 0,
+ "created_date": "2026-08-17T03:11:04.901000Z",
+ "updated_date": "2026-10-20T17:41:32.021000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "backfill_announcements",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "backfill": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "backfill-announcements",
+      "args": {
+       "user_id": "${ .trigger.user_id }"
+      }
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Backfill active announcements",
+      "description": "Copy active announcements to the new user"
+     }
+    }
+   }
+  ]
+ }
+}

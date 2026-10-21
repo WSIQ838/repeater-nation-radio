@@ -1,0 +1,59 @@
+{
+ "run_accounting_available": true,
+ "social_post": null,
+ "id": "6a6da4476a52e2fb7d9da888",
+ "app_id": "6a6d787f8e808727b935dd09",
+ "file_key": "Assign User Repeaters",
+ "name": "Assign User Repeaters",
+ "description": "When a member signs up or logs in, link directory repeaters whose callsign matches theirs to their account so they can manage them.",
+ "status": "active",
+ "status_reason": null,
+ "current_version_id": "545db0c0411e8f06258c3613c911de2d622153c61f6ed5577dd719d6f325834c",
+ "trigger": {
+  "condition": null,
+  "config": {
+   "trigger_type": "app_user_auth",
+   "events": [
+    "signup",
+    "login"
+   ]
+  },
+  "id": "d91022edf2dd44a5"
+ },
+ "app_type_context": null,
+ "last_run_at": "2026-10-20T19:43:52.021000Z",
+ "last_run_status": "success",
+ "consecutive_failures": 0,
+ "total_runs": 1542,
+ "successful_runs": 1536,
+ "failed_runs": 6,
+ "created_date": "2026-08-01T07:46:15.463000Z",
+ "updated_date": "2026-10-20T19:43:52.021000Z",
+ "created_by": "funeral.baker@gmail.com",
+ "definition": {
+  "document": {
+   "dsl": "1.0.0",
+   "name": "assign_user_repeaters",
+   "version": "1.0",
+   "namespace": "base44"
+  },
+  "do": [
+   {
+    "assign_repeaters": {
+     "call": "invoke_backend_function",
+     "with": {
+      "function_name": "assignUserRepeaters",
+      "args": {
+       "user_id": "${ .trigger.user_id }"
+      }
+     },
+     "then": "end",
+     "x-base44": {
+      "title": "Link repeaters to member",
+      "description": "Stamp owner_user_id on repeaters matching the member's callsign"
+     }
+    }
+   }
+  ]
+ }
+}

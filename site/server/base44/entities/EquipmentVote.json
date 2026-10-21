@@ -1,0 +1,38 @@
+{
+ "name": "EquipmentVote",
+ "type": "object",
+ "properties": {
+  "submission_id": {
+   "type": "string"
+  },
+  "vote": {
+   "type": "number",
+   "enum": [
+    1,
+    -1
+   ]
+  },
+  "voter_id": {
+   "type": "string"
+  }
+ },
+ "required": [
+  "submission_id",
+  "vote",
+  "voter_id"
+ ],
+ "rls": {
+  "create": {
+   "created_by_id": "{{user.id}}"
+  },
+  "read": {
+   "created_by_id": "{{user.id}}"
+  },
+  "update": {
+   "created_by_id": "{{user.id}}"
+  },
+  "delete": {
+   "created_by_id": "{{user.id}}"
+  }
+ }
+}
