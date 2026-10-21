@@ -21,7 +21,18 @@ Moving Repeater Nation off Base44. Source of truth for the plan: this file.
 - [ ] 6. Port 131 backend functions + 15 workflows
 - [ ] 7. Payments (Stripe, Wix, Printful webhooks), LiveKit, file storage, domain
 
-## Rebuild the database from an export
+## Run with Docker
+```
+cp .env.example .env        # set POSTGRES_PASSWORD and EXPORT_DATA_DIR
+docker compose up -d        # Postgres 16; creates the 93 tables on first start
+docker compose --profile load run --rm loader     # loads the exported JSON
+docker compose exec postgres psql -U rn rn -c 'select count(*) from "Repeater"'
+```
+Data lives in the `pgdata` volume. To start over: `docker compose down -v`.
+Postgres listens on localhost only. (Compose file is validated but was written in a
+session without a running Docker daemon; first real run is untested.)
+
+## Rebuild the database from an export (without Docker)
 ```
 python3 db/gen_schema.py "<export>/Repeater Nation/data/_entity_schemas.json" db/schema.sql db/rls.json
 createdb rn && psql rn -v ON_ERROR_STOP=1 -f db/schema.sql

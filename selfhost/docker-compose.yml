@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rn
+      POSTGRES_USER: rn
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"  # localhost only
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # runs once, on the first start of an empty volume
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rn -d rn"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-off data load:  docker compose --profile load run --rm loader
+  loader:
+    profiles: ["load"]
+    image: python:3.13-slim
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ./db:/app:ro
+      - ${EXPORT_DATA_DIR:-./export-data}:/data:ro  # only needed when running the loader
+    command: >
+      sh -c "pip install -q 'psycopg[binary]' &&
+             python load_data.py /data postgresql://rn@postgres:5432/rn"
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}  # read by libpq, so any characters are safe
+
+volumes:
+  pgdata:
