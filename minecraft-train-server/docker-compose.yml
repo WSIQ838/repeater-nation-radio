@@ -1,0 +1,36 @@
+# Life-like train Minecraft server (Java Edition 1.20.1, Forge).
+# Start:  docker compose up -d      Logs: docker compose logs -f mc
+services:
+  mc:
+    image: itzg/minecraft-server:java17
+    container_name: train-mc
+    restart: unless-stopped
+    ports:
+      - "25565:25565"
+    environment:
+      EULA: "TRUE"                  # you accept https://aka.ms/MinecraftEULA
+      TYPE: FORGE
+      VERSION: "1.20.1"
+      MEMORY: "6G"                  # trains + big worlds like RAM; lower to 4G if needed
+      MOTD: "All Aboard! Realistic Railways"
+      DIFFICULTY: normal
+      MODE: survival
+      VIEW_DISTANCE: "12"           # see trains coming from further away
+      SIMULATION_DISTANCE: "8"
+      MAX_PLAYERS: "20"
+      ENABLE_WHITELIST: "${ENABLE_WHITELIST:-false}"
+      WHITELIST: "${WHITELIST:-}"
+      OPS: "${OPS:-}"
+      # Mods auto-downloaded from Modrinth on first start.
+      MODRINTH_PROJECTS: |
+        create
+        steam-n-rails
+        create-railways-navigator
+        create-diesel-generators
+        ftb-chunks-forge
+        jei
+      ENABLE_ROLLING_LOGS: "true"
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true
