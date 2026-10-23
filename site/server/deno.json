@@ -2,7 +2,8 @@
   "tasks": {
     "start": "deno run --allow-all --unstable-sloppy-imports src/main.ts",
     "dev": "deno run --allow-all --watch --unstable-sloppy-imports src/main.ts",
-    "import": "deno run --allow-all src/cli/import.ts",
+    "import": "deno run --allow-all --unstable-sloppy-imports src/cli/import.ts",
+    "check": "deno run --allow-all --unstable-sloppy-imports src/cli/check.ts",
     "test": "deno test --allow-all src/"
   },
   "nodeModulesDir": "none",

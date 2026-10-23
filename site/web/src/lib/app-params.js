@@ -1,54 +1,21 @@
-const isNode = typeof window === 'undefined';
-const windowObj = isNode ? { localStorage: new Map() } : window;
-const storage = windowObj.localStorage;
+// Bootstrap values for the client. After a social sign-in the server redirects back with
+// ?access_token=...; it is moved into localStorage and removed from the address bar.
+export const TOKEN_KEY = 'rn_access_token';
 
-const toSnakeCase = (str) => {
-	return str.replace(/([A-Z])/g, '_$1').toLowerCase();
+function bootstrap() {
+  const out = { appId: import.meta.env.VITE_APP_ID || '', token: null, fromUrl: window.location.href, functionsVersion: undefined, appBaseUrl: '' };
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('clear_access_token') === 'true') localStorage.removeItem(TOKEN_KEY);
+    const fromUrl = url.searchParams.get('access_token');
+    if (fromUrl) {
+      localStorage.setItem(TOKEN_KEY, fromUrl);
+      url.searchParams.delete('access_token');
+      window.history.replaceState({}, document.title, url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : '') + url.hash);
+    }
+    out.token = localStorage.getItem(TOKEN_KEY);
+  } catch { /* storage unavailable */ }
+  return out;
 }
 
-const getAppParamValue = (paramName, { defaultValue = undefined, removeFromUrl = false } = {}) => {
-	if (isNode) {
-		return defaultValue;
-	}
-	const storageKey = `base44_${toSnakeCase(paramName)}`;
-	const urlParams = new URLSearchParams(window.location.search);
-	const searchParam = urlParams.get(paramName);
-	if (removeFromUrl) {
-		urlParams.delete(paramName);
-		const newUrl = `${window.location.pathname}${urlParams.toString() ? `?${urlParams.toString()}` : ""
-			}${window.location.hash}`;
-		window.history.replaceState({}, document.title, newUrl);
-	}
-	if (searchParam) {
-		storage.setItem(storageKey, searchParam);
-		return searchParam;
-	}
-	if (defaultValue) {
-		storage.setItem(storageKey, defaultValue);
-		return defaultValue;
-	}
-	const storedValue = storage.getItem(storageKey);
-	if (storedValue) {
-		return storedValue;
-	}
-	return null;
-}
-
-const getAppParams = () => {
-	if (getAppParamValue("clear_access_token") === 'true') {
-		storage.removeItem('base44_access_token');
-		storage.removeItem('token');
-	}
-	return {
-		appId: getAppParamValue("app_id", { defaultValue: import.meta.env.VITE_BASE44_APP_ID }),
-		token: getAppParamValue("access_token", { removeFromUrl: true }),
-		fromUrl: getAppParamValue("from_url", { defaultValue: window.location.href }),
-		functionsVersion: getAppParamValue("functions_version", { defaultValue: import.meta.env.VITE_BASE44_FUNCTIONS_VERSION }),
-		appBaseUrl: getAppParamValue("app_base_url", { defaultValue: import.meta.env.VITE_BASE44_APP_BASE_URL }),
-	}
-}
-
-
-export const appParams = {
-	...getAppParams()
-}
+export const appParams = bootstrap();

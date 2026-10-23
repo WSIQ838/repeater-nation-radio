@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: repeater
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: repeaternation
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repeater -d repeaternation"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://repeater:${POSTGRES_PASSWORD}@db:5432/repeaternation
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    volumes:
+      - uploads:/data
+      - ./exports:/exports:ro   # drop your Base44 export .zip here
+
+  # Optional automatic HTTPS (Let's Encrypt) when the server is reachable from the internet:
+  #   docker compose --profile https up -d
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on: [app]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+
+volumes:
+  dbdata:
+  uploads:
+  caddydata:

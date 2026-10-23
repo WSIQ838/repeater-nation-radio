@@ -1,110 +1,194 @@
-import { createClient } from '@base44/sdk';
-import { appParams } from '@/lib/app-params';
+// Client for the self-hosted Repeater Nation backend. It keeps the shape the app was written
+// against (base44.entities / auth / functions / integrations / actors), so pages are unchanged.
+import { appParams, TOKEN_KEY } from '@/lib/app-params';
 
-const { appId, token, functionsVersion, appBaseUrl } = appParams;
-
-// Create the Base44 client once and share it across the entire app.
-export const base44 = createClient({
-  appId,
-  token,
-  functionsVersion,
-  serverUrl: '',
-  requiresAuth: false,
-  appBaseUrl,
-  options: {
-    // createClient destructures a nested `options` object for these two --
-    // NOT top-level config keys (confirmed by reading @base44/sdk's actual
-    // source: `const { ..., options, ... } = config` then later
-    // `options?.onError`/`options?.actorsTransport`). A prior version of
-    // this file set `onError` at the top level, which the SDK silently
-    // never reads -- so that "fix" was completely inert the whole time it
-    // was live, which is exactly why no actor/mint error was ever actually
-    // surfaced despite the dedicated listener wired up for it elsewhere.
-    //
-    // Without a working onError, the SDK's own error logging is a no-op in
-    // a production build (NODE_ENV-gated), and actor connection-token mint
-    // failures are ONLY EVER reported through this callback -- there is no
-    // other path, no thrown exception app code sees, nothing.
-    onError: (err) => {
-      console.error('[Base44 SDK]', err?.status, err?.message, err);
-      const url = err?.originalError?.config?.url || '';
-      const actorMatch = url.match(/\/actors\/([^/]+)\/connection-token/);
-      if (actorMatch) {
-        window.dispatchEvent(new CustomEvent('rn:actor-mint-error', {
-          detail: { actorName: decodeURIComponent(actorMatch[1]), status: err?.status, message: err?.message },
-        }));
-      }
-    },
-    // The actors module's default "direct-first, proxy-fallback" mint path
-    // treats several failure statuses (405/409/422/503 -- see
-    // node_modules/@base44/sdk/dist/modules/actors.js's
-    // PROXY_FALLBACK_STATUSES) as an EXPECTED, silent case for an actor
-    // class the direct path doesn't yet serve, and falls back to the
-    // legacy proxy transport automatically -- without ever calling
-    // onError, by design. If that fallback isn't actually working
-    // correctly for a just-added actor class specifically, it would look
-    // exactly like total silence with zero trace anywhere, which matches
-    // everything observed here. The SDK's own comment states the proxy
-    // "serves migrated actors too, so falling back is always safe" --
-    // forcing it directly for every actor connection sidesteps whatever
-    // gap exists in the automatic fallback, at the cost of always using
-    // the older (but unconditionally supported) transport.
-    actorsTransport: 'proxy',
-  },
-});
-
-// The SDK auth endpoint is relatively expensive and many pages only need the
-// same current-user object. Deduplicate simultaneous calls and briefly reuse
-// the result so navigating between pages does not trigger another round trip.
-const originalMe = base44.auth.me.bind(base44.auth);
-let cachedUser = null;
-let cachedAt = 0;
-let pendingUser = null;
-const AUTH_CACHE_MS = 15000;
-
-base44.auth.me = async (...args) => {
-  const now = Date.now();
-  if (cachedUser && now - cachedAt < AUTH_CACHE_MS) return cachedUser;
-  if (pendingUser) return pendingUser;
-
-  pendingUser = originalMe(...args)
-    .then((user) => {
-      cachedUser = user;
-      cachedAt = Date.now();
-      return user;
-    })
-    .finally(() => {
-      pendingUser = null;
-    });
-
-  return pendingUser;
+const store = {
+  get: () => { try { return localStorage.getItem(TOKEN_KEY); } catch { return null; } },
+  set: (t) => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch { /* private mode */ } },
 };
 
-// Mutations can change the current user's data. After updateMe the cached
-// user is updated with what was saved rather than dropped: the activity
-// heartbeat saves last_active on every page open, and dropping the cache there
-// made the page's own auth.me() fetch the user a second time. Logout still
-// clears it, and the normal SDK behavior is otherwise untouched.
-const originalUpdateMe = base44.auth.updateMe?.bind(base44.auth);
-if (originalUpdateMe) {
-  base44.auth.updateMe = async (...args) => {
-    const result = await originalUpdateMe(...args);
-    const saved = result && typeof result === 'object' && result.id ? result : {};
-    if (cachedUser && (!saved.id || saved.id === cachedUser.id)) {
-      cachedUser = { ...cachedUser, ...(args[0] || {}), ...saved };
-      cachedAt = Date.now();
-    } else {
-      cachedUser = null;
-      cachedAt = 0;
+// Errors look like the old SDK's: message from the server, plus .status, .data and .response.data.
+function apiError(status, data, fallback) {
+  const message = (data && (data.message || data.error)) || fallback || `Request failed (${status})`;
+  const err = new Error(typeof message === 'string' ? message : fallback || 'Request failed');
+  err.status = status;
+  err.data = data;
+  err.response = { status, data };
+  err.originalError = { response: { status, data } };
+  return err;
+}
+
+async function request(method, path, body, { raw = false } = {}) {
+  const headers = {};
+  const token = store.get();
+  if (token) headers.Authorization = `Bearer ${token}`;
+  let payload;
+  if (body instanceof FormData) payload = body;
+  else if (body !== undefined) { headers['Content-Type'] = 'application/json'; payload = JSON.stringify(body); }
+  let res;
+  try {
+    res = await fetch(path, { method, headers, body: payload });
+  } catch (e) {
+    throw apiError(0, { error: 'Network error' }, 'Network error. Check your connection and try again.');
+  }
+  const text = await res.text();
+  let data = text;
+  try { data = text ? JSON.parse(text) : null; } catch { /* not JSON */ }
+  if (!res.ok) throw apiError(res.status, typeof data === 'object' ? data : { error: text }, res.statusText);
+  return raw ? { data, status: res.status } : data;
+}
+
+// ---------- realtime (entity.subscribe) ----------
+const rt = { ws: null, open: false, subs: new Map(), retry: 0, timer: null };
+function rtConnect() {
+  if (rt.ws || typeof WebSocket === 'undefined') return;
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const token = store.get();
+  const ws = new WebSocket(`${proto}://${location.host}/api/realtime${token ? `?token=${encodeURIComponent(token)}` : ''}`);
+  rt.ws = ws;
+  ws.onopen = () => { rt.open = true; rt.retry = 0; for (const entity of rt.subs.keys()) ws.send(JSON.stringify({ type: 'subscribe', entity })); };
+  ws.onmessage = (ev) => {
+    try {
+      const msg = JSON.parse(ev.data);
+      if (msg.type === 'event') for (const cb of rt.subs.get(msg.entity) || []) { try { cb(msg.event); } catch (e) { console.error(e); } }
+    } catch { /* ignore */ }
+  };
+  ws.onclose = () => {
+    rt.ws = null; rt.open = false;
+    if (!rt.subs.size) return;
+    rt.timer = setTimeout(rtConnect, Math.min(30000, 1000 * 2 ** rt.retry++));
+  };
+}
+function rtSubscribe(entity, cb) {
+  if (!rt.subs.has(entity)) rt.subs.set(entity, new Set());
+  rt.subs.get(entity).add(cb);
+  if (rt.open) rt.ws.send(JSON.stringify({ type: 'subscribe', entity }));
+  else rtConnect();
+  return () => {
+    const set = rt.subs.get(entity);
+    if (!set) return;
+    set.delete(cb);
+    if (!set.size) {
+      rt.subs.delete(entity);
+      if (rt.open) rt.ws.send(JSON.stringify({ type: 'unsubscribe', entity }));
     }
-    return result;
+    if (!rt.subs.size && rt.ws) { clearTimeout(rt.timer); rt.ws.close(); rt.ws = null; rt.open = false; }
   };
 }
 
-const originalLogout = base44.auth.logout.bind(base44.auth);
-base44.auth.logout = (...args) => {
-  cachedUser = null;
-  cachedAt = 0;
-  pendingUser = null;
-  return originalLogout(...args);
+// ---------- entities ----------
+const enc = encodeURIComponent;
+function entityApi(name) {
+  const base = `/api/entities/${enc(name)}`;
+  return {
+    list: (sort, limit, skip, fields) => request('POST', `${base}/query`, { q: {}, sort, limit, skip, fields }).then((r) => r.items),
+    filter: (q = {}, sortOrOpts, limit, skip, fields) => {
+      if (sortOrOpts && typeof sortOrOpts === 'object') return request('POST', `${base}/query`, { q, ...sortOrOpts });
+      return request('POST', `${base}/query`, { q, sort: sortOrOpts, limit, skip, fields }).then((r) => r.items);
+    },
+    get: (id) => request('GET', `${base}/${enc(id)}`),
+    create: (data) => request('POST', base, data),
+    bulkCreate: (items) => request('POST', `${base}/bulk`, items),
+    update: (id, data) => request('PUT', `${base}/${enc(id)}`, data),
+    bulkUpdate: (items) => request('PUT', `${base}/bulk`, items),
+    updateMany: (q, data) => request('POST', `${base}/update-many`, { q, data }),
+    delete: (id) => request('DELETE', `${base}/${enc(id)}`),
+    deleteMany: (q) => request('POST', `${base}/delete-many`, { q }),
+    count: (q = {}) => request('POST', `${base}/count`, { q }).then((r) => r.count),
+    subscribe: (cb) => rtSubscribe(name, cb),
+  };
+}
+const entities = new Proxy({}, {
+  get(cache, name) {
+    if (typeof name !== 'string') return undefined;
+    return (cache[name] ??= entityApi(name));
+  },
+});
+
+// ---------- auth ----------
+let cachedUser = null, cachedAt = 0, pendingUser = null;
+const AUTH_CACHE_MS = 15000;
+const clearUserCache = () => { cachedUser = null; cachedAt = 0; pendingUser = null; };
+
+const auth = {
+  // De-duplicates simultaneous calls and briefly reuses the result (pages all ask for the user).
+  async me() {
+    if (cachedUser && Date.now() - cachedAt < AUTH_CACHE_MS) return cachedUser;
+    if (pendingUser) return pendingUser;
+    pendingUser = request('GET', '/api/auth/me')
+      .then((u) => { cachedUser = u; cachedAt = Date.now(); return u; })
+      .finally(() => { pendingUser = null; });
+    return pendingUser;
+  },
+  async isAuthenticated() {
+    if (!store.get()) return false;
+    try { await auth.me(); return true; } catch { return false; }
+  },
+  async updateMe(data) {
+    const saved = await request('PUT', '/api/auth/me', data);
+    if (cachedUser && saved?.id === cachedUser.id) { cachedUser = { ...cachedUser, ...saved }; cachedAt = Date.now(); } else clearUserCache();
+    return saved;
+  },
+  setToken(token) { store.set(token); clearUserCache(); },
+  logout(redirectUrl) {
+    store.set(null); clearUserCache();
+    if (redirectUrl && typeof window !== 'undefined') window.location.href = '/login';
+  },
+  redirectToLogin(returnUrl) {
+    let to = '/login';
+    try {
+      const u = new URL(returnUrl || window.location.href, window.location.origin);
+      if (u.origin === window.location.origin && u.pathname !== '/login') to = `/login?returnTo=${enc(u.pathname + u.search)}`;
+    } catch { /* fall through */ }
+    window.location.href = to;
+  },
+  loginWithProvider(provider, fromUrl) {
+    const from = fromUrl || '/dashboard';
+    window.location.href = `/api/auth/oauth/${enc(provider)}/start?from=${enc(from)}`;
+  },
+  async loginViaEmailPassword(email, password) {
+    const r = await request('POST', '/api/auth/login', { email, password });
+    auth.setToken(r.access_token);
+    return r;
+  },
+  register: ({ email, password, full_name }) => request('POST', '/api/auth/register', { email, password, full_name }),
+  verifyOtp: ({ email, otpCode }) => request('POST', '/api/auth/verify-otp', { email, otpCode }),
+  resendOtp: (email) => request('POST', '/api/auth/resend-otp', { email }),
+  resetPasswordRequest: (email) => request('POST', '/api/auth/reset-password-request', { email }),
+  resetPassword: ({ resetToken, newPassword }) => request('POST', '/api/auth/reset-password', { resetToken, newPassword }),
+  inviteUser: (email, role) => request('POST', '/api/auth/invite', { email, role }),
 };
+
+// ---------- functions / integrations ----------
+const functions = {
+  // Resolves like axios did: { data, status }.
+  invoke: (name, data) => request('POST', `/api/functions/${enc(name)}`, data ?? {}, { raw: true }),
+};
+
+async function upload({ file }) {
+  const form = new FormData();
+  form.append('file', file);
+  return request('POST', '/api/integrations/core/upload-file', form);
+}
+const integrations = { Core: { UploadFile: upload, UploadPublicFile: upload } };
+
+// ---------- actors (live rooms) ----------
+function actorConnect(actor, room, { id } = {}) {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const token = store.get();
+  const qs = new URLSearchParams({ ...(token ? { token } : {}), ...(id ? { id } : {}) });
+  const ws = new WebSocket(`${proto}://${location.host}/api/actors/${enc(actor)}/${enc(room)}?${qs}`);
+  const listeners = new Set();
+  const queue = [];
+  ws.onopen = () => { while (queue.length) ws.send(queue.shift()); };
+  ws.onmessage = (ev) => { try { const m = JSON.parse(ev.data); listeners.forEach((cb) => cb(m)); } catch { /* ignore */ } };
+  return {
+    subscribe(cb) { listeners.add(cb); return { unsubscribe: () => listeners.delete(cb) }; },
+    send(msg) { const s = JSON.stringify(msg); ws.readyState === WebSocket.OPEN ? ws.send(s) : queue.push(s); },
+    close() { listeners.clear(); try { ws.close(); } catch { /* closed */ } },
+  };
+}
+const actors = new Proxy({}, { get: (_t, actor) => (room) => ({ connect: (opts) => actorConnect(String(actor), room, opts) }) });
+
+export const base44 = { entities, auth, functions, integrations, actors, appId: appParams.appId };
+export default base44;

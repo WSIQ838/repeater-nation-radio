@@ -104,12 +104,12 @@ function safeFrom(from: string | null): string {
 
 function fail(from: string, message: string) {
   const sep = from.includes('?') ? '&' : '?';
-  return Response.redirect(`${config.publicUrl}/login${sep}error=${encodeURIComponent(message)}`, 302);
+  return new Response(null, { status: 302, headers: { location: `${config.publicUrl}/login${sep}error=${encodeURIComponent(message)}` } });
 }
 
 export async function oauthStart(provider: string, url: URL): Promise<Response> {
   const p = providers[provider];
-  if (!p || !p.clientId()) throw new HttpError(404, `Sign-in with ${provider} is not configured on this server`);
+  if (!p || !p.clientId()) return fail('/', `Sign-in with ${provider[0].toUpperCase() + provider.slice(1)} isn't set up on this site yet. Use email and password instead.`);
   const nonce = randomToken(16);
   const state = await signBlob('oauth-state', { provider, nonce, from: safeFrom(url.searchParams.get('from') || url.searchParams.get('from_url')) });
   const params = new URLSearchParams({

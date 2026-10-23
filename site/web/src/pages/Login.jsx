@@ -24,7 +24,7 @@ const NEEDS_VERIFY = /verify your email/i;
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => new URLSearchParams(window.location.search).get("error") || "");
   const [loading, setLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");

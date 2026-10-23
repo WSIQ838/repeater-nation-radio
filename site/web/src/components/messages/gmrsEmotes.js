@@ -2,7 +2,7 @@
 // Each emote is inserted into the message body as a shortcode (e.g. :over:)
 // and rendered inline by MessageBody.jsx.
 
-const BASE = 'https://media.base44.com/images/public/6a6d787f8e808727b935dd09';
+const BASE = '/emotes';
 
 export const GMRS_EMOTES = [
   { code: ':gmrs:', label: 'GMRS', url: `${BASE}/c7aa40aec_1.png` },

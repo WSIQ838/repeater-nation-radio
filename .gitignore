@@ -22,3 +22,5 @@ site/server/data/
 site/.env
 site/web/node_modules/
 site/web/dist/
+site/exports/*.zip
+site/.env

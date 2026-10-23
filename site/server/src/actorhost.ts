@@ -53,23 +53,31 @@ export async function actorSocket(req: Request, name: string, roomId: string, ur
     const conn = new Connection(connId, identity, socket);
     actor.connections.get(connId)?.close(4000, 'Replaced by a newer connection');
     actor.connections.set(connId, conn);
-    try {
-      await actor.handleConnect(conn);
-    } catch (e) {
-      console.error(`[actor:${name}] handleConnect failed:`, e);
-      conn.reject(1011, 'Internal error');
-    }
-    if (conn.rejected) { if (actor.connections.get(connId) === conn) actor.connections.delete(connId); return; }
-
-    socket.onmessage = async (ev) => {
+    // Handlers are attached before handleConnect runs: clients send "join" the moment the socket opens,
+    // and anything arriving while handleConnect is still working waits its turn.
+    const ready = (async () => {
+      try {
+        await actor.handleConnect(conn);
+      } catch (e) {
+        console.error(`[actor:${name}] handleConnect failed:`, e);
+        conn.reject(1011, 'Internal error');
+      }
+      if (conn.rejected && actor.connections.get(connId) === conn) actor.connections.delete(connId);
+    })();
+    let chain = ready;
+    socket.onmessage = (ev) => {
       let msg: any;
       try { msg = JSON.parse(String(ev.data)); } catch { return; }
-      try { await actor.handleMessage(conn, msg); } catch (e) { console.error(`[actor:${name}] handleMessage failed:`, e); }
+      chain = chain.then(async () => {
+        if (conn.rejected) return;
+        try { await actor.handleMessage(conn, msg); } catch (e) { console.error(`[actor:${name}] handleMessage failed:`, e); }
+      });
     };
     socket.onclose = async () => {
-      if (actor.connections.get(connId) !== conn) return; // already replaced
+      await ready;
+      if (actor.connections.get(connId) !== conn) return; // already replaced or rejected
       actor.connections.delete(connId);
-      try { await actor.handleClose(conn); } catch (e) { console.error(`[actor:${name}] handleClose failed:`, e); }
+      try { await chain; await actor.handleClose(conn); } catch (e) { console.error(`[actor:${name}] handleClose failed:`, e); }
       if (!actor.connections.size) setTimeout(() => { if (!actor.connections.size) rooms.delete(`${name}/${roomId}`); }, 60_000);
     };
   };

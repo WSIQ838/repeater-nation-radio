@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
 
@@ -20,19 +19,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAppState = async () => {
-    const appClient = createAxiosClient({
-      baseURL: `/api/apps/public`,
-      headers: { 'X-App-Id': appParams.appId },
-      token: appParams.token,
-      interceptResponses: true
-    });
-
     setIsLoadingPublicSettings(true);
     setAuthError(null);
 
     // These two requests do not depend on each other. Running them together
     // removes one full network round-trip from every fresh page load.
-    const publicSettingsPromise = appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+    const publicSettingsPromise = fetch('/api/public-settings').then((r) => { if (!r.ok) throw Object.assign(new Error('Failed to load app'), { status: r.status }); return r.json(); });
     const authPromise = appParams.token ? checkUserAuth() : Promise.resolve();
 
     const [publicResult, authResult] = await Promise.allSettled([publicSettingsPromise, authPromise]);
