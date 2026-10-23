@@ -137,7 +137,7 @@ export async function login(req: Request, body: any) {
   const [cred] = user ? await sql`SELECT * FROM credentials WHERE user_id = ${user.id}` : [];
 
   if (user && cred && !cred.password_hash && cred.email_verified) {
-    throw new HttpError(401, 'This account has no password yet. Use "Forgot password" to set one, or sign in with Google, Microsoft, Facebook or Apple.', { error: 'password_not_set', message: 'This account has no password yet. Use "Forgot password" to set one, or sign in with Google, Microsoft, Facebook or Apple.' });
+    throw new HttpError(401, 'This account has no password yet. Use "Forgot password" to set one, or sign in with Google.', { error: 'password_not_set', message: 'This account has no password yet. Use "Forgot password" to set one, or sign in with Google.' });
   }
   const ok = !!(cred && await verifyPassword(password, cred.password_hash));
   if (!user || !cred || !ok) throw new HttpError(401, 'Invalid email or password');

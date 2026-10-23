@@ -41,7 +41,7 @@ Open http://localhost:8080. The first build takes a few minutes.
    Any it can't fetch are listed in `import-media-failures.txt` inside the uploads volume.
 
 **Passwords did not come across** (Base44 doesn't export them). Members sign in with *Forgot password*,
-or with Google/Microsoft/Facebook/Apple using the same e-mail, which links to their existing account.
+or with Google using the same e-mail, which links to their existing account.
 Tell members before you switch.
 
 ## 3. E-mail (required for real use)
@@ -50,12 +50,16 @@ Set the `SMTP_*` values. Sign-up codes and password resets are e-mailed; without
 printed in `docker compose logs app`, so nobody new could verify an account. Any provider works
 (Gmail app password, Mailgun, SES, Brevo...). Check it from an admin account by requesting a password reset.
 
-## 4. Social sign-in
+## 4. Google sign-in
 
-Create an OAuth app with each provider you want and put its ID/secret in `.env` (blank = that button shows a
-"not set up yet" message). The redirect URL for each provider is
-`{PUBLIC_URL}/api/auth/oauth/<google|microsoft|facebook|apple>/callback`.
-The old Google/Microsoft/Facebook/Apple logins were Base44's own apps, so these must be created fresh.
+Sign-in is e-mail + password, or Google. Create an OAuth client in the Google Cloud console
+(*APIs & Services -> Credentials -> OAuth client ID -> Web application*), add this as an authorized
+redirect URI, and put the ID and secret in `.env` as `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`:
+
+`{PUBLIC_URL}/api/auth/oauth/google/callback`
+
+The old Google login was Base44's own, so this one must be created fresh. Without it the Google button
+shows a "not set up yet" message and e-mail sign-in still works.
 
 ## 5. Put it on the internet
 

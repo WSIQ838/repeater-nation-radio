@@ -8,9 +8,6 @@ import { UserPlus, Mail, Lock, Loader2, BadgeCheck, CheckCircle2, AlertCircle, R
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
-import FacebookIcon from "@/components/FacebookIcon";
-import AppleIcon from "@/components/AppleIcon";
-import MicrosoftIcon from "@/components/MicrosoftIcon";
 import SignupAnnouncement from "@/components/SignupAnnouncement";
 import VerifyEmailHelp from "@/components/VerifyEmailHelp";
 import { toast } from "@/components/ui/use-toast";
@@ -229,7 +226,7 @@ export default function Register() {
     if (!cs || !googleSignupOk) return;
 
     const params = new URLSearchParams();
-    const signupKey = socialProvider === "facebook" ? "facebook_signup" : socialProvider === "apple" ? "apple_signup" : socialProvider === "microsoft" ? "microsoft_signup" : "google_signup";
+    const signupKey = "google_signup";
     params.set(signupKey, "1");
     params.set("callsign", cs);
     params.set("returnTo", safeReturnTo());
@@ -292,20 +289,8 @@ export default function Register() {
         <GoogleIcon className="w-5 h-5 mr-2" />
         Continue with Google
       </Button>
-      <Button variant="outline" className="w-full h-12 text-sm font-medium mb-2" onClick={() => openSocialSignup("facebook")}>
-        <FacebookIcon className="w-5 h-5 mr-2" />
-        Continue with Facebook
-      </Button>
-      <Button variant="outline" className="w-full h-12 text-sm font-medium mb-2" onClick={() => openSocialSignup("apple")}>
-        <AppleIcon className="w-5 h-5 mr-2" />
-        Continue with Apple
-      </Button>
-      <Button variant="outline" className="w-full h-12 text-sm font-medium mb-2" onClick={() => openSocialSignup("microsoft")}>
-        <MicrosoftIcon className="w-5 h-5 mr-2" />
-        Continue with Microsoft
-      </Button>
       <p className="text-center text-xs text-muted-foreground mb-6">
-        Google, Facebook, Apple, and Microsoft signup require a verified GMRS or HAM callsign.
+        Google signup requires a verified GMRS or HAM callsign.
       </p>
 
       <Dialog open={googleSignupOpen} onOpenChange={setGoogleSignupOpen}>
@@ -316,7 +301,7 @@ export default function Register() {
               Verify your callsign to continue
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Enter your GMRS or HAM callsign and verify it before continuing with {socialProvider === "facebook" ? "Facebook" : socialProvider === "apple" ? "Apple" : socialProvider === "microsoft" ? "Microsoft" : "Google"} signup.
+              Enter your GMRS or HAM callsign and verify it before continuing with Google signup.
             </p>
           </DialogHeader>
 
@@ -379,8 +364,8 @@ export default function Register() {
               Cancel
             </Button>
             <Button type="button" onClick={handleSocialSignup} disabled={!googleSignupOk || googleSignupVerifying}>
-              {socialProvider === "facebook" ? <FacebookIcon className="w-4 h-4 mr-2" /> : socialProvider === "apple" ? <AppleIcon className="w-4 h-4 mr-2" /> : socialProvider === "microsoft" ? <MicrosoftIcon className="w-4 h-4 mr-2" /> : <GoogleIcon className="w-4 h-4 mr-2" />}
-              Continue with {socialProvider === "facebook" ? "Facebook" : socialProvider === "apple" ? "Apple" : socialProvider === "microsoft" ? "Microsoft" : "Google"}
+              <GoogleIcon className="w-4 h-4 mr-2" />
+              Continue with Google
             </Button>
           </DialogFooter>
         </DialogContent>
