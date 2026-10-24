@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { memberLocations } from "../lib/auth";
 
-const POLL_MS = 10000;
+const POLL_MS = 20000;
 const STYLE = {
   version: 8,
   sources: { osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, attribution: "© OpenStreetMap contributors" } },
@@ -34,6 +34,7 @@ export default function MemberMap({ showing, myPos, onShow }) {
   useEffect(() => {
     let stop = false;
     const poll = async () => {
+      if (document.hidden) return;
       try {
         const r = await memberLocations();
         if (stop) return;

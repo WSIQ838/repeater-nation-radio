@@ -577,7 +577,7 @@ function RadioAppInner({session,onSignOut}){
     const id=navigator.geolocation.watchPosition(pos=>{
       const c=pos.coords;
       setMyPos({lat:c.latitude,lng:c.longitude});
-      const now=Date.now();if(now-last<15000)return;last=now;
+      const now=Date.now();if(now-last<30000)return;last=now;
       reportLocation({lat:c.latitude,lng:c.longitude,accuracy:c.accuracy,heading:c.heading,channel_id:channelIdRef.current,visibility:shareMembers?"members":"dispatch"}).then(()=>setLocNote("Sharing with "+(shareMembers?"Controllers and other members":"Controllers")+". Last sent "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+".")).catch(()=>setLocNote("Got a location but couldn't send it."));
     },err=>setLocNote(err?.code===1?"Location is blocked for this app. Allow location in the system settings, then switch this off and on.":"Couldn't get a location yet."),{enableHighAccuracy:true,maximumAge:10000});
     return()=>{navigator.geolocation.clearWatch(id);stopLocation().catch(()=>{})};

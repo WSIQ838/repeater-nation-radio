@@ -7,7 +7,7 @@ const sameData=(a,b)=>a===b||JSON.stringify(a)===JSON.stringify(b);
 // The call list is checked often enough that an incoming call rings promptly; who is online
 // changes slowly and costs the server a LiveKit lookup per channel, so it is checked less
 // often and only while the window is visible.
-const CALLS_POLL_MS=4000, PRESENCE_POLL_MS=15000;
+const CALLS_POLL_MS=4000, IDLE_CALLS_POLL_MS=8000, PRESENCE_POLL_MS=15000;
 // A call just started may not be in the server's list yet; don't end it for that.
 const START_GRACE_MS=8000;
 // LiveKit DisconnectReason: 1 = this side hung up; 4 and 5 = the server removed us or
@@ -126,7 +126,17 @@ export function useDirectCalls(userId, outputDeviceId="", micDeviceId="", volume
     if(p)setControllersOnline(Number(p.controllersOnline)||0);
   },[userId]);
 
-  useEffect(()=>{refresh();const id=setInterval(refresh,CALLS_POLL_MS);return()=>clearInterval(id)},[refresh]);
+  useEffect(()=>{
+    // Polled every 4s during a call and every 8s otherwise (an incoming ring still shows
+    // within a few seconds); a hidden window skips polling and catches up when shown.
+    let last=0;
+    const run=()=>{last=Date.now();refresh()};
+    const tick=()=>{if(document.hidden)return;if(!callIdRef.current&&Date.now()-last<IDLE_CALLS_POLL_MS-500)return;run()};
+    const vis=()=>{if(!document.hidden)run()};
+    run();const id=setInterval(tick,CALLS_POLL_MS);
+    document.addEventListener("visibilitychange",vis);
+    return()=>{clearInterval(id);document.removeEventListener("visibilitychange",vis)};
+  },[refresh]);
   useEffect(()=>{
     refreshPresence();const id=setInterval(refreshPresence,PRESENCE_POLL_MS);
     const vis=()=>{if(!document.hidden)refreshPresence()};
