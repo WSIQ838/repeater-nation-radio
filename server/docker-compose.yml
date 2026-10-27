@@ -1,0 +1,15 @@
+# LiveKit voice server for Repeater Nation Radio.
+# Run behind Nginx Proxy Manager: NPM proxies signaling (443 -> 7880);
+# audio (7881/tcp, 7882/udp) is published straight from this container.
+services:
+  livekit:
+    image: livekit/livekit-server:v1.8
+    command: --config /etc/livekit.yaml
+    restart: unless-stopped
+    # Host networking is what LiveKit recommends for WebRTC; it also avoids
+    # publishing a huge UDP range. NPM should forward to <this-host>:7880.
+    network_mode: host
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
